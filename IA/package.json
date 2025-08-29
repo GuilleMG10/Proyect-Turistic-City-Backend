@@ -1,0 +1,14 @@
+{
+  "name": "api-ia",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.1",
+    "express": "^4.19.2",
+    "node-fetch": "^3.3.2"
+  }
+}
