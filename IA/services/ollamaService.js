@@ -1,43 +1,46 @@
 import 'dotenv/config';
-import fetch from 'node-fetch';
+import fetch from "node-fetch";
 
-export const callOllama = async (prompt) => {
-  try {
-    const response = await fetch("http://127.0.0.1:11434/api/generate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "hf.co/TheBloke/Mistral-7B-Instruct-v0.1-GGUF:Q4_K_M",
-        prompt: prompt,
-      }),
-    });
+export const callOllamaStream = async (prompt, onData) => {
+  const response = await fetch("http://127.0.0.1:11434/api/generate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "hf.co/TheBloke/Mistral-7B-Instruct-v0.1-GGUF:Q4_K_M",
+      prompt: prompt,
+    }),
+  });
 
-    if (!response.ok) throw new Error(`Error en Ollama: ${response.statusText}`);
+  if (!response.ok) throw new Error(`Error en Ollama: ${response.statusText}`);
 
-    const raw = await response.text();
-    //Lee todo el cuerpo de la respuesta como texto plano. se ve algo asi:
-//     {"model":"hf.co/TheBloke/Mistral-7B-Instruct-v0.1-GGUF:Q4_K_M","created_at":"2025-08-29T03:44:44.0423133Z","response":" y","done":false}
-// {"model":"hf.co/TheBloke/Mistral-7B-Instruct-v0.1-GGUF:Q4_K_M","created_at":"2025-08-29T03:44:44.1922604Z","response":" có","done":false}
+  const decoder = new TextDecoder();
+  let buffer = "";
 
-    console.log(raw)
-    const lines = raw.split("\n").filter(line => line.trim() !== "");
+  for await (const chunk of response.body) {
+    buffer += decoder.decode(chunk, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop() || ""; 
 
-    let fullResponse = "";
     for (const line of lines) {
+      if (!line.trim()) continue;
       try {
         const json = JSON.parse(line);
-        if (json.response) fullResponse += json.response;
+        if (json.response) onData(json.response);
       } catch (err) {
-        console.warn("No se pudo parsear línea de Ollama:", line);
+        console.warn("Error parseando línea:", line);
       }
     }
-    return fullResponse;
+  }
 
-  } catch (error) {
-    console.error("Error llamando a Ollama:", error);
-    throw error;
+  // Procesar resto del buffer
+  if (buffer) {
+    try {
+      const json = JSON.parse(buffer);
+      if (json.response) onData(json.response);
+    } catch {}
   }
 };
+
 
 
 export const callHuggingFace = async (prompt) => {
@@ -79,7 +82,7 @@ export const callHuggingFace = async (prompt) => {
 //Nota que el response es un objeto javascript, tiene un body, dentro del body hay un string en formato json
 //el metodo .json extrae este string y lo vuelve un objeto javascript 
     
-    const content = result.response.choices[0].message.content;
+    const content = result.choices[0].message.content;
     const index = content.indexOf('</think>');
 
     let finalText;
@@ -100,10 +103,11 @@ export const callHuggingFace = async (prompt) => {
 
 
 
-
-export const generateAIResponse = async (prompt, provider = "ollama") => {
+export const generateAIResponse = async (prompt, provider = "ollama", onData) => {
   if (!prompt) throw new Error("El prompt es obligatorio");
-  if (provider === "ollama") return await callOllama(prompt);
+
+  if (provider === "ollama") return await callOllamaStream(prompt, onData);
   if (provider === "huggingface") return await callHuggingFace(prompt);
+
   throw new Error(`Proveedor desconocido: ${provider}`);
 };

@@ -4,10 +4,8 @@ import iaRoutes from "./routes/iaRoutes.js";
 const app = express();
 const PORT = 3000;
 
-// Middleware para parsear JSON
 app.use(express.json());
 
-// Rutas
 app.use("/ia", iaRoutes);
 
 app.listen(PORT, () => {
