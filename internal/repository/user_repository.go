@@ -1,23 +1,28 @@
 package repository
 
-import "github.com/GuilleMG10/Proyect-Turistic-City-Backend/internal/model"
+import (
+	"github.com/GuilleMG10/Proyect-Turistic-City-Backend/internal/model"
+	"gorm.io/gorm"
+)
 
 type UserRepository struct {
+	db *gorm.DB
 }
 
-// FindUserByID implements service.UserRepository.
-func (u *UserRepository) FindUserByID(id int) (*model.User, error) {
-	panic("unimplemented")
+func NewUserRepository(db *gorm.DB) *UserRepository {
+	return &UserRepository{
+		db: db,
+	}
 }
 
-func NewUserRepository() *UserRepository {
-	return &UserRepository{}
+func (r *UserRepository) FindUserByID(id int) (*model.User, error) {
+	var user model.User
+	if err := r.db.First(&user, id).Error; err != nil {
+		return nil, err
+	}
+	return &user, nil
 }
 
-func FindUserByID(id int) (*model.User, error) {
-	return &model.User{
-		ID:    1,
-		Name:  "Pepito",
-		Email: "Pepito@pepito.com",
-	}, nil
+func (r *UserRepository) CreateUser(user *model.User) error {
+	return r.db.Create(user).Error
 }
