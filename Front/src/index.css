@@ -1,0 +1,8 @@
+@import "tailwindcss";
+
+/* opcional: estilos globales */
+:root { color-scheme: light; }
+body { 
+  background-color: rgb(249 250 251);
+  color: rgb(17 24 39);
+}
