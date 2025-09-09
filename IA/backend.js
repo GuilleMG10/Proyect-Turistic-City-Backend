@@ -1,10 +1,10 @@
 import fetch from "node-fetch"; // Si Node >= 18, puedes usar fetch nativo sin instalar
 
 async function enviarPromptStreaming() {
-  const prompt = "Hola, que es el modelo MVC?";
+  const prompt = "Dime 10 nombres que empiecen con D";
 
   try {
-    const response = await fetch("https://2bef669bf710.ngrok-free.app/ia/prompt", {
+    const response = await fetch("http://localhost:3000/ia/prompt", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ prompt })
