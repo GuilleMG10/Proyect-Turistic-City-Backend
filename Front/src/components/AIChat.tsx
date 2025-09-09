@@ -43,7 +43,7 @@ export default function AIChat({ isOpen, onClose }: Props) {
 
     try {
       // Connect to your AI backend service
-      const response = await fetch(`${import.meta.env.VITE_AI_ENDPOINT}/ia/prompt`, {
+      const response = await fetch(`${import.meta.env.VITE_AI_ENDPOINT}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
