@@ -1,0 +1,5 @@
+@import "tailwindcss";
+
+/* opcional: estilos globales */
+:root { color-scheme: light; }
+body { @apply bg-gray-50 text-gray-900; }
