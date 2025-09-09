@@ -1,8 +1,95 @@
 import { useEffect, useState } from "react";
-import { supabase } from "../lib/supabaseClient";
 import type { Place } from "../types";
 import PlaceGrid from "../components/PlaceGrid";
 import ErrorBanner from "../components/ErrorBanner";
+
+// quitar despues de probar asdasd
+const mockPlaces: Place[] = [
+  {
+    id: "1",
+    name: "Cristo de la Concordia",
+    description: "Una de las estatuas de Cristo más grandes del mundo, ubicada en el cerro San Pedro con vista panorámica de Cochabamba.",
+    image_url: "https://placehold.co/800x533?text=CDLC",
+    category: "Turismo",
+    min_age: null,
+    max_age: null,
+    price_min: 0,
+    price_max: 10,
+    rating: 4.7,
+    city: "Cochabamba",
+    is_active: true,
+  },
+  {
+    id: "2", 
+    name: "Parque Nacional Tunari",
+    description: "Área protegida ideal para trekking, observación de fauna y flora, con hermosos paisajes de montaña.",
+    image_url: "https://placehold.co/800x533?text=PNT",
+    category: "Naturaleza",
+    min_age: 8,
+    max_age: null,
+    price_min: 5,
+    price_max: 15,
+    rating: 4.5,
+    city: "Cochabamba",
+    is_active: true,
+  },
+  {
+    id: "3",
+    name: "Palacio Portales",
+    description: "Impresionante palacio de arquitectura francesa que alberga un museo con arte y objetos históricos.",
+    image_url: "https://placehold.co/800x533?text=PP",
+    category: "Cultura",
+    min_age: null,
+    max_age: null,
+    price_min: 15,
+    price_max: 20,
+    rating: 4.2,
+    city: "Cochabamba",
+    is_active: true,
+  },
+  {
+    id: "4",
+    name: "Mercado La Cancha",
+    description: "Uno de los mercados más grandes de Sudamérica, perfecto para experimentar la cultura local.",
+    image_url: "https://placehold.co/800x533?text=MLC",
+    category: "Cultura",
+    min_age: null,
+    max_age: null,
+    price_min: null,
+    price_max: null,
+    rating: 4.0,
+    city: "Cochabamba",
+    is_active: true,
+  },
+  {
+    id: "5",
+    name: "Teatro Achá",
+    description: "Histórico teatro que ofrece una variedad de eventos culturales, obras de teatro y conciertos.",
+    image_url: "https://placehold.co/800x533?text=TA",
+    category: "Entretenimiento",
+    min_age: 12,
+    max_age: null,
+    price_min: 25,
+    price_max: 100,
+    rating: 4.3,
+    city: "Cochabamba",
+    is_active: true,
+  },
+  {
+    id: "6",
+    name: "Laguna Alalay",
+    description: "Hermosa laguna en el centro de la ciudad, ideal para pasear en familia y disfrutar actividades al aire libre.",
+    image_url: "https://placehold.co/800x533?text=LA",
+    category: "Naturaleza",
+    min_age: null,
+    max_age: null,
+    price_min: null,
+    price_max: null,
+    rating: 4.1,
+    city: "Cochabamba",
+    is_active: true,
+  },
+];
 
 export default function Home() {
   const [places, setPlaces] = useState<Place[]>([]);
@@ -15,22 +102,12 @@ export default function Home() {
     async function load() {
       setLoading(true);
       setErr(null);
-      const { data, error } = await supabase
-        .from("places")
-        .select(
-          "id,name,description,image_url,category,min_age,max_age,price_min,price_max,rating,city,is_active"
-        )
-        .eq("is_active", true)
-        .limit(30);
 
-      if (error) {
-        if (!cancelled) {
-          setErr("Error al cargar los lugares");
-          setPlaces([]);
-        }
-        return;
+      await new Promise(resolve => setTimeout(resolve, 500));
+      if (!cancelled) {
+        setPlaces(mockPlaces);
       }
-      if (!cancelled) setPlaces((data ?? []) as Place[]);
+      
       setLoading(false);
     }
 
