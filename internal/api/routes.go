@@ -7,7 +7,12 @@ type UserHandler interface {
 	CreateUser(c *gin.Context)
 }
 
-func RegisterRoutes(router *gin.Engine, u UserHandler) {
+type IAHandler interface {
+	GenerateAIResponse(c *gin.Context)
+}
+
+func RegisterRoutes(router *gin.Engine, u UserHandler, ia IAHandler) {
 	router.GET("/users/:id", u.GetUser)
 	router.POST("/users", u.CreateUser)
+	router.POST("/ia", ia.GenerateAIResponse)
 }

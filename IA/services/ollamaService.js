@@ -1,4 +1,4 @@
-import 'dotenv/config';
+import "dotenv/config";
 import fetch from "node-fetch";
 
 export const callOllamaStream = async (prompt, onData) => {
@@ -6,7 +6,8 @@ export const callOllamaStream = async (prompt, onData) => {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "hf.co/TheBloke/Mistral-7B-Instruct-v0.1-GGUF:Q4_K_M",
+      // model: "hf.co/TheBloke/Mistral-7B-Instruct-v0.1-GGUF:Q4_K_M",
+      model: "qwen3",
       prompt: prompt,
     }),
   });
@@ -19,7 +20,7 @@ export const callOllamaStream = async (prompt, onData) => {
   for await (const chunk of response.body) {
     buffer += decoder.decode(chunk, { stream: true });
     const lines = buffer.split("\n");
-    buffer = lines.pop() || ""; 
+    buffer = lines.pop() || "";
 
     for (const line of lines) {
       if (!line.trim()) continue;
@@ -41,8 +42,6 @@ export const callOllamaStream = async (prompt, onData) => {
   }
 };
 
-
-
 export const callHuggingFace = async (prompt) => {
   try {
     const response = await fetch(
@@ -54,56 +53,56 @@ export const callHuggingFace = async (prompt) => {
         },
         method: "POST",
         body: JSON.stringify({
-          messages: [
-            { role: "user", content: prompt },
-          ],
+          messages: [{ role: "user", content: prompt }],
           model: "deepseek-ai/DeepSeek-R1:fireworks-ai",
         }),
       }
     );
 
-    if (!response.ok) throw new Error(`Error en Hugging Face: ${response.statusText}`);
+    if (!response.ok)
+      throw new Error(`Error en Hugging Face: ${response.statusText}`);
 
     const result = await response.json();
-//     Response {
-//   status: 200,
-//   statusText: "OK",
-//   ok: true,
-//   headers: Headers {
-//     "content-type": "application/json",
-//     "content-length": "64"
-//   },
-//   body: ReadableStream {
-//     // El contenido crudo en texto JSON sería algo como:
-//     '{"nombre":"Jonathan","edad":25,"ciudad":"Cochabamba"}'
-//   },
-//   url: "https://api.ejemplo.com/data"
-// }
-//Nota que el response es un objeto javascript, tiene un body, dentro del body hay un string en formato json
-//el metodo .json extrae este string y lo vuelve un objeto javascript 
-    
+    //     Response {
+    //   status: 200,
+    //   statusText: "OK",
+    //   ok: true,
+    //   headers: Headers {
+    //     "content-type": "application/json",
+    //     "content-length": "64"
+    //   },
+    //   body: ReadableStream {
+    //     // El contenido crudo en texto JSON sería algo como:
+    //     '{"nombre":"Jonathan","edad":25,"ciudad":"Cochabamba"}'
+    //   },
+    //   url: "https://api.ejemplo.com/data"
+    // }
+    //Nota que el response es un objeto javascript, tiene un body, dentro del body hay un string en formato json
+    //el metodo .json extrae este string y lo vuelve un objeto javascript
+
     const content = result.choices[0].message.content;
-    const index = content.indexOf('</think>');
+    const index = content.indexOf("</think>");
 
     let finalText;
 
     if (index !== -1) {
-        finalText = content.slice(index + '</think>'.length).trim();
+      finalText = content.slice(index + "</think>".length).trim();
     } else {
-        finalText = content;
+      finalText = content;
     }
 
     return finalText;
-
   } catch (error) {
     console.error("Error llamando a Hugging Face:", error);
     throw error;
   }
 };
 
-
-
-export const generateAIResponse = async (prompt, provider = "ollama", onData) => {
+export const generateAIResponse = async (
+  prompt,
+  provider = "ollama",
+  onData
+) => {
   if (!prompt) throw new Error("El prompt es obligatorio");
 
   if (provider === "ollama") return await callOllamaStream(prompt, onData);

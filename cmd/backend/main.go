@@ -43,8 +43,11 @@ func main() {
 	userService := service.NewUserService(userRepo)
 	userHandler := handler.NewUserController(userService)
 
+	//IA
+	iaHandler := handler.NewIAHandler()
+
 	router := gin.Default()
-	api.RegisterRoutes(router, userHandler)
+	api.RegisterRoutes(router, userHandler, iaHandler)
 
 	if err := router.Run(":8081"); err != nil {
 		log.Fatalf("Could not start server: %v", err)
