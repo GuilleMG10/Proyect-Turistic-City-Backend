@@ -1,4 +1,5 @@
 import { MapPin, Star, Clock, BadgeDollarSign, Users } from "lucide-react";
+import { useState } from "react";
 import type { Place } from "../types";
 
 type Props = {
@@ -8,6 +9,8 @@ type Props = {
 };
 
 export default function PlaceCard({ place, onInterest, onView }: Props) {
+  const [imageError, setImageError] = useState(false);
+  
   const ages =
     place.min_age == null && place.max_age == null
       ? "Todas las edades"
@@ -17,20 +20,66 @@ export default function PlaceCard({ place, onInterest, onView }: Props) {
     place.price_min == null && place.price_max == null
       ? "Gratis / Consultar"
       : place.price_max && place.price_min && place.price_max !== place.price_min
-      ? `Bs ${place.price_min} – ${place.price_max}`
+      ? `Bs ${place.price_min} - ${place.price_max}`
       : `Bs ${place.price_min ?? place.price_max}`;
+
+  //// TODO: I know this is poorly implemented and it can be better, but its 3AM and im tired... same with (EventCard and PlaceDetailsModal)
+  //// Looking at place name and category to determine best image to show
+  // Smart image URL selection based on place name and category
+  const getUnsplashImageUrl = () => {
+    const placeName = place.name.toLowerCase();
+    const category = place.category.toLowerCase();
+    
+    // Map specific places to appropriate Unsplash images
+    if (placeName.includes('cristo') || placeName.includes('concordia')) {
+      return 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&h=800&fit=crop';
+    }
+    if (placeName.includes('palacio') || placeName.includes('portales')) {
+      return 'https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=1200&h=800&fit=crop';
+    }
+    if (placeName.includes('tunari') || placeName.includes('parque nacional')) {
+      return 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&h=800&fit=crop';
+    }
+    if (placeName.includes('mercado') || placeName.includes('cancha')) {
+      return 'https://images.unsplash.com/photo-1567696911980-2eed69a46042?w=1200&h=800&fit=crop';
+    }
+    if (placeName.includes('teatro')) {
+      return 'https://images.unsplash.com/photo-1518156677180-95a2893f3e9f?w=1200&h=800&fit=crop';
+    }
+    if (placeName.includes('laguna') || placeName.includes('alalay')) {
+      return 'https://images.unsplash.com/photo-1439066615861-d1af74d74000?w=1200&h=800&fit=crop';
+    }
+    
+    // Fallback based on category
+    switch (category) {
+      case 'turismo':
+        return 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200&h=800&fit=crop';
+      case 'cultura':
+        return 'https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=1200&h=800&fit=crop';
+      case 'entretenimiento':
+        return 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=1200&h=800&fit=crop';
+      case 'gastronomía':
+        return 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1200&h=800&fit=crop';
+      case 'naturaleza':
+        return 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1200&h=800&fit=crop';
+      default:
+        return 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200&h=800&fit=crop';
+    }
+  };
+
+  const handleImageError = () => {
+    setImageError(true);
+  };
 
   return (
     <article className="overflow-hidden rounded-2xl bg-white shadow-sm border">
       {/* imagen */}
       <div className="aspect-[16/10] w-full bg-gray-100">
         <img
-          src={
-            place.image_url ??
-            "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200"
-          }
+          src={imageError ? getUnsplashImageUrl() : (place.image_url && place.image_url.includes('unsplash.com') ? place.image_url : getUnsplashImageUrl())}
           alt={place.name}
           className="h-full w-full object-cover"
+          onError={handleImageError}
         />
       </div>
 
