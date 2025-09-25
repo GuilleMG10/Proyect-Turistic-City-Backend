@@ -11,19 +11,22 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type IAHandler struct{}
+type IAHandler struct {
+	userService UserService
+}
 
-func NewIAHandler() *IAHandler {
-	return &IAHandler{}
+func NewIAHandler(userService UserService) *IAHandler {
+	return &IAHandler{userService: userService}
 }
 
 func (h *IAHandler) GenerateAIResponse(c *gin.Context) {
 	var requestBody struct {
 		Prompt string `json:"prompt"`
+		UserID int    `json:"userId"`
 	}
 
 	if err := c.ShouldBindJSON(&requestBody); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "El campo 'prompt' es obligatorio"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "El campo 'prompt' y 'userId' son obligatorios"})
 		return
 	}
 
@@ -32,15 +35,23 @@ func (h *IAHandler) GenerateAIResponse(c *gin.Context) {
 		return
 	}
 
+	user, err := h.userService.GetUser(requestBody.UserID)
+	if err != nil || user == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "El usuario no existe"})
+		return
+	}
+
 	nodeBackendURL := "http://localhost:3000/ia/prompt"
 
-	payload, err := json.Marshal(map[string]string{"prompt": requestBody.Prompt})
+	payload, err := json.Marshal(map[string]interface{}{
+		"prompt": requestBody.Prompt,
+		"userId": requestBody.UserID,
+	})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al crear el cuerpo de la petición"})
 		return
 	}
 
-	// Crea la petición HTTP
 	req, err := http.NewRequest("POST", nodeBackendURL, bytes.NewBuffer(payload))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al crear la petición a Node.js"})
@@ -48,7 +59,6 @@ func (h *IAHandler) GenerateAIResponse(c *gin.Context) {
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	// Ejecuta la petición
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -63,13 +73,11 @@ func (h *IAHandler) GenerateAIResponse(c *gin.Context) {
 		return
 	}
 
-	// Configura los headers para Server-Sent Events
 	c.Writer.Header().Set("Content-Type", "text/event-stream")
 	c.Writer.Header().Set("Cache-Control", "no-cache")
 	c.Writer.Header().Set("Connection", "keep-alive")
 	c.Writer.Header().Set("Transfer-Encoding", "chunked")
 
-	// Lee la respuesta de Node.js en streaming y la retransmite al cliente
 	reader := bufio.NewReader(resp.Body)
 	for {
 		line, err := reader.ReadBytes('\n')
@@ -80,7 +88,6 @@ func (h *IAHandler) GenerateAIResponse(c *gin.Context) {
 			fmt.Printf("Error al leer del stream: %v\n", err)
 			break
 		}
-
 		c.Writer.Write(line)
 		c.Writer.Flush()
 	}
