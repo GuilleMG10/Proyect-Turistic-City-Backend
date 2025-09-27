@@ -6,3 +6,13 @@ body {
   background-color: rgb(249 250 251);
   color: rgb(17 24 39);
 }
+
+/* Image fallback styles */
+.fallback-image {
+  opacity: 0.9;
+  filter: sepia(0.2) saturate(0.8);
+}
+
+img[src*="unsplash.com"] {
+  transition: opacity 0.3s ease;
+}

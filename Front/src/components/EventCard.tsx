@@ -1,140 +1,142 @@
-import { MapPin, Star, Clock, BadgeDollarSign, Users, Calendar } from "lucide-react";
-import { useState } from "react";
-import type { Event } from "../types";
+import { Calendar, MapPin, Star, Clock, BadgeDollarSign, Users, Heart } from "lucide-react";
+import type { EventWithStatus } from "../types";
+import { useUserStore } from "../store/userStore";
+import { getEventStatusColor } from "../utils/eventStatus";
 
 type Props = {
-  event: Event;
-  onInterest?: (e: Event) => void;
-  onView?: (e: Event) => void;
+  event: EventWithStatus;
+  onInterest?: (e: EventWithStatus) => void;
+  onView?: (e: EventWithStatus) => void;
+  showTag?: boolean; // Show tag for event type or show full details
 };
 
-export default function EventCard({ event, onInterest, onView }: Props) {
-  const [imageError, setImageError] = useState(false);
+export default function EventCard({ event, onInterest, onView, showTag = false }: Props) {
+  const { user, addInterest, removeInterest, isInterested } = useUserStore();
   
-  const ages =
-    event.min_age == null && event.max_age == null
-      ? "Todas las edades"
-      : `${event.min_age ?? 0}+${event.max_age ? ` hasta ${event.max_age}` : ""}`;
+  const eventDate = new Date(event.event_date);
+  const formattedDate = eventDate.toLocaleDateString('es-ES', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric'
+  });
+  
+  const formattedTime = eventDate.toLocaleTimeString('es-ES', {
+    hour: '2-digit',
+    minute: '2-digit'
+  });
 
-  const price =
-    event.price_min == null && event.price_max == null
-      ? "Gratis / Consultar"
-      : event.price_max && event.price_min && event.price_max !== event.price_min
-      ? `Bs ${event.price_min} – ${event.price_max}`
-      : `Bs ${event.price_min ?? event.price_max}`;
+  const isEventInterested = user ? isInterested(event.id) : false;
 
-  // Smart image URL selection based on event category
-  const getUnsplashImageUrl = () => {
-    const category = event.category.toLowerCase();
+  const handleFavoriteToggle = () => {
+    if (!user) return;
     
-    switch (category) {
-      case 'cultura':
-        return 'https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=1200&h=800&fit=crop';
-      case 'gastronomía':
-        return 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1200&h=800&fit=crop';
-      case 'entretenimiento':
-        return 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=1200&h=800&fit=crop';
-      case 'música':
-        return 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=1200&h=800&fit=crop';
-      case 'festival':
-        return 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=1200&h=800&fit=crop';
-      default:
-        return 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=1200&h=800&fit=crop';
+    if (isEventInterested) {
+      removeInterest(event.id);
+    } else {
+      addInterest(event.id);
     }
   };
 
-  const handleImageError = () => {
-    setImageError(true);
-  };
+  const statusConfig = getEventStatusColor(event.status);
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("es-ES", {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-    });
-  };
-
-  const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleTimeString("es-ES", {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
+  // If showing as tag (for calendar view), render compact version
+  if (showTag) {
+    return (
+      <div 
+        className={`${statusConfig.bg} ${statusConfig.text} px-2 py-1 rounded text-xs cursor-pointer hover:opacity-80 transition-opacity`}
+        onClick={() => onView?.(event)}
+        title={`${event.description} - ${statusConfig.label}`}
+      >
+        {event.name}
+      </div>
+    );
+  }
 
   return (
     <article className="overflow-hidden rounded-2xl bg-white shadow-sm border">
-      {/* imagen */}
-      <div className="aspect-[16/10] w-full bg-gray-100 relative">
-        <img
-          src={imageError ? getUnsplashImageUrl() : (event.image_url && event.image_url.includes('unsplash.com') ? event.image_url : getUnsplashImageUrl())}
-          alt={event.name}
-          className="h-full w-full object-cover"
-          onError={handleImageError}
-        />
-        {/* Event date badge */}
-        <div className="absolute top-3 left-3 bg-white rounded-lg px-2 py-1 shadow-lg">
-          <div className="text-xs font-semibold text-gray-900">
-            {formatDate(event.event_date)}
+      {/* Header with date and status */}
+      <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <Calendar className="h-5 w-5" />
+            <div>
+              <p className="font-semibold">{formattedDate}</p>
+              <p className="text-sm opacity-90">{formattedTime}</p>
+            </div>
           </div>
+          {user && (
+            <button
+              onClick={handleFavoriteToggle}
+              className="p-1 hover:bg-white/20 rounded-full transition-colors"
+            >
+              <Heart className={`h-5 w-5 ${isEventInterested ? 'fill-red-400 text-red-400' : 'text-white'}`} />
+            </button>
+          )}
+        </div>
+        
+        {/* Status tag */}
+        <div className="flex justify-end">
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusConfig.bg} ${statusConfig.text} bg-opacity-90`}>
+            {statusConfig.label}
+          </span>
         </div>
       </div>
 
-      {/* contenido */}
+      {/* Content */}
       <div className="p-4 space-y-3">
-        {/* título + rating */}
+        {/* Title + Rating */}
         <div className="flex items-start justify-between">
           <div className="min-w-0">
             <h3 className="font-semibold text-lg leading-tight line-clamp-1">{event.name}</h3>
             <p className="mt-1 flex items-center gap-1 text-sm text-gray-600">
               <MapPin className="h-4 w-4" />
-              <span className="line-clamp-1">{event.venue || event.city || "Cochabamba"}</span>
+              <span className="line-clamp-1">{event.location}</span>
             </p>
           </div>
-          {event.rating != null && (
+          {event.reviews && event.reviews.length > 0 && (
             <div className="flex items-center gap-1 text-amber-600">
               <Star className="h-5 w-5 fill-amber-500" />
-              <span className="font-medium">{event.rating.toFixed(1)}</span>
+              <span className="font-medium">
+                {(event.reviews.reduce((sum, r) => sum + r.rating, 0) / event.reviews.length).toFixed(1)}
+              </span>
             </div>
           )}
         </div>
 
         <p className="text-sm text-gray-700 line-clamp-2">{event.description}</p>
 
-        {/* barras/etiquetas como en el wireframe */}
+        {/* Event details */}
         <div className="grid grid-cols-2 gap-2 text-xs">
           <div className="flex items-center gap-2 rounded-full bg-gray-100 px-2 py-1">
-            <Calendar className="h-3.5 w-3.5" />
-            <span>{formatDate(event.event_date)}</span>
-          </div>
-          <div className="flex items-center gap-2 rounded-full bg-gray-100 px-2 py-1">
             <Clock className="h-3.5 w-3.5" />
-            <span>{formatTime(event.event_date)}</span>
+            <span>{formattedTime}</span>
           </div>
           <div className="flex items-center gap-2 rounded-full bg-gray-100 px-2 py-1">
             <BadgeDollarSign className="h-3.5 w-3.5" />
-            <span>{price}</span>
+            <span>Bs {event.price}</span>
           </div>
           <div className="flex items-center gap-2 rounded-full bg-gray-100 px-2 py-1">
             <Users className="h-3.5 w-3.5" />
-            <span>{ages}</span>
+            <span>Todas las edades</span>
           </div>
-          <div className="col-span-2 flex items-center gap-2 rounded-full bg-gray-100 px-2 py-1">
+          <div className="flex items-center gap-2 rounded-full bg-gray-100 px-2 py-1">
             <span className="h-2 w-2 rounded-full bg-purple-500 inline-block" />
             <span>{event.category}</span>
           </div>
         </div>
 
-        {/* botones inferiores */}
+        {/* Action buttons */}
         <div className="pt-2 flex gap-3">
+          {event.status !== 'finished' && (
+            <button
+              className="flex-1 rounded-md border px-3 py-2 text-sm hover:bg-gray-50"
+              onClick={() => onInterest?.(event)}
+            >
+              Me interesa
+            </button>
+          )}
           <button
-            className="flex-1 rounded-md border px-3 py-2 text-sm hover:bg-gray-50"
-            onClick={() => onInterest?.(event)}
-          >
-            Me interesa
-          </button>
-          <button
-            className="flex-1 rounded-md bg-purple-600 text-white px-3 py-2 text-sm hover:bg-purple-700"
+            className={`${event.status === 'finished' ? 'flex-1' : 'flex-1'} rounded-md bg-gray-900 text-white px-3 py-2 text-sm hover:bg-black`}
             onClick={() => onView?.(event)}
           >
             Ver detalles

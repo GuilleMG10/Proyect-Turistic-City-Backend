@@ -1,6 +1,7 @@
-import { MapPin, Star, Clock, BadgeDollarSign, Users } from "lucide-react";
-import { useState } from "react";
+import { MapPin, Star, Clock, BadgeDollarSign, Users, Heart } from "lucide-react";
 import type { Place } from "../types";
+import { useUserStore } from "../store/userStore";
+import { getImageSrc, handleImageError } from "../utils/imageUtils";
 
 type Props = {
   place: Place;
@@ -9,78 +10,55 @@ type Props = {
 };
 
 export default function PlaceCard({ place, onInterest, onView }: Props) {
-  const [imageError, setImageError] = useState(false);
+  const { user } = useUserStore();
   
-  const ages =
-    place.min_age == null && place.max_age == null
-      ? "Todas las edades"
-      : `${place.min_age ?? 0}+${place.max_age ? ` hasta ${place.max_age}` : ""}`;
-
-  const price =
-    place.price_min == null && place.price_max == null
-      ? "Gratis / Consultar"
-      : place.price_max && place.price_min && place.price_max !== place.price_min
-      ? `Bs ${place.price_min} - ${place.price_max}`
-      : `Bs ${place.price_min ?? place.price_max}`;
-
-  //// TODO: I know this is poorly implemented and it can be better, but its 3AM and im tired... same with (EventCard and PlaceDetailsModal)
-  //// Looking at place name and category to determine best image to show
-  // Smart image URL selection based on place name and category
-  const getUnsplashImageUrl = () => {
-    const placeName = place.name.toLowerCase();
-    const category = place.category.toLowerCase();
-    
-    // Map specific places to appropriate Unsplash images
-    if (placeName.includes('cristo') || placeName.includes('concordia')) {
-      return 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&h=800&fit=crop';
-    }
-    if (placeName.includes('palacio') || placeName.includes('portales')) {
-      return 'https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=1200&h=800&fit=crop';
-    }
-    if (placeName.includes('tunari') || placeName.includes('parque nacional')) {
-      return 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&h=800&fit=crop';
-    }
-    if (placeName.includes('mercado') || placeName.includes('cancha')) {
-      return 'https://images.unsplash.com/photo-1567696911980-2eed69a46042?w=1200&h=800&fit=crop';
-    }
-    if (placeName.includes('teatro')) {
-      return 'https://images.unsplash.com/photo-1518156677180-95a2893f3e9f?w=1200&h=800&fit=crop';
-    }
-    if (placeName.includes('laguna') || placeName.includes('alalay')) {
-      return 'https://images.unsplash.com/photo-1439066615861-d1af74d74000?w=1200&h=800&fit=crop';
-    }
-    
-    // Fallback based on category
-    switch (category) {
-      case 'turismo':
-        return 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200&h=800&fit=crop';
-      case 'cultura':
-        return 'https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=1200&h=800&fit=crop';
-      case 'entretenimiento':
-        return 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=1200&h=800&fit=crop';
-      case 'gastronomía':
-        return 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1200&h=800&fit=crop';
-      case 'naturaleza':
-        return 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1200&h=800&fit=crop';
-      default:
-        return 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200&h=800&fit=crop';
-    }
+  // Temporary local storage for place favorites until backend implements place_interests
+  const getPlaceFavorites = (): number[] => {
+    const stored = localStorage.getItem('place-favorites');
+    return stored ? JSON.parse(stored) : [];
   };
+  
+  const setPlaceFavorites = (favorites: number[]) => {
+    localStorage.setItem('place-favorites', JSON.stringify(favorites));
+  };
+  
+  // Database fields don't have age/price restrictions for places
+  const ages = "Todas las edades";
+  const price = "Consultar";
 
-  const handleImageError = () => {
-    setImageError(true);
+  const placeFavorites = getPlaceFavorites();
+  const isFav = user ? placeFavorites.includes(place.id) : false;
+
+  const handleFavoriteToggle = () => {
+    if (!user) return;
+    
+    const favorites = getPlaceFavorites();
+    if (isFav) {
+      const newFavorites = favorites.filter(id => id !== place.id);
+      setPlaceFavorites(newFavorites);
+    } else {
+      setPlaceFavorites([...favorites, place.id]);
+    }
   };
 
   return (
     <article className="overflow-hidden rounded-2xl bg-white shadow-sm border">
       {/* imagen */}
-      <div className="aspect-[16/10] w-full bg-gray-100">
+      <div className="aspect-[16/10] w-full bg-gray-100 relative">
         <img
-          src={imageError ? getUnsplashImageUrl() : (place.image_url && place.image_url.includes('unsplash.com') ? place.image_url : getUnsplashImageUrl())}
+          src={getImageSrc(place.link_image, 'place')}
           alt={place.name}
           className="h-full w-full object-cover"
-          onError={handleImageError}
+          onError={(e) => handleImageError(e, 'place')}
         />
+        {user && (
+          <button
+            onClick={handleFavoriteToggle}
+            className="absolute top-3 right-3 p-2 bg-white/80 hover:bg-white rounded-full shadow-sm transition-colors"
+          >
+            <Heart className={`h-4 w-4 ${isFav ? 'fill-red-400 text-red-400' : 'text-gray-600'}`} />
+          </button>
+        )}
       </div>
 
       {/* contenido */}
@@ -91,13 +69,15 @@ export default function PlaceCard({ place, onInterest, onView }: Props) {
             <h3 className="font-semibold text-lg leading-tight line-clamp-1">{place.name}</h3>
             <p className="mt-1 flex items-center gap-1 text-sm text-gray-600">
               <MapPin className="h-4 w-4" />
-              <span className="line-clamp-1">{place.city ?? "Cochabamba"}</span>
+              <span className="line-clamp-1">{place.location}</span>
             </p>
           </div>
-          {place.rating != null && (
+          {place.reviews && place.reviews.length > 0 && (
             <div className="flex items-center gap-1 text-amber-600">
               <Star className="h-5 w-5 fill-amber-500" />
-              <span className="font-medium">{place.rating.toFixed(1)}</span>
+              <span className="font-medium">
+                {(place.reviews.reduce((sum: number, r) => sum + r.rating, 0) / place.reviews.length).toFixed(1)}
+              </span>
             </div>
           )}
         </div>

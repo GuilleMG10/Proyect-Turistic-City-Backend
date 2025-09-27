@@ -8,6 +8,10 @@ export default defineConfig({
     port: 5173,
     open: true,
     cors: true,
+    headers: {
+      'Cross-Origin-Embedder-Policy': 'cross-origin',
+      'Cross-Origin-Opener-Policy': 'same-origin'
+    }
   },
   build: {
     target: 'esnext',

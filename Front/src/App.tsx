@@ -9,7 +9,7 @@ export default function App() {
     <div className="min-h-screen bg-gray-50 text-gray-900">
       <header className="sticky top-0 z-10 bg-white border-b">
         <div className="mx-auto max-w-7xl px-6 py-3 flex items-center justify-between">
-          <h1 className="text-2xl font-semibold">Culturistas</h1>
+          <h1 className="text-2xl font-semibold">Descubre lugares turísticos</h1>
 
           <div className="flex items-center gap-3">
             <button 
