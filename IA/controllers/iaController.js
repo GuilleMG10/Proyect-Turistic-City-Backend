@@ -29,8 +29,6 @@
 
 //     let responseBuffer = "";
 
-
-
 //     const onData = (chunk) => {
 //       responseBuffer += chunk;
 //       res.write(`data: ${chunk}\n\n`); // envia chunks  si solo pusieramos un salto de linea
@@ -57,10 +55,17 @@
 import { saveMessage, searchMemory } from "../utils/longmemory.js";
 import { generateAIResponse } from "../services/ollamaService.js";
 
+import { saveMessage, searchMemory } from "../utils/longmemory.js";
+import { generateAIResponse } from "../services/ollamaService.js";
+
 export const generateResponse = async (req, res) => {
   try {
-    const { prompt, userId } = req.body;
-    if (!prompt) return res.status(400).json({ error: "El campo 'prompt' es obligatorio" });
+    const { prompt, userId, interests } = req.body;
+    if (!prompt) {
+      return res
+        .status(400)
+        .json({ error: "El campo 'prompt' es obligatorio" });
+    }
 
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
@@ -69,6 +74,15 @@ export const generateResponse = async (req, res) => {
     console.log("⚡ Nueva petición:");
     console.log("👉 Prompt recibido:", prompt);
     console.log("👉 UserId:", userId);
+
+    let interestsContext = "";
+    if (interests && interests.length > 0) {
+      const interestsText = interests
+        .map((p) => `- ${p.name}: ${p.description}`)
+        .join("\n");
+      interestsContext = `El usuario ha mostrado interés previamente en los siguientes lugares:\n${interestsText}\n\n`;
+      console.log("💡 Intereses del usuario añadidos al contexto.");
+    }
 
     // 🔹 Recuperamos memoria a largo plazo (Chroma)
     const longMemory = await searchMemory(userId, prompt);
@@ -81,10 +95,13 @@ export const generateResponse = async (req, res) => {
       });
     }
 
-    // 🔹 Construimos contexto solo con memoria a largo plazo
-    const context = longMemory.map(m => `${m.role}: ${m.content}`).join("\n");
-    const finalPrompt = `Contexto previo:\n${context}\n\nNueva pregunta del usuario:\n${prompt}\n\nIA:`;
+    // 🔹 Construimos contexto de memoria
+    const longMemoryContext = longMemory
+      .map((m) => `${m.role}: ${m.content}`)
+      .join("\n");
 
+    // 🔹 Prompt final combinado
+    const finalPrompt = `Contexto de la conversación anterior:\n${longMemoryContext}\n\n${interestsContext}Basado en todo el contexto anterior, responde la nueva pregunta del usuario de forma útil y amigable.\n\nNueva pregunta del usuario:\n${prompt}\n\nIA:`;
 
     console.log("🧠 FINAL PROMPT enviado a Ollama:\n", finalPrompt);
 
@@ -92,8 +109,8 @@ export const generateResponse = async (req, res) => {
     await saveMessage(userId, "usuario", prompt);
     console.log("💾 Guardado en memoria (usuario)");
 
+    // 🔹 Stream de respuesta desde Ollama
     let responseBuffer = "";
-
     const onData = (chunk) => {
       responseBuffer += chunk;
       res.write(`data: ${chunk}\n\n`);
@@ -105,13 +122,15 @@ export const generateResponse = async (req, res) => {
     await saveMessage(userId, "IA", responseBuffer);
     console.log("💾 Guardado en memoria (IA)");
 
+    // 🔹 Cerramos el stream SSE
     res.write("data: [DONE]\n\n");
     res.end();
 
     console.log("✅ Respuesta final enviada al cliente.");
   } catch (error) {
     console.error("❌ Error en controlador IA:", error);
-    res.status(500).json({ error: "Error en controlador IA" });
+    if (!res.headersSent) {
+      res.status(500).json({ error: "Error en controlador IA" });
+    }
   }
 };
-

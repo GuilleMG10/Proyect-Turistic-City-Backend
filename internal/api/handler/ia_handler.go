@@ -20,13 +20,15 @@ func NewIAHandler(userService UserService) *IAHandler {
 }
 
 func (h *IAHandler) GenerateAIResponse(c *gin.Context) {
+
 	var requestBody struct {
-		Prompt string `json:"prompt"`
-		UserID int    `json:"userId"`
+		Prompt    string                   `json:"prompt"`
+		UserID    string                   `json:"userId"` // Cambiado a string para flexibilidad
+		Interests []map[string]interface{} `json:"interests"`
 	}
 
 	if err := c.ShouldBindJSON(&requestBody); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "El campo 'prompt' y 'userId' son obligatorios"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Cuerpo de la petición inválido"})
 		return
 	}
 
@@ -35,17 +37,12 @@ func (h *IAHandler) GenerateAIResponse(c *gin.Context) {
 		return
 	}
 
-	user, err := h.userService.GetUser(requestBody.UserID)
-	if err != nil || user == nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "El usuario no existe"})
-		return
-	}
-
 	nodeBackendURL := "http://localhost:3000/ia/prompt"
 
 	payload, err := json.Marshal(map[string]interface{}{
-		"prompt": requestBody.Prompt,
-		"userId": requestBody.UserID,
+		"prompt":    requestBody.Prompt,
+		"userId":    requestBody.UserID,
+		"interests": requestBody.Interests,
 	})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al crear el cuerpo de la petición"})
