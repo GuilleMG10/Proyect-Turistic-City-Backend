@@ -7,6 +7,7 @@ import (
 
 	"github.com/GuilleMG10/Proyect-Turistic-City-Backend/internal/api"
 	"github.com/GuilleMG10/Proyect-Turistic-City-Backend/internal/api/handler"
+	"github.com/GuilleMG10/Proyect-Turistic-City-Backend/internal/middleware"
 	"github.com/GuilleMG10/Proyect-Turistic-City-Backend/internal/repository"
 	"github.com/GuilleMG10/Proyect-Turistic-City-Backend/internal/service"
 	"github.com/gin-gonic/gin"
@@ -51,6 +52,7 @@ func main() {
 	reviewHandler := handler.NewReviewHandler(reviewService)
 
 	router := gin.Default()
+	router.Use(middleware.CORS())
 	api.RegisterRoutes(router, userHandler, placeHandler, reviewHandler)
 
 	if err := router.Run(":8081"); err != nil {
