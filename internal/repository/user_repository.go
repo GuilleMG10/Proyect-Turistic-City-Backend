@@ -10,14 +10,20 @@ type UserRepository struct {
 }
 
 func NewUserRepository(db *gorm.DB) *UserRepository {
-	return &UserRepository{
-		db: db,
-	}
+	return &UserRepository{db: db}
 }
 
 func (r *UserRepository) FindUserByID(id int) (*model.User, error) {
 	var user model.User
 	if err := r.db.First(&user, id).Error; err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+func (r *UserRepository) FindUserByUsername(username string) (*model.User, error) {
+	var user model.User
+	if err := r.db.Where("username = ?", username).First(&user).Error; err != nil {
 		return nil, err
 	}
 	return &user, nil
