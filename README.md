@@ -29,6 +29,12 @@ if you didnt install Ollama you should install that first, then:
 - **npm install**
 - **npm start**
 
+## Running AI (memory)
+- https://github.com/chroma-core/chroma -> download for your OS
+- $env:CHROMA_SERVER_CORS_ALLOW_ORIGINS='["http://localhost:3000"]'; ./chroma run --host localhost --port 8000 (PowerShell)
+
+¿Qué lugares me recomiendas visitar?
+
 ## Running frontend
 - **npm install**
 - **npm run build; npm run dev**
