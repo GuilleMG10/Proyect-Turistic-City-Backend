@@ -33,12 +33,17 @@ func (h *EventHandler) GetEvents(c *gin.Context) {
 	c.JSON(http.StatusOK, events)
 }
 
+// POST /events (from event_handler.go)
 func (h *EventHandler) CreateEvent(c *gin.Context) {
 	var newEvent model.Event
 	if err := c.ShouldBindJSON(&newEvent); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
 		return
 	}
+
+	userID, _ := c.Get("userID")
+	newEvent.UserID = userID.(uint)
+
 	if err := h.service.AddEvent(&newEvent); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not create event"})
 		return

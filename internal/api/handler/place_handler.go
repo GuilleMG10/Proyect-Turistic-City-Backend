@@ -43,10 +43,15 @@ func (h *PlaceHandler) AddPlace(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
 		return
 	}
+
+	userID, _ := c.Get("userID")
+	newPlace.UserID = userID.(uint)
+
 	if err := h.placeService.AddNewPlace(&newPlace); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not create place"})
 		return
 	}
+
 	c.JSON(http.StatusCreated, newPlace)
 }
 

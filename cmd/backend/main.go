@@ -31,7 +31,7 @@ func main() {
 	auth.Configure(jwtSecret)
 
 	dsn := fmt.Sprintf(
-		"user=%s password=%s host=%s port=%s dbname=%s sslmode=require",
+		"postgresql://%s:%s@%s:%s/%s?sslmode=require&statement_cache_mode=none&prefer_simple_protocol=true",
 		os.Getenv("DB_USER"),
 		os.Getenv("DB_PASSWORD"),
 		os.Getenv("DB_HOST"),
@@ -40,6 +40,7 @@ func main() {
 	)
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+
 	if err != nil {
 		log.Fatalf("Could not connect to database: %v", err)
 	}
