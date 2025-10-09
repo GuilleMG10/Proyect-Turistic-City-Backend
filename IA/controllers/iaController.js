@@ -55,9 +55,6 @@
 import { saveMessage, searchMemory } from "../utils/longmemory.js";
 import { generateAIResponse } from "../services/ollamaService.js";
 
-import { saveMessage, searchMemory } from "../utils/longmemory.js";
-import { generateAIResponse } from "../services/ollamaService.js";
-
 export const generateResponse = async (req, res) => {
   try {
     const { prompt, userId, interests } = req.body;
