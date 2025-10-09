@@ -8,6 +8,7 @@ require (
 )
 
 require (
+	github.com/golang-jwt/jwt/v5 v5.3.0 // indirect
 	github.com/kr/text v0.1.0 // indirect
 	github.com/rogpeppe/go-internal v1.8.0 // indirect
 )

@@ -26,3 +26,11 @@ func (r *PlaceRepository) FindPlaces(query string) ([]*model.Place, error) {
 func (r *PlaceRepository) CreatePlace(place *model.Place) error {
 	return r.db.Create(place).Error
 }
+
+func (r *PlaceRepository) UpdatePlace(place *model.Place) error {
+	return r.db.Save(place).Error
+}
+
+func (r *PlaceRepository) DeletePlace(id uint) error {
+	return r.db.Delete(&model.Place{}, id).Error
+}
