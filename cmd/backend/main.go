@@ -7,6 +7,7 @@ import (
 
 	"github.com/GuilleMG10/Proyect-Turistic-City-Backend/internal/api"
 	"github.com/GuilleMG10/Proyect-Turistic-City-Backend/internal/api/handler"
+	"github.com/GuilleMG10/Proyect-Turistic-City-Backend/internal/auth"
 	"github.com/GuilleMG10/Proyect-Turistic-City-Backend/internal/middleware"
 	"github.com/GuilleMG10/Proyect-Turistic-City-Backend/internal/repository"
 	"github.com/GuilleMG10/Proyect-Turistic-City-Backend/internal/service"
@@ -19,8 +20,16 @@ import (
 func main() {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatalf("Error cargando .env: %v", err)
+		log.Fatalf("Error loading .env file: %v", err)
 	}
+
+	// Configure JWT
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		log.Fatal("JWT_SECRET environment variable not set")
+	}
+	auth.Configure(jwtSecret)
+
 	dsn := fmt.Sprintf(
 		"user=%s password=%s host=%s port=%s dbname=%s sslmode=require",
 		os.Getenv("DB_USER"),
@@ -29,31 +38,38 @@ func main() {
 		os.Getenv("DB_PORT"),
 		os.Getenv("DB_NAME"),
 	)
-	fmt.Println("DSN:", dsn)
+
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("Could not connect to database: %v", err)
 	}
 
-	// if err := db.AutoMigrate(&model.User{}); err != nil {
-	// 	log.Fatalf("Could not migrate database: %v", err)
-	// }
-
+	// User dependencies
 	userRepo := repository.NewUserRepository(db)
 	userService := service.NewUserService(userRepo)
 	userHandler := handler.NewUserHandler(userService)
 
+	// Place dependencies
 	placeRepo := repository.NewPlaceRepository(db)
 	placeService := service.NewPlaceService(placeRepo)
 	placeHandler := handler.NewPlaceHandler(placeService)
 
+	// Review dependencies
 	reviewRepo := repository.NewReviewRepository(db)
 	reviewService := service.NewReviewService(reviewRepo)
 	reviewHandler := handler.NewReviewHandler(reviewService)
 
+	// Event dependencies
+	eventRepo := repository.NewEventRepository(db)
+	eventService := service.NewEventService(eventRepo)
+	eventHandler := handler.NewEventHandler(eventService)
+
+	// IA Handler
+	iaHandler := handler.NewIAHandler(userService)
+
 	router := gin.Default()
 	router.Use(middleware.CORS())
-	api.RegisterRoutes(router, userHandler, placeHandler, reviewHandler)
+	api.RegisterRoutes(router, userHandler, placeHandler, reviewHandler, eventHandler, iaHandler)
 
 	if err := router.Run(":8081"); err != nil {
 		log.Fatalf("Could not start server: %v", err)
