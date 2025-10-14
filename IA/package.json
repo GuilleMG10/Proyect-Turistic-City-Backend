@@ -4,7 +4,8 @@
   "type": "module",
   "main": "app.js",
   "scripts": {
-    "start": "node app.js"
+    "start": "node app.js",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
   },
   "dependencies": {
     "@langchain/community": "^0.3.56",
@@ -19,6 +20,9 @@
     "nomic": "^1.0.0"
   },
   "devDependencies": {
-    "ngrok": "^5.0.0-beta.2"
+    "jest": "^30.2.0",
+    "ngrok": "^5.0.0-beta.2",
+    "node-mocks-http": "^1.17.2",
+    "supertest": "^7.1.4"
   }
 }

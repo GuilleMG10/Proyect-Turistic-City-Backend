@@ -4,12 +4,15 @@ go 1.24.6
 
 require (
 	github.com/gin-gonic/gin v1.10.1
+	github.com/stretchr/testify v1.11.1
 	gorm.io/gorm v1.30.2
 )
 
 require (
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/kr/text v0.1.0 // indirect
-	github.com/rogpeppe/go-internal v1.8.0 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/stretchr/objx v0.5.2 // indirect
 )
 
 require (
