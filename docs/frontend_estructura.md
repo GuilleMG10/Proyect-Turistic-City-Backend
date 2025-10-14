@@ -1,5 +1,3 @@
-# Documentación Frontend
-
 ## Tecnologías Principales
 
 - **React 19**: Framework principal para la construcción de la interfaz de usuario.
@@ -108,8 +106,11 @@ Página principal que contiene toda la lógica de la aplicación:
 
 ### Modales
 - **LoginModal**: Modal de inicio de sesión/registro
-- **EventDetailsModal**: Detalles completos de un evento
-- **PlaceDetailsModal**: Detalles completos de un lugar
+- **EventDetailsModal**: Detalles completos de un evento con reseñas
+- **PlaceDetailsModal**: Detalles completos de un lugar con reseñas
+- **PlaceFormModal**: Formulario para crear/editar lugares (admin)
+- **EventFormModal**: Formulario para crear/editar eventos (admin)
+- **ConfirmModal**: Modal de confirmación personalizado con variantes (danger/warning/info)
 
 ## Hooks Personalizados (src/hooks/)
 
@@ -118,13 +119,17 @@ Hook principal para cargar datos de la API:
 - Carga lugares y eventos al montar el componente
 - Maneja estados de carga y error
 - Se integra con el estado del usuario para cargar datos personalizados
+- Función `refetch()` para recargar datos después de mutaciones
+- Sistema de trigger para forzar recarga cuando es necesario
 
 ### useFiltering.ts
 Maneja la lógica de filtrado de contenido:
 - Filtra por búsqueda de texto
-- Filtra por categoría seleccionada
-- Aplica filtros avanzados (precios, edades, zonas)
+- Filtra por categoría seleccionada (con memoria por pestaña)
+- Aplica filtros avanzados (precios, edades, zonas, rating mínimo)
+- Calcula rating promedio desde reseñas para filtro de calificación
 - Devuelve listas filtradas de lugares y eventos
+- Calcula categorías disponibles dinámicamente según la pestaña activa
 
 ### useModalState.ts
 Gestiona el estado de múltiples modales:
@@ -153,24 +158,27 @@ Gestiona los lugares favoritos del usuario:
 ### api.ts
 Servicio principal para llamadas a la API backend:
 - **Clase ApiService**: Métodos estáticos para todas las operaciones de API
-- **Cache inteligente**: Cache de 5 minutos para evitar llamadas innecesarias
+- **Cache inteligente**: Cache de 5 minutos con limpieza automática después de mutaciones
+- **Autenticación JWT**: Token extraído de localStorage y enviado en headers
 - **Manejo de errores**: Logging y propagación de errores
 - **Endpoints disponibles**:
-  - Eventos: obtener, crear, obtener por ID
-  - Lugares: obtener, crear
+  - Eventos: obtener, crear, actualizar, eliminar, obtener por ID
+  - Lugares: obtener, crear, actualizar, eliminar (soft delete)
   - Usuarios: obtener, crear, login, registro
-  - Reseñas: obtener reseñas de lugares
-  - Intereses: gestionar intereses en eventos
-  - Favoritos: gestionar lugares favoritos
+  - Reseñas: obtener reseñas de lugares/eventos (precargadas)
+  - Intereses: gestionar intereses en eventos (agregar/quitar)
+  - Favoritos: gestionar lugares favoritos (agregar/quitar)
 
 ## Gestión de Estado (src/store/)
 
 ### userStore.ts
 Estado global del usuario usando Zustand:
-- **Estado persistente**: Usuario logueado, intereses, favoritos
+- **Estado persistente**: Usuario logueado, token JWT, intereses, favoritos
 - **Acciones**: Login, registro, logout
 - **Integración**: Se conecta con hooks de favoritos e intereses
-- **Persistencia**: Usa localStorage para mantener sesión (por ahora hasta que implementemos JWT)
+- **Persistencia**: Usa localStorage con Zustand persist middleware
+- **Autenticación JWT**: Token almacenado y renovado automáticamente en cada login
+- **Control de acceso**: Función `isAdmin()` para verificar rol de administrador (role_id === 1)
 
 ## Tipos TypeScript (src/types/)
 
@@ -190,11 +198,11 @@ Definiciones de tipos para toda la aplicación:
 Funciones para determinar el estado de eventos:
 - `getEventStatusColor`: Devuelve colores y etiquetas según el estado
 
-### imageUtils.ts (esto desaparecera para el MVP)
+### imageUtils.ts
 Utilidades para manejo de imágenes:
 - `getImageSrc`: Maneja URLs de imágenes con fallbacks
-- `getPlaceholderImage`: Imágenes placeholder aleatorias
-- `handleImageError`: Manejo de errores de carga de imágenes
+- `getPlaceholderImage`: Genera placeholders con iniciales del nombre usando placehold.co
+- `handleImageError`: Manejo de errores de carga de imágenes con fallback a placeholder
 
 ## Configuraciones Externas (src/lib/)
 
@@ -249,8 +257,48 @@ Configuración del cliente de Supabase:
 
 ## Optimizaciones
 
-- **Lazy Loading**: Componentes pesados (AIChat, modales) se cargan bajo demanda
-- **Cache de API**: Respuestas de API se cachean por 5 minutos
+- **Lazy Loading**: Componentes pesados (AIChat, modales de detalles) se cargan bajo demanda con Suspense
+- **Cache de API**: Respuestas de API se cachean por 5 minutos, limpieza automática después de mutaciones
 - **Debounce**: Búsqueda con debounce para evitar llamadas excesivas
-- **Suspense**: Manejo de carga de componentes lazy
-- **Optimización de imágenes**: Fallbacks y manejo de errores de imágenes
+- **Suspense**: Manejo de carga de componentes lazy con fallback
+- **Optimización de imágenes**: Placeholders con iniciales, fallbacks automáticos
+- **Memoria de filtros**: Categorías seleccionadas se recuerdan por pestaña
+- **Refetch inteligente**: Limpia cache antes de refetch para obtener datos frescos
+
+## Funcionalidades de Administrador
+
+Los usuarios con `role_id = 1` tienen acceso a funcionalidades administrativas:
+
+### Gestión de Lugares
+- **Crear lugares**: Botón "+" visible solo para admins en pestaña Explorar
+- **Editar lugares**: Botón de edición en modal de detalles
+- **Eliminar lugares**: Soft delete con modal de confirmación personalizado
+- **Formulario completo**: Nombre, descripción, ubicación, coordenadas, categoría, imagen
+
+### Gestión de Eventos
+- **Crear eventos**: Botón "+" visible solo para admins en pestaña Eventos
+- **Editar eventos**: Botón de edición en modal de detalles
+- **Eliminar eventos**: Modal de confirmación personalizado
+- **Formulario completo**: Nombre, descripción, fecha/hora, precio, edad mínima, ubicación, categoría, zona, imagen
+
+### Características del Sistema de Administración
+- **Control de acceso**: Verificación de rol en cada acción
+- **Validación**: Formularios con validación de campos requeridos
+- **Confirmaciones**: Modales de confirmación personalizados con variantes visuales
+- **Actualización en tiempo real**: Refetch automático después de crear/editar/eliminar
+- **Manejo de errores**: Mensajes de error claros para el usuario
+
+## Sistema de Reseñas
+
+Las reseñas se cargan automáticamente con los lugares y eventos:
+
+### Características
+- **Precarga con GORM**: Relación `Reviews` precargada en backend
+- **Visualización**: Reseñas mostradas en modales de detalles
+- **Rating promedio**: Calculado en el frontend para filtros
+- **Información completa**: Nombre de usuario, calificación, comentario, fecha
+
+### Integración con Filtros
+- **Filtro por rating**: Permite filtrar por calificación mínima
+- **Cálculo dinámico**: Rating promedio calculado desde el array de reviews
+- **Exclusión de sin reviews**: Items sin reseñas excluidos cuando minRating > 0
