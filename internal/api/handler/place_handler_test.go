@@ -37,6 +37,16 @@ func (m *MockPlaceService) GetPlaces(query string) ([]*model.Place, error) {
 	return args.Get(0).([]*model.Place), args.Error(1)
 }
 
+func (m *MockPlaceService) UpdateExistingPlace(place *model.Place) error {
+	args := m.Called(place)
+	return args.Error(0)
+}
+
+func (m *MockPlaceService) DeleteExistingPlace(id uint) error {
+	args := m.Called(id)
+	return args.Error(0)
+}
+
 // Función de Prueba para AddPlace
 func TestPlaceHandler_AddPlace(t *testing.T) {
 	gin.SetMode(gin.TestMode)

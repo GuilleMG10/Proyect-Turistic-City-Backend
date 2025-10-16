@@ -32,3 +32,24 @@ func (r *UserRepository) FindUserByUsername(username string) (*model.User, error
 func (r *UserRepository) CreateUser(user *model.User) error {
 	return r.db.Create(user).Error
 }
+
+func (r *UserRepository) FindInterestsByUserID(userID uint) ([]*model.Event, error) {
+	var interests []*model.UserInterest
+
+	// Eager-load the associated Event data for each interest found
+	err := r.db.Preload("Event").Where("user_id = ? AND active = ?", userID, true).Find(&interests).Error
+	if err != nil {
+		return nil, err
+	}
+
+	// Extract the Event objects from the interest records
+	var events []*model.Event
+	for _, interest := range interests {
+		// Ensure the preloaded event is valid before appending
+		if interest.Event.ID != 0 {
+			events = append(events, &interest.Event)
+		}
+	}
+
+	return events, nil
+}

@@ -9,6 +9,7 @@ type UserRepository interface {
 	FindUserByID(id int) (*model.User, error)
 	FindUserByUsername(username string) (*model.User, error)
 	CreateUser(user *model.User) error
+	FindInterestsByUserID(userID uint) ([]*model.Event, error) // Updated return type
 }
 
 type UserService struct {
@@ -23,15 +24,17 @@ func (s *UserService) GetUser(id int) (*model.User, error) {
 	return s.userRepository.FindUserByID(id)
 }
 
-func (s *UserService) AddUser(user *model.User, rawPassword string) error {
+func (s *UserService) GetUserInterests(userID uint) ([]*model.Event, error) {
+	return s.userRepository.FindInterestsByUserID(userID)
+}
 
-	// aqui hace el hasheo automatico del password polsia
+func (s *UserService) AddUser(user *model.User, rawPassword string) error {
 	hash, err := bcrypt.GenerateFromPassword([]byte(rawPassword), bcrypt.DefaultCost)
 	if err != nil {
 		return err
 	}
 	user.PasswordHash = string(hash)
-	user.RoleID = 4
+	user.RoleID = 4 // Default to a normal user role
 	user.Active = true
 
 	return s.userRepository.CreateUser(user)

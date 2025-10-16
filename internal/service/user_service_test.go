@@ -37,6 +37,14 @@ func (m *MockUserRepository) CreateUser(user *model.User) error {
 	return args.Error(0)
 }
 
+func (m *MockUserRepository) FindInterestsByUserID(userID uint) ([]*model.Event, error) {
+	args := m.Called(userID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*model.Event), args.Error(1)
+}
+
 // --- Pruebas para GetUser ---
 
 func TestUserService_GetUser(t *testing.T) {

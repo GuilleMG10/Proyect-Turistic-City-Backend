@@ -23,5 +23,5 @@ type Place struct {
 }
 
 func (Place) TableName() string {
-	return "tourist_places"
+	return "places"
 }

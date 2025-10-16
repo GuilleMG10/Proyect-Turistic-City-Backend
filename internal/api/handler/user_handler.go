@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/GuilleMG10/Proyect-Turistic-City-Backend/internal/auth"
 	"github.com/GuilleMG10/Proyect-Turistic-City-Backend/internal/model"
 	"github.com/gin-gonic/gin"
 )
@@ -103,8 +104,15 @@ func (h *UserHandler) Login(c *gin.Context) {
 		return
 	}
 
+	token, err := auth.GenerateToken(user.ID, user.Username, user.RoleID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not generate token"})
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"message": "login successful",
+		"token":   token,
 		"user": gin.H{
 			"id":       user.ID,
 			"name":     user.Name,

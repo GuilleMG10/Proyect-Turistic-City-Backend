@@ -1,0 +1,28 @@
+{
+  "name": "api-ia",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
+  },
+  "dependencies": {
+    "@langchain/community": "^0.3.57",
+    "@langchain/core": "^0.3.78",
+    "@pinecone-database/pinecone": "^6.1.2",
+    "@xenova/transformers": "^2.17.2",
+    "chromadb": "^3.0.17",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "langchain": "^0.3.36",
+    "node-fetch": "^3.3.2",
+    "nomic": "^1.0.0"
+  },
+  "devDependencies": {
+    "jest": "^30.2.0",
+    "ngrok": "^5.0.0-beta.2",
+    "node-mocks-http": "^1.17.2",
+    "supertest": "^7.1.4"
+  }
+}

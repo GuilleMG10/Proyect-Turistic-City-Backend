@@ -1,2 +1,51 @@
+# Miscellaneous
 bin
 .env
+
+# Dependencies
+frontend/node_modules/
+frontend/package-lock.json
+frontend/yarn.lock
+frontend/pnpm-lock.yaml
+ai/node_modules/
+ai/package-lock.json
+ai/.env
+ai/chromadb/*
+
+# Build files
+frontend/dist/
+frontend/build/
+
+# Environment variables
+frontend/.env
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+
+# Tests
+frontend/coverage/
+
+# Logs
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/pnpm-debug.log*
+frontend/*.log
+frontend/*.tmp
+
+# Packages
+frontend/package-lock.json
+
+# Proxy
+proxy/*
+!proxy/run.txt
+!proxy/configs/
+
+# Editor & System
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db

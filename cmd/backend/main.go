@@ -7,6 +7,7 @@ import (
 
 	"github.com/GuilleMG10/Proyect-Turistic-City-Backend/internal/api"
 	"github.com/GuilleMG10/Proyect-Turistic-City-Backend/internal/api/handler"
+	"github.com/GuilleMG10/Proyect-Turistic-City-Backend/internal/auth"
 	"github.com/GuilleMG10/Proyect-Turistic-City-Backend/internal/middleware"
 	"github.com/GuilleMG10/Proyect-Turistic-City-Backend/internal/repository"
 	"github.com/GuilleMG10/Proyect-Turistic-City-Backend/internal/service"
@@ -19,8 +20,16 @@ import (
 func main() {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatalf("Error cargando .env: %v", err)
+		log.Fatalf("Error loading .env file: %v", err)
 	}
+
+	// Configure JWT
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		log.Fatal("JWT_SECRET environment variable not set")
+	}
+	auth.Configure(jwtSecret)
+
 	dsn := fmt.Sprintf(
 		"user=%s password=%s host=%s port=%s dbname=%s sslmode=require",
 		os.Getenv("DB_USER"),
@@ -29,15 +38,11 @@ func main() {
 		os.Getenv("DB_PORT"),
 		os.Getenv("DB_NAME"),
 	)
-	fmt.Println("DSN:", dsn)
+
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("Could not connect to database: %v", err)
 	}
-
-	// if err := db.AutoMigrate(&model.User{}); err != nil {
-	// 	log.Fatalf("Could not migrate database: %v", err)
-	// }
 
 	userRepo := repository.NewUserRepository(db)
 	userService := service.NewUserService(userRepo)
@@ -51,9 +56,24 @@ func main() {
 	reviewService := service.NewReviewService(reviewRepo)
 	reviewHandler := handler.NewReviewHandler(reviewService)
 
+	eventRepo := repository.NewEventRepository(db)
+	eventService := service.NewEventService(eventRepo)
+	eventHandler := handler.NewEventHandler(eventService)
+
+	iaHandler := handler.NewIAHandler(userService)
+
+	userInterestRepo := repository.NewUserInterestRepository(db)
+	userInterestService := service.NewUserInterestService(userInterestRepo)
+	userInterestHandler := handler.NewUserInterestHandler(userInterestService)
+
+	placeFavoriteRepo := repository.NewPlaceFavoriteRepository(db)
+	placeFavoriteService := service.NewPlaceFavoriteService(placeFavoriteRepo)
+	placeFavoriteHandler := handler.NewPlaceFavoriteHandler(placeFavoriteService)
+
 	router := gin.Default()
 	router.Use(middleware.CORS())
-	api.RegisterRoutes(router, userHandler, placeHandler, reviewHandler)
+
+	api.RegisterRoutes(router, userHandler, placeHandler, reviewHandler, eventHandler, iaHandler, userInterestHandler, placeFavoriteHandler)
 
 	if err := router.Run(":8081"); err != nil {
 		log.Fatalf("Could not start server: %v", err)

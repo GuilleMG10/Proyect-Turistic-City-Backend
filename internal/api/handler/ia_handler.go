@@ -6,44 +6,61 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 
+	"github.com/GuilleMG10/Proyect-Turistic-City-Backend/internal/model"
 	"github.com/gin-gonic/gin"
 )
 
-type IAHandler struct {
-	userService UserService
+type IAUserService interface {
+	GetUserInterests(userID uint) ([]*model.Event, error)
 }
 
-func NewIAHandler(userService UserService) *IAHandler {
+type IAHandler struct {
+	userService IAUserService
+}
+
+func NewIAHandler(userService IAUserService) *IAHandler {
 	return &IAHandler{userService: userService}
 }
 
 func (h *IAHandler) GenerateAIResponse(c *gin.Context) {
+	// 1. Get UserID from JWT context (set by AuthMiddleware)
+	userIDVal, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "User ID not found in context"})
+		return
+	}
+	userID, ok := userIDVal.(uint)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "User ID in context has invalid format"})
+		return
+	}
 
+	// 2. Get prompt from request body
 	var requestBody struct {
-		Prompt    string                   `json:"prompt"`
-		UserID    string                   `json:"userId"` // Cambiado a string para flexibilidad
-		Interests []map[string]interface{} `json:"interests"`
+		Prompt string `json:"prompt"`
 	}
-
 	if err := c.ShouldBindJSON(&requestBody); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Cuerpo de la petición inválido"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Cuerpo de la petición inválido, se requiere 'prompt'"})
 		return
 	}
 
-	if requestBody.Prompt == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "El campo 'prompt' no puede estar vacío"})
-		return
+	// 3. Fetch user interests from the database
+	interests, err := h.userService.GetUserInterests(userID)
+	if err != nil {
+		log.Printf("Could not retrieve interests for user %d: %v. Proceeding without them.", userID, err)
+		interests = []*model.Event{}
 	}
-
+	// 4. Forward to Node.js AI service
 	nodeBackendURL := "http://localhost:3000/ia/prompt"
-
 	payload, err := json.Marshal(map[string]interface{}{
 		"prompt":    requestBody.Prompt,
-		"userId":    requestBody.UserID,
-		"interests": requestBody.Interests,
+		"userId":    userID,
+		"interests": interests,
 	})
+
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al crear el cuerpo de la petición"})
 		return
@@ -70,6 +87,7 @@ func (h *IAHandler) GenerateAIResponse(c *gin.Context) {
 		return
 	}
 
+	// 5. Stream the response back to the client
 	c.Writer.Header().Set("Content-Type", "text/event-stream")
 	c.Writer.Header().Set("Cache-Control", "no-cache")
 	c.Writer.Header().Set("Connection", "keep-alive")
@@ -82,7 +100,6 @@ func (h *IAHandler) GenerateAIResponse(c *gin.Context) {
 			if err == io.EOF {
 				break
 			}
-			fmt.Printf("Error al leer del stream: %v\n", err)
 			break
 		}
 		c.Writer.Write(line)
