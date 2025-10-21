@@ -1,7 +1,10 @@
 import { ChromaClient } from "chromadb";
 
 const client = new ChromaClient();
-const collectionName = "chat_memory";
+
+const [,, cmd, collectionArg, arg] = process.argv;
+
+const collectionName = collectionArg === "favorites" ? "raw" : "chat_memory";
 
 const dummyEmbedding = {
   generate: async (texts) => texts.map(() => []),
@@ -28,29 +31,29 @@ async function listAll() {
   //a a query solo que solo colecciona ids, metadatas y documents(los textos), embeddings(si lo especificas) y uris(si lo especificas), pero cada uno ya no necesariamentes
   //  es un vector de vectores,
   //son simplemente vectores asi:
-// {
-//   "ids": [
-//     "user123-1758661403678",
-//     "user123-1758661462505"
-//   ],
-//   "documents": [
-//     "Hola, me llamo Ana",
-//     "¡Hola, Ana! Encantado de conocerte. ¿En qué puedo ayudarte?"
-//   ],
-//   "metadatas": [
-//     { "role": "usuario", "sessionId": "user123" },
-//     { "role": "IA", "sessionId": "user123" }
-//   ],
-//   "embeddings": [
-//     [0.0123, -0.0345, 0.0567, ..., 0.0091],   // vector del doc 1
-//     [0.0211, -0.0287, 0.0665, ..., -0.0042]   // vector del doc 2
-//   ],
-//   "uris": []
-// }
-//el metodo get por defecto viene con id, metadata y documents si quisieras ver los embeddings los debes poner en el include
-//pero eso te obliga a poner documents y metadata en el include, id siempre viene en todo por eso no se incluye en include
+  // {
+  //   "ids": [
+  //     "user123-1758661403678",
+  //     "user123-1758661462505"
+  //   ],
+  //   "documents": [
+  //     "Hola, me llamo Ana",
+  //     "¡Hola, Ana! Encantado de conocerte. ¿En qué puedo ayudarte?"
+  //   ],
+  //   "metadatas": [
+  //     { "role": "usuario", "sessionId": "user123" },
+  //     { "role": "IA", "sessionId": "user123" }
+  //   ],
+  //   "embeddings": [
+  //     [0.0123, -0.0345, 0.0567, ..., 0.0091],   // vector del doc 1
+  //     [0.0211, -0.0287, 0.0665, ..., -0.0042]   // vector del doc 2
+  //   ],
+  //   "uris": []
+  // }
+  //el metodo get por defecto viene con id, metadata y documents si quisieras ver los embeddings los debes poner en el include
+  //pero eso te obliga a poner documents y metadata en el include, id siempre viene en todo por eso no se incluye en include
 
-  console.log("Documentos guardados en Chroma:");
+  console.log(`Documentos guardados en la colección '${collectionName}':`);
   if (!results.ids || results.ids.length === 0) {
     console.log("No hay documentos.");
     return;
@@ -71,25 +74,23 @@ async function listAll() {
 async function deleteById(id) {
   const coll = await getCollection();
   await coll.delete({ ids: [id] });
-  console.log(`Documento ${id} eliminado`);
+  console.log(`Documento ${id} eliminado de la colección '${collectionName}'`);
 }
 
 async function deleteByUserId(userId) {
   const coll = await getCollection();
   await coll.delete({ where: { userId } });
-  console.log(`Documentos del usuario ${userId} eliminados`);
+  console.log(`Documentos del usuario ${userId} eliminados de la colección '${collectionName}'`);
 }
 
 async function deleteAll() {
   try {
     await client.deleteCollection({ name: collectionName });
-    console.log("Colección eliminada completamente");
+    console.log(`Colección '${collectionName}' eliminada completamente`);
   } catch (error) {
     console.error("Error al eliminar la colección:", error.message || error);
   }
 }
-
-const [,, cmd, arg] = process.argv;
 
 (async () => {
   switch (cmd) {
@@ -109,13 +110,20 @@ const [,, cmd, arg] = process.argv;
       break;
     default:
       console.log(`
-Uso: node chromaInterface.js <comando> [arg]
+Uso: node chromaInterface.js <comando> [coleccion] [arg]
 
 Comandos:
-  list                       Lista todos los documentos
-  deleteById <id>            Elimina un documento por ID
-  deleteByUserId <session>   Elimina todos los docs de un usuario
-  deleteAll                  Elimina todo en la colección
+  list [coleccion]                Lista todos los documentos
+  deleteById [coleccion] <id>     Elimina un documento por ID
+  deleteByUserId [coleccion] <id> Elimina todos los docs de un usuario
+  deleteAll [coleccion]           Elimina todo en la colección
+
+
+Ejemplos:
+  node chromaInterface.js list
+  node chromaInterface.js list favorites
+  node chromaInterface.js deleteByUserId favorites user123
+  node chromaInterface.js deleteAll favorites
 `);
   }
 })();

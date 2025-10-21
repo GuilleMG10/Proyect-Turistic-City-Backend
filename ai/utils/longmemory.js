@@ -75,3 +75,59 @@ export const searchMemory = async (userId, query, topK = 10) => {
     role: r.metadata.role,
   }));
 };
+
+let raw;
+
+async function getRawStore() {
+  if (!raw) {
+    raw = await Chroma.fromExistingCollection(embeddings, {
+      collectionName: "raw",
+      url: "http://localhost:8000",
+    });
+    console.log("📦 Colección 'raw' inicializada en Chroma");
+  }
+  return raw;
+}
+
+export const saveUserFavorites = async (userId, favoritesList) => {
+  const store = await getRawStore();
+
+  const textData = favoritesList
+    .map(fav => {
+      const category = fav.category ? ` (categoría: ${fav.category})` : "";
+      return `${fav.name}: ${fav.description}${category}`;
+    })
+    .join("\n");
+
+  // ✅ Eliminar cualquier registro anterior del usuario
+  await store.delete({ filter: { userId: { $eq: userId } } });
+
+
+  // ✅ Guardar un único documento por usuario
+  await store.addDocuments([
+    {
+      pageContent: textData,
+      metadata: { userId, type: "favorites" },
+    },
+  ]);
+
+  console.log(`💾 Guardado en Chroma (1 registro por usuario: ${userId}):`, textData);
+};
+
+export const getUserFavorites = async (userId) => {
+  const store = await getRawStore();
+
+  const results = await store.similaritySearch("favoritos del usuario", 1, {
+    userId, 
+  });
+
+  if (!results || results.length === 0) {
+    console.log(`⚠️ No se encontraron favoritos para el usuario ${userId}`);
+    return null;
+  }
+
+  const favoritesText = results[0].pageContent;
+  console.log(`📚 Favoritos recuperados para ${userId}:`, favoritesText);
+
+  return favoritesText;
+};
