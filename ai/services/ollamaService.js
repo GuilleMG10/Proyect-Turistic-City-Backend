@@ -22,6 +22,8 @@ export const callOllamaStream = async (prompt, onData) => {
 
   const decoder = new TextDecoder();
   let buffer = "";
+  let started = false;
+
 
   for await (const chunk of response.body) {
     buffer += decoder.decode(chunk, { stream: true });
@@ -32,12 +34,18 @@ export const callOllamaStream = async (prompt, onData) => {
       if (!line.trim()) continue;
       try {
         const json = JSON.parse(line);
-        // El modelo qwen3 ya procesa el thinking internamente y no envia las tags, si usamos otro modelo esto volveria, pensar en como hacer esto dinamico
-        // Solo enviamos el campo 'response' que es la respuesta final
         const text = json.response;
-        if (text && text.trim()) {
-          onData(text);
+
+        if (!started) {
+          if (text.includes("</think>")) {
+            started = true;
+            const after = text.split("</think>")[1];
+            if (after && after.trim()) onData(after);
+          }
+        } else {
+          if (text.trim()) onData(text);
         }
+
       } catch (err) {
         console.warn("Error parseando línea:", line);
       }

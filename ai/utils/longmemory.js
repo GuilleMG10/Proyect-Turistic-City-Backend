@@ -1,156 +1,77 @@
-import { pipeline } from "@xenova/transformers";
-import { ChromaClient } from "chromadb";
+import { Chroma } from "@langchain/community/vectorstores/chroma";
+import { HuggingFaceTransformersEmbeddings } from "@langchain/community/embeddings/hf_transformers";
 
-// Inicializar embeddings locales con all-mpnet-base-v2
-let embedder;
-async function getEmbedder() {
-  if (!embedder) {
-    embedder = await pipeline("feature-extraction", "Xenova/all-mpnet-base-v2");
-    console.log("Modelo de embeddings cargado: all-mpnet-base-v2");
-  }
-  return embedder;
-}
-
-// Adaptador para Chroma
-const embeddingFunction = {
-  generate: async (texts) => {
-    const extractor = await getEmbedder();
-    const vectors = [];
-    for (const text of texts) {
-      const output = await extractor(text, { pooling: "mean", normalize: true });
-      vectors.push(Array.from(output.data));
-
-    }
-    return vectors;
-  },
-};
-
-//Tensor {
-//   type: 'float32',
-//   data: Float32Array(768) [0.0123, -0.0345, 0.0567, ...], // 768 números
-//   dims: [768]
-// }
-//TODO LO DE ARRIBA ES OUTPUT
-//
-
-// "Los gatos corren."
-// → ["Los", "gatos", "cor", "ren", "."]   lO DE AQUI SE LLAMA TOKENS
-//CADA TOKEN TIENE UN ID RELACIONADO:
-// "Los"   → 1523
-// "gatos" → 2098
-// "cor"   → 4021
-// "ren"   → 1789
-// "."     → 9
-//a cada ID se le relaciona un embedding:
-// 1523 → [0.12, -0.07, 0.33]
-// 2098 → [0.08, -0.03, 0.28]
-// 4021 → [0.22, -0.10, 0.40]
-// 1789 → [0.19, -0.05, 0.31]
-// 9    → [0.05, -0.02, 0.10]
-//sacamos un promedio de todos los vectores para tener un solo embedding: Promedio = [0.13, -0.05, 0.28]
-//y lo normalizamos: sacar la raiz cuadrada de la suma de todos los elementos, ese numero pasara a dividir todos los elementos
-//esto con el objetivo de poder realizar busquedas semanticas de forma mas sencilla
-const client = new ChromaClient({ 
-  host: "localhost",
-  port: 8000
+// Inicializar embeddings
+const embeddings = new HuggingFaceTransformersEmbeddings({
+  modelName: "Xenova/all-mpnet-base-v2",
 });
-let collection;
 
-async function initCollection() {
-  if (!collection) {
-    try {
-      collection = await client.getOrCreateCollection({
-        name: "chat_memory",
-        embeddingFunction: embeddingFunction,
-      });
-      console.log("Colección inicializada en Chroma:", collection.name);
-    } catch (error) {
-      console.error("Error inicializando colección:", error);
-      throw error;
-    }
-  }
-  return collection;
-}
-//arriba le estamos asignando un valor a mi variable coleccion
-//puede que en realidad ya tenga un valor asignado en tal caso simplemente lo retornamos
-//caso contrario lo que haremos sera entrar a la base de datos y buscar la coleccion llamada
-//chat_memory si es que existe se lo asignamos a nuestra variable llamada collection, caso contrario
-//la creamos dandole un nombre eh indicandole 
-// que Para cada documento que guarde o consulta que haga, usa este embeddingFunction para convertir texto en vectores.”
-
-export const saveMessage = async (userId, role, content) => {
-  try {
-    const coll = await initCollection();
-
-    await coll.add({
-      ids: [`${userId}-${Date.now()}`],
-      metadatas: [{ userId, role }],
-      documents: [content],
+// Inicializar Chroma
+let vectorStore;
+async function getVectorStore() {
+  if (!vectorStore) {
+    vectorStore = await Chroma.fromExistingCollection(embeddings, {
+      collectionName: "chat_memory",
+      url: "http://localhost:8000", // tu servidor Chroma
     });
-
-    console.log(`Guardado en Chroma (${role}):`, content.substring(0, 50) + '...');
-  } catch (error) {
-    console.warn(`Error guardando en ChromaDB (${role}):`, error.message);
-    // Continúa sin fallar - el chat funciona sin memoria
+    //fromExistingCollection obtiene una coleccion ya existente asi como tambien la crea si no existe
+    //la primera vez que la crea te advierte algo como:
+    //No embedding function configuration found for collection chat_memory2. 'add' and 'query' 
+    // will fail unless you provide them embeddings directly.
+    //Sin embargo si le indicaste un modelo que embedea asi que no hay problema, ese error de arriba ya no aparecera
+    //de nuevo una vez que insertes un documento en la coleccion o hagas una busqueda
+    console.log("📦 Colección inicializada en Chroma con LangChain");
   }
+  return vectorStore;
+}
+
+//Este objeto (store) sabe cómo guardar documentos y cómo buscar documentos por embeddings.
+
+
+// Guardar mensaje
+export const saveMessage = async (userId, role, content) => {
+  const store = await getVectorStore();
+
+  await store.addDocuments([
+    {
+      pageContent: content,
+      metadata: { userId, role },
+    },
+  ]);
+
+  console.log(`💾 Guardado en Chroma (${role}):`, content);
 };
 
+// Buscar memoria
 export const searchMemory = async (userId, query, topK = 10) => {
-  try {
-    const coll = await initCollection();
+  const store = await getVectorStore();
 
-    const results = await coll.query({
-      queryTexts: [query],
-      nResults: topK,
-      where: { userId },
-    });
-  //Chroma busca solo en los documentos cuya metadata tenga sessionId
-  //recuerda que creaste: ids: [`${sessionId}-${Date.now()}`], ese es el identificador unico del documento
-  //no nos ayuda a buscar los documentos de un solo usuario, lo que si nos ayuda es la metadata
+  const results = await store.similaritySearch(query, topK, {
+    userId, 
+  });
 
-  //queryTexts es un vector, en este caso de un solo elemento, pero es un vector porque mi const embeddingFunction  podia recibir varios strings
+  console.log("RESULTS", results);
 
-  console.log("Resultados desde Chroma:", results.ids[0]?.length || 0, "documentos encontrados");
+//   [
+//   Document {
+//     pageContent: "Mi canción favorita es 'COQUETA'",
+//     metadata: { userId: 'user123', role: 'usuario' },
+//     id: '0694d8a0-9f55-11f0-bae3-43d35769ef50'
+//   },
+//   Document {
+//     pageContent: 'Cual es mi nombre?',
+//     metadata: { role: 'usuario', userId: 'user123' },
+//     id: 'user123-1759382794601'
+//   },
+//   Document {
+//     pageContent: 'Cual es mi nombre?',
+//     metadata: { role: 'usuario', userId: 'user123' },
+//     id: 'user123-1759383137846'
+//   }
+// ]
 
-  //   {
-  //   ids: [
-  //     ["abc123-1695567890123", "abc123-1695567890456"]
-  //   ],
-  //   documents: [
-  //     ["Hola, ¿cómo estás?", "Muy bien, ¿y tú?"]
-  //   ],
-  //   metadatas: [
-  //     [
-  //       { sessionId: "abc123", role: "user" },
-  //       { sessionId: "abc123", role: "assistant" }
-  //     ]
-  //   ],
-  //   distances: [
-  //     [0.08, 0.25]
-  //   ]
-  // }
-  //results se ve como lo de arriba, nota que es un objeto donde tenemos elementos como ids, documents, metadatas, distances y embeddings no siempre vienen , puse distances como ejemplo
-  //cada uno siempre es un vector que contiene vectores adentro
-  //ids es un vector que tiene un vector de strings
-  //documents es lo mismo
-  //metadata es un vector que tiene un vector de objetos
-  //distancias es un vector que tiene un vector de numeros
-  //embeddings seria un vector que tiene un vector con emebddings(y los embeddings son vectores)
-  //distances es distancia euclidiana, mientras mas cercado a cero significa que el documento relacionado a esa distancia
-  //se parece mas semanticamente con el query original, mientras mas alejado del cero el documento se parece menos semanticamente hablando del documento original
-
-    if (!results.documents.length || !results.documents[0]) return [];
-
-    return results.documents[0].map(
-      (doc, i) => ({
-      content: doc,
-      role: results.metadatas[0][i].role,
-    })
-      );
-    //esa línea dice que para cada documento en el primer grupo de resultados, se construye un nuevo objeto { content, role }.
-    //estariamos retornando un vector de objetos
-  } catch (error) {
-    console.warn("Error buscando en ChromaDB:", error.message);
-    return []; // Retorna array vacío si falla - el chat funciona sin memoria
-  }
+  return results.map(r => ({
+    content: r.pageContent,
+    role: r.metadata.role,
+  }));
 };
