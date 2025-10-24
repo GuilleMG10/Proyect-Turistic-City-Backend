@@ -1,4 +1,4 @@
-import { saveMessage, searchMemory,saveUserFavorites, getUserFavorites } from "../utils/longmemory.js";
+import { saveMessage, searchMemory,saveUserFavorites, getUserFavorites, upsertPlaces, searchPlacesMemory } from "../utils/longmemory.js";
 import { generateAIResponse } from "../services/ollamaService.js";
 
 
@@ -11,64 +11,91 @@ export const generateResponse = async (req, res) => {
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
 
-    console.log("Nueva petición:");
-    console.log("Prompt recibido:", prompt);
+    console.log("🧠 Nueva petición recibida");
+    console.log("Prompt:", prompt);
     console.log("UserID:", userId);
-    
-    // 🔹 Construir o recuperar contexto de intereses del usuario
+
+    // ============================================================
+    // 🔹 1. Recuperar o construir contexto de intereses del usuario
+    // ============================================================
     let userContextText = "";
 
     if (interests && Array.isArray(interests) && interests.length > 0) {
-      // Recibimos intereses del backend principal → los usamos y guardamos en Chroma
       const formatted = interests.map(ev => {
         const category = ev.category ? ` (categoría: ${ev.category})` : "";
         return `${ev.name}: ${ev.description}${category}`;
       }).join("\n");
 
       userContextText = `El usuario ha mostrado interés en los siguientes lugares o eventos:\n${formatted}`;
-      
       await saveUserFavorites(userId, interests);
-      console.log("💾 Intereses recibidos y guardados en memoria:", userContextText);
-
+      console.log("💾 Intereses recibidos y guardados en memoria.");
     } else {
-      // No se recibieron intereses → intentar recuperarlos desde memoria persistente
       const storedFavorites = await getUserFavorites(userId);
       if (storedFavorites) {
         userContextText = `El usuario tiene los siguientes intereses guardados:\n${storedFavorites}`;
-        console.log("📚 Intereses recuperados desde Chroma:", storedFavorites);
+        console.log("📚 Intereses recuperados desde memoria persistente.");
       } else {
         console.log("⚠️ No se encontraron intereses guardados para este usuario.");
       }
     }
 
-
-
-
+    // ==============================================
+    // 🔹 2. Recuperar memoria larga del usuario
+    // ==============================================
     const longMemory = await searchMemory(userId, prompt);
-    console.log("Memoria recuperada desde Chroma:");
-    if (longMemory.length === 0) {
-      console.log("(sin resultados relevantes en la memoria)");
-    } else {
-      longMemory.forEach((m, i) => {
-        console.log(`[${i + 1}] (${m.role}) ${m.content}`);
-      });
-    }
-
+    console.log("📖 Memoria recuperada desde Chroma:", longMemory.length);
     const context = longMemory.map(m => `${m.role}: ${m.content}`).join("\n");
-    
-    // Build enhanced prompt with user preferences
-    let finalPrompt = "";
-    if (userContextText) {
-      finalPrompt = `Información del usuario:\n${userContextText}\n\nContexto de conversaciones previas:\n${context}\n\nNueva pregunta del usuario:\n${prompt}\n\nIA (responde considerando las preferencias del usuario):`;
-    } else {
-      finalPrompt = `Contexto previo:\n${context}\n\nNueva pregunta del usuario:\n${prompt}\n\nIA:`;
+
+    // ==============================================
+    // 🔹 3. Recuperar lugares disponibles desde Chroma
+    // ==============================================
+    const placesMemory = await searchPlacesMemory(prompt);
+    console.log("📍 Lugares relevantes recuperados desde Chroma:", placesMemory.length);
+
+    let placesContext = "";
+    if (placesMemory.length > 0) {
+      placesContext = placesMemory
+        .map(p => {
+          return `• ${p.name || "(sin nombre)"}: (${p.type}) ${p.category || "Sin categoría"}\n` +
+                 `  Descripción: ${p.description || "Sin descripción"}\n` +
+                 `  Horario: ${p.atencion || "No especificado"}\n` +
+                 `  Precio estimado: ${p.estimatedPrice || "Desconocido"} Bs`;
+        })
+        .join("\n\n");
     }
 
-    console.log("FINAL PROMPT enviado a Ollama:\n", finalPrompt);
+    // ==============================================
+    // 🔹 4. Construir el prompt final enriquecido
+    // ==============================================
+    let finalPrompt = "";
 
+    if (userContextText || placesContext) {
+      finalPrompt = `Información de lugares favoritos del usuario:\n${userContextText || "(sin datos)"}\n\n` +
+                    `Lugares disponibles en memoria usando RAG:\n${placesContext || "(no hay lugares registrados)"}\n\n` +
+                    `Contexto de conversaciones previas:\n${context || "(sin historial previo)"}\n\n` +
+                    `Nueva solicitud del usuario:\n${prompt}\n\n` +
+                    `IA (responde considerando los intereses del usuario, los lugares obtenidos por RAG y el contexto de conversaciones previas). 
+                    Genera un **itinerario completo y cronológico**, distribuido entre la hora inicial y final que el usuario indique.
+                    - Asigna **horarios específicos (inicio–fin)** para cada actividad.
+                    - Asegúrate de que el total no exceda el presupuesto disponible.
+                    - Devuelve la respuesta en formato **Markdown**, con títulos claros y listas ordenadas.
+                    `
+    } else {
+      finalPrompt = `Contexto previo:\n${context || "(sin historial previo)"}\n\n` +
+                    `Nueva pregunta del usuario:\n${prompt}\n\nIA:`;
+    }
+
+    console.log("🧩 FINAL PROMPT enviado a Ollama:\n", finalPrompt);
+
+    // ==============================================
+    // 🔹 5. Guardar mensaje del usuario
+    // ==============================================
     await saveMessage(userId, "usuario", prompt);
-    console.log("Guardado en memoria (usuario)");
+    console.log("💾 Guardado en memoria (usuario)");
 
+    // ==============================================
+    // 🔹 6. Generar respuesta desde Ollama y transmitir en tiempo real
+    // ==============================================
     let responseBuffer = "";
     const onData = (chunk) => {
       responseBuffer += chunk;
@@ -77,94 +104,51 @@ export const generateResponse = async (req, res) => {
 
     await generateAIResponse(finalPrompt, "ollama", onData);
 
+    // ==============================================
+    // 🔹 7. Guardar respuesta de la IA
+    // ==============================================
     await saveMessage(userId, "IA", responseBuffer);
-    console.log("Guardado en memoria (IA)");
+    console.log("💾 Guardado en memoria (IA)");
 
     res.write("data: [DONE]\n\n");
     res.end();
+    console.log("✅ Respuesta final enviada al cliente.");
 
-    console.log("Respuesta final enviada al cliente.");
   } catch (error) {
-    console.error("Error en controlador IA:", error);
+    console.error("❌ Error en controlador IA:", error);
     res.status(500).json({ error: "Error en controlador IA" });
   }
 };
 
-export const generateItinerary = async (req, res) => {
+
+
+
+
+
+export const registerPlaces = async (req, res) => {
   try {
-    const { userId, schedule, budget, places } = req.body;
+    const { places } = req.body;
 
-    res.setHeader("Content-Type", "text/event-stream");
-    res.setHeader("Cache-Control", "no-cache");
-    res.setHeader("Connection", "keep-alive");
-
-    console.log("🧭 Nueva solicitud de itinerario recibida");
-    if (userId) console.log("UserID:", userId);
-    if (schedule) console.log("Horario:", schedule);
-    if (budget) console.log("Presupuesto:", budget);
-    if (places && Array.isArray(places)) console.log("Lugares recibidos:", places.length);
-
-    const formattedPlaces = Array.isArray(places)
-      ? places.map(p => {
-          const dateRange = p.start && p.end ? ` (desde ${p.start} hasta ${p.end})` : "";
-          const category = p.category ? ` (categoría: ${p.category})` : "";
-          const estimatedPrice = p.estimatedPrice ? ` (precio estimado: ${p.estimatedPrice} Bs)` : "";
-          return `${p.name || "Lugar sin nombre"}: ${p.description || "Sin descripción"}${category}${dateRange}${estimatedPrice}`;
-        }).join("\n")
-      : "No se proporcionaron lugares.";
-
-    const prompt = `Planificar un itinerario según el siguiente contexto:\nHorario: ${schedule || "No especificado"}\nPresupuesto: ${budget || "No especificado"} Bs\nLugares:\n${formattedPlaces}`;
-    if (userId) await saveMessage(userId, "usuario", prompt);
-    console.log("💾 Guardado en memoria (usuario itinerario)");
-
-    const longMemory = userId ? await searchMemory(userId, prompt, 2) : [];
-    console.log("📚 Memoria recuperada desde Chroma:");
-    if (longMemory.length === 0) {
-      console.log("(sin resultados relevantes en la memoria)");
-    } else {
-      longMemory.forEach((m, i) => {
-        console.log(`[${i + 1}] (${m.role}) ${m.content}`);
-      });
+    if (!places || !Array.isArray(places) || places.length === 0) {
+      return res.status(400).json({ error: "El campo 'places' debe ser un arreglo con al menos un elemento." });
     }
 
-    const context = longMemory.map(m => `${m.role}: ${m.content}`).join("\n");
+    res.setHeader("Content-Type", "application/json");
+    console.log("📍 Nueva solicitud de registro/actualización de lugares recibida");
+    console.log("Total lugares:", places.length);
 
-    const finalPrompt = `
-Eres un asistente especializado en planificación personalizada de itinerarios.
-Usa los mensajes anteriores que el usuario te envió o tú le enviaste para recordar y mejorar la planificación.
+    // Guardar o actualizar lugares en Chroma
+    const result = await upsertPlaces(places);
 
-Contexto previo:
-${context || "No hay contexto previo disponible."}
+    console.log("💾 Lugares procesados correctamente:", result.length);
 
-Solicitud actual (texto base):
-${prompt}
-
-Tarea:
-Diseña un itinerario realista en base a la nueva solicitud, optimizado en tiempo y presupuesto.
-Incluye horarios aproximados, recomendaciones breves de transporte si aplica y una breve justificación para cada actividad.
-Responde en español, de forma clara y organizada.
-    `;
-
-    console.log("🧠 Prompt final enviado a Ollama:\n", finalPrompt);
-
-    let responseBuffer = "";
-    const onData = (chunk) => {
-      responseBuffer += chunk;
-      res.write(`data: ${chunk}\n\n`);
-    };
-
-    await generateAIResponse(finalPrompt, "ollama", onData);
-
-    if (userId) await saveMessage(userId, "IA", responseBuffer);
-    console.log("💾 Guardado en memoria (IA itinerario)");
-
-    res.write("data: [DONE]\n\n");
-    res.end();
-
-    console.log("✅ Itinerario transmitido y guardado exitosamente.");
+    return res.status(200).json({
+      message: "Lugares registrados o actualizados correctamente",
+      processed: result,
+    });
   } catch (error) {
-    console.error("❌ Error en generateItinerary:", error);
-    res.status(500).json({ error: "Error generando el itinerario." });
+    console.error("❌ Error en registerPlaces:", error);
+    return res.status(500).json({ error: "Error registrando o actualizando lugares" });
   }
 };
 

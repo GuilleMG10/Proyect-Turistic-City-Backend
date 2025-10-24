@@ -5,6 +5,7 @@
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
+    "dev": "tsx watch app.js",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
   },
   "dependencies": {
@@ -23,6 +24,7 @@
     "jest": "^30.2.0",
     "ngrok": "^5.0.0-beta.2",
     "node-mocks-http": "^1.17.2",
-    "supertest": "^7.1.4"
+    "supertest": "^7.1.4",
+    "tsx": "^4.20.6"
   }
 }

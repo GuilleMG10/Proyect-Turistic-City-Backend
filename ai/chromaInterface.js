@@ -4,7 +4,18 @@ const client = new ChromaClient();
 
 const [,, cmd, collectionArg, arg] = process.argv;
 
-const collectionName = collectionArg === "favorites" ? "raw" : "chat_memory";
+let collectionName;
+
+switch (collectionArg) {
+  case "favorites":
+    collectionName = "raw";
+    break;
+  case "places":
+    collectionName = "places_collection";
+    break;
+  default:
+    collectionName = "chat_memory";
+}
 
 const dummyEmbedding = {
   generate: async (texts) => texts.map(() => []),
@@ -127,3 +138,4 @@ Ejemplos:
 `);
   }
 })();
+

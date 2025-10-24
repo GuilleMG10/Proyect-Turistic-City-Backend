@@ -20,7 +20,7 @@ async function getVectorStore() {
     // will fail unless you provide them embeddings directly.
     //Sin embargo si le indicaste un modelo que embedea asi que no hay problema, ese error de arriba ya no aparecera
     //de nuevo una vez que insertes un documento en la coleccion o hagas una busqueda
-    console.log("📦 Colección inicializada en Chroma con LangChain");
+    console.log("Colección inicializada en Chroma con LangChain");
   }
   return vectorStore;
 }
@@ -84,7 +84,7 @@ async function getRawStore() {
       collectionName: "raw",
       url: "http://localhost:8000",
     });
-    console.log("📦 Colección 'raw' inicializada en Chroma");
+    console.log("Colección 'raw' inicializada en Chroma");
   }
   return raw;
 }
@@ -99,11 +99,11 @@ export const saveUserFavorites = async (userId, favoritesList) => {
     })
     .join("\n");
 
-  // ✅ Eliminar cualquier registro anterior del usuario
+  // Eliminar cualquier registro anterior del usuario
   await store.delete({ filter: { userId: { $eq: userId } } });
 
 
-  // ✅ Guardar un único documento por usuario
+  // Guardar un único documento por usuario
   await store.addDocuments([
     {
       pageContent: textData,
@@ -111,7 +111,7 @@ export const saveUserFavorites = async (userId, favoritesList) => {
     },
   ]);
 
-  console.log(`💾 Guardado en Chroma (1 registro por usuario: ${userId}):`, textData);
+  console.log(`Guardado en Chroma (1 registro por usuario: ${userId}):`, textData);
 };
 
 export const getUserFavorites = async (userId) => {
@@ -122,12 +122,104 @@ export const getUserFavorites = async (userId) => {
   });
 
   if (!results || results.length === 0) {
-    console.log(`⚠️ No se encontraron favoritos para el usuario ${userId}`);
+    console.log(`No se encontraron favoritos para el usuario ${userId}`);
     return null;
   }
 
   const favoritesText = results[0].pageContent;
-  console.log(`📚 Favoritos recuperados para ${userId}:`, favoritesText);
+  console.log(`Favoritos recuperados para ${userId}:`, favoritesText);
 
   return favoritesText;
+};
+
+
+
+let placesStore;
+
+async function getPlacesStore() {
+  if (!placesStore) {
+    placesStore = await Chroma.fromExistingCollection(embeddings, {
+      collectionName: "places_collection",
+      url: "http://localhost:8000",
+    });
+    console.log("✅ Colección 'places_collection' inicializada en Chroma");
+  }
+  return placesStore;
+}
+
+/**
+ * Inserta o actualiza lugares (upsert).
+ * Si existe un documento con el mismo name → se elimina y reemplaza.
+ */
+export const upsertPlaces = async (places) => {
+  const store = await getPlacesStore();
+  const processed = [];
+
+  for (const place of places) {
+    if (!place.name) continue;
+
+    const name = place.name.trim();
+    const description = place.description || "Sin descripción";
+    const category = place.category || "No especificada";
+    const type = place.type?.toLowerCase() === "evento" ? "evento" : "lugar";
+    const atencion = place.atencion || "Horario no especificado";
+    const estimatedPrice = place.estimatedPrice || "No indicado";
+
+    // 🔹 Construir texto a indexar
+    const content = [
+      `${name}: ${description} (categoría: ${category}, tipo: ${type})`,
+      `Atención: ${atencion}`,
+      `Precio estimado: ${estimatedPrice} Bs`,
+    ].join("\n");
+
+    // 🧹 Eliminar cualquier registro previo que tenga el mismo nombre
+    try {
+      await store.delete({ filter: { name: { $eq: name } } });
+
+      console.log(`🧹 Eliminado documento previo de '${name}' (si existía)`);
+    } catch (err) {
+      console.warn(`⚠️ No se pudo eliminar '${name}' (puede que no existiera):`, err.message);
+    }
+
+    // 💾 Insertar nuevo documento (ID automático)
+    await store.addDocuments([
+      {
+        pageContent: content,
+        metadata: { name, category, type, atencion, estimatedPrice },
+      },
+    ]);
+
+    processed.push({ name, type, status: "upserted" });
+  }
+
+  return processed;
+};
+
+
+/**
+ * Busca en la colección de lugares (places_collection)
+ * Devuelve los lugares más relevantes según el texto de consulta.
+ */
+export const searchPlacesMemory = async (query, topK = 10) => {
+  const store = await getPlacesStore();
+
+  const results = await store.similaritySearch(query, topK);
+
+  console.log("📍 Resultados encontrados en places_collection:");
+  if (results.length === 0) {
+    console.log("(sin resultados relevantes)");
+  } else {
+    results.forEach((r, i) => {
+      console.log(`[${i + 1}] ${r.metadata.name} (${r.metadata.type})`);
+    });
+  }
+
+  return results.map(r => ({
+    name: r.metadata.name,
+    type: r.metadata.type,
+    category: r.metadata.category,
+    atencion: r.metadata.atencion,
+    estimatedPrice: r.metadata.estimatedPrice,
+    content: r.pageContent,
+  }));
 };
