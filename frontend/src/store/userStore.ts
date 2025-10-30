@@ -85,13 +85,33 @@ export const useUserStore = create<UserState>()(
         const { user } = get();
         if (!user) return;
         
+        // Optimistically update UI immediately
+        const tempInterest: UserInterest = {
+          id: Date.now(), // Temporary ID
+          user_id: user.id,
+          event_id: eventId,
+          active: true,
+          created_at: new Date().toISOString()
+        };
+        
+        set((state) => ({
+          interests: [...state.interests, tempInterest],
+        }));
+        
         try {
           const newInterest = await ApiService.addUserInterest(user.id, eventId);
+          // Replace temp with real interest
           set((state) => ({
-            interests: [...state.interests, newInterest],
+            interests: state.interests.map(i => 
+              i.id === tempInterest.id ? newInterest : i
+            ),
           }));
         } catch (error) {
           console.error('Failed to add interest:', error);
+          // Revert on error
+          set((state) => ({
+            interests: state.interests.filter(i => i.id !== tempInterest.id),
+          }));
         }
       },
 
@@ -99,17 +119,24 @@ export const useUserStore = create<UserState>()(
         const { user } = get();
         if (!user) return;
         
+        // Store the interest before removing (for potential rollback)
+        const removedInterest = get().interests.find(i => i.event_id === eventId);
+        
+        // Optimistically update UI immediately
+        set((state) => ({
+          interests: state.interests.filter(interest => interest.event_id !== eventId),
+        }));
+        
         try {
-          // Optimistically update UI immediately TODO
-          set((state) => ({
-            interests: state.interests.filter(interest => interest.event_id !== eventId),
-          }));
-          
           await ApiService.removeUserInterest(user.id, eventId);
         } catch (error) {
           console.error('Failed to remove interest:', error);
-          // Reload on error to restore correct state
-          await get().loadUserInterests();
+          // Revert on error
+          if (removedInterest) {
+            set((state) => ({
+              interests: [...state.interests, removedInterest],
+            }));
+          }
         }
       },
 

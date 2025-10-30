@@ -11,6 +11,7 @@ export type Place = {
   created_at: string;          // timestamp
   link_image: string | null;   // matches DB field name
   active: boolean;             // matches DB field name
+  display_number?: number;     // Frontend-only: assigned display number
   reviews?: Review[];
   user?: User;
 };

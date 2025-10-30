@@ -1,5 +1,7 @@
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import { Icon } from 'leaflet';
+import { useEffect } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import MarkerClusterGroup from 'react-leaflet-markercluster';
+import { Icon, DivIcon } from 'leaflet';
 import { MapPin, Calendar, DollarSign, ExternalLink } from 'lucide-react';
 import type { Place, Event } from '../types';
 import 'leaflet/dist/leaflet.css';
@@ -15,6 +17,43 @@ const DefaultIcon = new Icon({
   iconAnchor: [12, 41],
   popupAnchor: [1, -34],
 });
+
+// Custom icon with place number
+const createNumberedIcon = (number: number): DivIcon => {
+  return new DivIcon({
+    className: 'custom-numbered-icon',
+    html: `
+      <div style="
+        background-color: #3b82f6;
+        color: white;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 14px;
+        border: 3px solid white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      ">${number}</div>
+    `,
+    iconSize: [32, 32],
+    iconAnchor: [16, 16],
+    popupAnchor: [0, -16],
+  });
+};
+
+// Component to handle dynamic map center updates
+function MapUpdater({ center, zoom }: { center: [number, number]; zoom: number }) {
+  const map = useMap();
+  
+  useEffect(() => {
+    map.setView(center, zoom, { animate: true });
+  }, [center, zoom, map]);
+  
+  return null;
+}
 
 type Props = {
   places?: Place[];
@@ -58,20 +97,29 @@ export default function MapView({
         style={{ height: '100%', width: '100%' }}
         scrollWheelZoom={true}
       >
+        <MapUpdater center={center} zoom={zoom} />
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
-        {/* Places Markers */}
-        {filteredPlaces.map((place) => (
+        {/* Places Markers with Clustering */}
+        <MarkerClusterGroup>
+          {filteredPlaces.map((place) => (
             <Marker
               key={`place-${place.id}`}
               position={[place.latitude, place.longitude]}
-              icon={DefaultIcon}
+              icon={place.display_number ? createNumberedIcon(place.display_number) : DefaultIcon}
             >
               <Popup>
                 <div className="min-w-[200px] max-w-[280px]">
+                  {place.display_number && (
+                    <div className="mb-2">
+                      <span className="inline-flex items-center justify-center w-6 h-6 bg-blue-600 text-white text-xs font-bold rounded-full">
+                        {place.display_number}
+                      </span>
+                    </div>
+                  )}
                   <h3 className="font-semibold text-base mb-1">{place.name}</h3>
                   <p className="text-xs text-gray-600 mb-2 line-clamp-2">{place.description}</p>
                   
@@ -105,8 +153,10 @@ export default function MapView({
               </Popup>
             </Marker>
           ))}
+        </MarkerClusterGroup>
 
-          {/* Events Markers */}
+        {/* Events Markers with Clustering */}
+        <MarkerClusterGroup>
           {filteredEvents.map((event) => (
             <Marker
               key={`event-${event.id}`}
@@ -153,6 +203,7 @@ export default function MapView({
               </Popup>
             </Marker>
           ))}
+        </MarkerClusterGroup>
       </MapContainer>
 
       {/* Legend */}

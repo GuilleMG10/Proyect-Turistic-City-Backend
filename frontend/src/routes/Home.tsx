@@ -42,6 +42,7 @@ export default function Home() {
   const [isEventFormOpen, setIsEventFormOpen] = useState(false);
   const [showPlacesOnMap, setShowPlacesOnMap] = useState(true);
   const [showEventsOnMap, setShowEventsOnMap] = useState(true);
+  const [mapCenter, setMapCenter] = useState<[number, number] | undefined>(undefined);
   const [filters, setFilters] = useState({
     categories: [] as string[],
     priceRange: [0, 1000] as [number, number],
@@ -90,6 +91,34 @@ export default function Home() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCategory]);
 
+  const modalState = useModalState();
+  const { toggleInterest: toggleEventInterest } = useEventInterest();
+  const toggleFavorite = useFavorites((state) => state.toggleFavorite);
+  const { user } = useUserStore();
+  const isAdmin = useUserStore((state) => state.isAdmin());
+
+  // Listen for place number clicks to navigate to map
+  useEffect(() => {
+    const handleNavigateToMap = (event: globalThis.Event) => {
+      const customEvent = event as CustomEvent<{ placeId: number; displayNumber: number; latitude: number; longitude: number }>;
+      const { latitude, longitude } = customEvent.detail;
+      
+      // Switch to map tab
+      setActiveTab('mapa');
+      setShowPlacesOnMap(true);
+      setShowEventsOnMap(false);
+      
+      // Store the center location for the map to use
+      // We'll pass this to MapView component
+      setMapCenter([latitude, longitude]);
+    };
+
+    window.addEventListener('navigateToMapWithPlace', handleNavigateToMap);
+    return () => {
+      window.removeEventListener('navigateToMapWithPlace', handleNavigateToMap);
+    };
+  }, []);
+
   // Derive live message for screen readers (no setState needed)
   const liveMessage = useMemo(() => {
     if (loading) {
@@ -119,12 +148,6 @@ export default function Home() {
 
     return `Mostrando ${itemCount} ${tabNames[activeTab]} en la pestaña ${tabNames[activeTab]}.`;
   }, [loading, error, searchQuery, selectedCategory, activeTab, filteredPlaces.length, filteredEvents.length]);
-
-  const modalState = useModalState();
-  const { toggleInterest: toggleEventInterest } = useEventInterest();
-  const toggleFavorite = useFavorites((state) => state.toggleFavorite);
-  const { user } = useUserStore();
-  const isAdmin = useUserStore((state) => state.isAdmin());
   
   const handleFormSuccess = () => {
     // Refetch to ensure we have the latest data from backend
@@ -144,6 +167,26 @@ export default function Home() {
       });
     }
   };
+
+  // Lock body scroll when any modal is open
+  useEffect(() => {
+    const isAnyModalOpen = 
+      modalState.isEventModalOpen || 
+      modalState.isPlaceModalOpen || 
+      isPlaceFormOpen || 
+      isEventFormOpen || 
+      modalState.isFilterModalOpen;
+    
+    if (isAnyModalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [modalState.isEventModalOpen, modalState.isPlaceModalOpen, isPlaceFormOpen, isEventFormOpen, modalState.isFilterModalOpen]);
 
   const tabs = [
     { key: 'explorar' as const, label: 'Explorar' },
@@ -250,6 +293,8 @@ export default function Home() {
                 events={filteredEvents}
                 showPlaces={showPlacesOnMap}
                 showEvents={showEventsOnMap}
+                center={mapCenter}
+                zoom={mapCenter ? 17 : undefined}
                 onMarkerClick={handleMapMarkerClick}
               />
             </div>

@@ -1,11 +1,18 @@
-import { useEffect, useState } from 'react';
-import { X, MapPin, Star, Calendar, Users, Edit, Trash2 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { X, MapPin, Star, Calendar, Users, Edit, Trash2, Image as ImageIcon, Upload, ChevronDown, ChevronUp } from 'lucide-react';
 import type { Place } from '../types';
 import { getImageSrc, handleImageError } from '../utils/imageUtils';
 import { useUserStore } from '../store/userStore';
 import PlaceFormModal from './PlaceFormModal';
 import ConfirmModal from './ConfirmModal';
 import { ApiService } from '../services/api';
+import { 
+  getPlaceAdditionalImages, 
+  addPlaceImage, 
+  removePlaceImage,
+  fileToBase64,
+  validateImageFile
+} from '../utils/additionalImages';
 
 type Props = {
   place: Place;
@@ -20,6 +27,17 @@ export default function PlaceDetailsModal({ place, isOpen, onClose, onUpdate }: 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [additionalImages, setAdditionalImages] = useState<string[]>([]);
+  const [showAdditionalInfo, setShowAdditionalInfo] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+
+  // Load additional images
+  useEffect(() => {
+    if (isOpen) {
+      const images = getPlaceAdditionalImages(place.id);
+      setAdditionalImages(images);
+    }
+  }, [isOpen, place.id]);
 
   // Focus management
   useEffect(() => {
@@ -65,6 +83,38 @@ export default function PlaceDetailsModal({ place, isOpen, onClose, onUpdate }: 
     onUpdate?.();
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const error = validateImageFile(file);
+    if (error) {
+      alert(error);
+      return;
+    }
+
+    setIsUploadingImage(true);
+    try {
+      const base64 = await fileToBase64(file);
+      addPlaceImage(place.id, base64);
+      const updatedImages = getPlaceAdditionalImages(place.id);
+      setAdditionalImages(updatedImages);
+    } catch (error) {
+      alert('Error al cargar la imagen: ' + (error instanceof Error ? error.message : 'Error desconocido'));
+    } finally {
+      setIsUploadingImage(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleImageDelete = (index: number) => {
+    if (confirm('¿Eliminar esta imagen?')) {
+      removePlaceImage(place.id, index);
+      const updatedImages = getPlaceAdditionalImages(place.id);
+      setAdditionalImages(updatedImages);
+    }
+  };
+
   if (!isOpen) return null;
 
   const averageRating = place.reviews && place.reviews.length > 0 
@@ -105,13 +155,18 @@ export default function PlaceDetailsModal({ place, isOpen, onClose, onUpdate }: 
         {/* Content */}
         <section className="p-6 space-y-6">
           {/* Image */}
-          <figure className="aspect-video rounded-lg overflow-hidden bg-gray-100">
+          <figure className="aspect-video rounded-lg overflow-hidden bg-gray-100 relative">
             <img
               src={getImageSrc(place.link_image, place.name, 'place')}
               alt={`Imagen principal de ${place.name} - ${place.description}`}
               className="w-full h-full object-cover"
               onError={(e) => handleImageError(e, place.name, 'place')}
             />
+            {place.display_number && (
+              <div className="absolute top-3 left-3 w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-lg shadow-lg border-3 border-white">
+                {place.display_number}
+              </div>
+            )}
             <figcaption className="sr-only">Imagen representativa de {place.name}</figcaption>
           </figure>
 
@@ -191,6 +246,79 @@ export default function PlaceDetailsModal({ place, isOpen, onClose, onUpdate }: 
               </p>
             </article>
           </section>
+
+          {/* Additional Images Section */}
+          {isAdmin && (
+            <section className="border-t pt-6">
+              <button
+                onClick={() => setShowAdditionalInfo(!showAdditionalInfo)}
+                className="w-full flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <div className="flex items-center gap-2">
+                  <ImageIcon className="h-5 w-5 text-gray-600" />
+                  <h3 className="font-semibold">Mostrar información adicional</h3>
+                  <span className="text-sm text-gray-500">
+                    ({additionalImages.length} {additionalImages.length === 1 ? 'imagen' : 'imágenes'})
+                  </span>
+                </div>
+                {showAdditionalInfo ? (
+                  <ChevronUp className="h-5 w-5 text-gray-600" />
+                ) : (
+                  <ChevronDown className="h-5 w-5 text-gray-600" />
+                )}
+              </button>
+
+              {showAdditionalInfo && (
+                <div className="mt-4 space-y-4">
+                  {/* Upload Section */}
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/jpg"
+                      onChange={handleImageUpload}
+                      disabled={isUploadingImage}
+                      className="hidden"
+                      id="image-upload"
+                    />
+                    <label
+                      htmlFor="image-upload"
+                      className={`cursor-pointer inline-flex flex-col items-center gap-2 ${
+                        isUploadingImage ? 'opacity-50' : ''
+                      }`}
+                    >
+                      <Upload className="h-8 w-8 text-gray-400" />
+                      <span className="text-sm font-medium text-gray-700">
+                        {isUploadingImage ? 'Cargando...' : 'Cargar imagen JPG'}
+                      </span>
+                      <span className="text-xs text-gray-500">Máx. 5MB</span>
+                    </label>
+                  </div>
+
+                  {/* Images Grid */}
+                  {additionalImages.length > 0 && (
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      {additionalImages.map((image, index) => (
+                        <div key={index} className="relative group aspect-video rounded-lg overflow-hidden bg-gray-100">
+                          <img
+                            src={image}
+                            alt={`Imagen adicional ${index + 1} de ${place.name}`}
+                            className="w-full h-full object-cover"
+                          />
+                          <button
+                            onClick={() => handleImageDelete(index)}
+                            className="absolute top-2 right-2 p-1.5 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity focus:outline-none focus:ring-2 focus:ring-red-500"
+                            aria-label={`Eliminar imagen ${index + 1}`}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </section>
+          )}
 
           {/* Reviews */}
           {place.reviews && place.reviews.length > 0 && (

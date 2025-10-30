@@ -48,13 +48,42 @@ export const useFavorites = create<FavoritesState>((set, get) => ({
   },
 
   toggleFavorite: async (userId: number, placeId: number) => {
-    const { isFavorite, addFavorite, removeFavorite } = get();
-    if (isFavorite(placeId)) {
-      await removeFavorite(userId, placeId);
-      // Reload favorites from server to ensure sync
-      await get().loadFavorites(userId);
+    const { isFavorite, addFavorite, removeFavorite, loadFavorites } = get();
+    
+    // Optimistically update UI immediately
+    const wasFavorite = isFavorite(placeId);
+    
+    if (wasFavorite) {
+      // Optimistically remove from UI
+      set((state) => ({
+        favorites: state.favorites.filter(f => f.place_id !== placeId)
+      }));
+      
+      try {
+        await removeFavorite(userId, placeId);
+      } catch {
+        // Revert on error
+        await loadFavorites(userId);
+      }
     } else {
-      await addFavorite(userId, placeId);
+      // Optimistically add to UI
+      const tempFavorite: PlaceFavorite = {
+        id: Date.now(), // Temporary ID
+        user_id: userId,
+        place_id: placeId,
+        active: true,
+        created_at: new Date().toISOString()
+      };
+      set((state) => ({
+        favorites: [...state.favorites, tempFavorite]
+      }));
+      
+      try {
+        await addFavorite(userId, placeId);
+      } catch {
+        // Revert on error
+        await loadFavorites(userId);
+      }
     }
   },
 

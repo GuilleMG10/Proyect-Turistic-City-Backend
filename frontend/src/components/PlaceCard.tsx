@@ -55,6 +55,27 @@ const PlaceCard = memo(function PlaceCard({ place, onInterest, onView }: Props) 
           className="h-full w-full"
           onError={(e) => handleImageError(e, place.name, 'place')}
         />
+        {place.display_number && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              // Dispatch custom event to switch to map tab with coordinates
+              window.dispatchEvent(new CustomEvent('navigateToMapWithPlace', { 
+                detail: { 
+                  placeId: place.id, 
+                  displayNumber: place.display_number,
+                  latitude: place.latitude,
+                  longitude: place.longitude
+                } 
+              }));
+            }}
+            className="absolute top-3 left-3 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm shadow-lg border-2 border-white hover:bg-blue-700 hover:scale-110 transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            aria-label={`Ver lugar #${place.display_number} en el mapa`}
+            title="Click para ver en el mapa"
+          >
+            {place.display_number}
+          </button>
+        )}
         {user && (
           <button
             onClick={handleFavoriteToggle}

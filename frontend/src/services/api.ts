@@ -63,6 +63,31 @@ export class ApiService {
     }
   }
 
+  private static isTokenExpired(token: string): boolean {
+    try {
+      // Decode JWT token (format: header.payload.signature)
+      const parts = token.split('.');
+      if (parts.length !== 3) return true;
+      
+      const payload = JSON.parse(atob(parts[1]));
+      
+      // Check if token has expiration (exp claim is in seconds)
+      if (!payload.exp) return false; // No expiration set
+      
+      // Compare with current time (add 10 second buffer)
+      const currentTime = Math.floor(Date.now() / 1000);
+      return payload.exp < (currentTime + 10);
+    } catch {
+      return true; // If we can't decode, consider it expired
+    }
+  }
+
+  private static handleExpiredToken(): void {
+    // Clear user storage and reload page to reset state
+    localStorage.removeItem('user-storage');
+    window.location.reload();
+  }
+
   private static async request<T>(
     endpoint: string,
     options: RequestInit = {}
@@ -83,9 +108,13 @@ export class ApiService {
       'Content-Type': 'application/json',
     };
     
-    // Add auth token if available
+    // Add auth token if available and not expired
     const token = this.getAuthToken();
     if (token) {
+      if (this.isTokenExpired(token)) {
+        this.handleExpiredToken();
+        throw new Error('Session expired. Please login again.');
+      }
       headers['Authorization'] = `Bearer ${token}`;
     }
     
@@ -101,6 +130,11 @@ export class ApiService {
       const response = await fetch(url, config);
       
       if (!response.ok) {
+        // Handle 401 Unauthorized (expired token)
+        if (response.status === 401) {
+          this.handleExpiredToken();
+          throw new Error('Session expired. Please login again.');
+        }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       

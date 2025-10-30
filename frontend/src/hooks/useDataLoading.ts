@@ -3,6 +3,7 @@ import type { Place, EventWithStatus } from "../types";
 import { ApiService } from "../services/api";
 import { useUserStore } from "../store/userStore";
 import { useFavorites } from "./useFavorites";
+import { assignPlaceNumbers } from "../utils/placeNumbering";
 
 export function useDataLoading() {
   const [places, setPlaces] = useState<Place[]>([]);
@@ -37,10 +38,11 @@ export function useDataLoading() {
           setEvents(eventsData);
         }
 
-        // Load places from API
+        // Load places from API and assign display numbers
         const placesData = await ApiService.getPlaces();
         if (!cancelled) {
-          setPlaces(placesData);
+          const placesWithNumbers = assignPlaceNumbers(placesData);
+          setPlaces(placesWithNumbers);
         }
       } catch (err) {
         console.error('Error loading data:', err);
