@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
-import { User, LogOut } from 'lucide-react';
+import { User, LogOut, UserCircle } from 'lucide-react';
 import { useUserStore } from '../store/userStore';
+import { useNavigate } from 'react-router-dom';
 
 type Props = {
   onLoginClick: () => void;
@@ -10,6 +11,7 @@ export default function UserMenu({ onLoginClick }: Props) {
   const { user, logout } = useUserStore();
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -28,6 +30,11 @@ export default function UserMenu({ onLoginClick }: Props) {
   const handleLogout = () => {
     logout();
     setIsOpen(false);
+  };
+
+  const handleViewProfile = () => {
+    setIsOpen(false);
+    navigate('/profile');
   };
 
   if (!user) {
@@ -83,6 +90,14 @@ export default function UserMenu({ onLoginClick }: Props) {
             </div>
 
             <hr className="my-2" />
+
+            <button
+              onClick={handleViewProfile}
+              className="w-full px-4 py-2 text-left flex items-center gap-3 hover:bg-gray-100 transition-colors text-gray-700"
+            >
+              <UserCircle className="h-4 w-4" />
+              <span className="font-medium">Ver Perfil</span>
+            </button>
 
             <button
               onClick={handleLogout}

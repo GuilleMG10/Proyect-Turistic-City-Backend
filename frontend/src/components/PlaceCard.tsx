@@ -14,11 +14,12 @@ type Props = {
 
 const PlaceCard = memo(function PlaceCard({ place, onInterest, onView }: Props) {
   const { user } = useUserStore();
-  const isFavorite = useFavorites((state) => state.isFavorite);
   const favorites = useFavorites((state) => state.favorites);
 
   // Check if place is favorited - depend on favorites array to trigger re-render
-  const isFav = useMemo(() => user ? isFavorite(place.id) : false, [user, isFavorite, place.id, favorites]);
+  const isFavorite = useMemo(() => {
+    return favorites.some(fav => fav.place_id === place.id && fav.active);
+  }, [favorites, place.id]);
 
   const averageRating = useMemo(() => {
     return place.reviews && place.reviews.length > 0
@@ -58,10 +59,10 @@ const PlaceCard = memo(function PlaceCard({ place, onInterest, onView }: Props) 
           <button
             onClick={handleFavoriteToggle}
             className="absolute top-3 right-3 p-2 bg-white/80 hover:bg-white rounded-full shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-            aria-label={isFav ? `Quitar ${place.name} de favoritos` : `Agregar ${place.name} a favoritos`}
-            aria-pressed={isFav}
+            aria-label={isFavorite ? `Quitar ${place.name} de favoritos` : `Agregar ${place.name} a favoritos`}
+            aria-pressed={isFavorite}
           >
-            <Heart className={`h-4 w-4 ${isFav ? 'fill-red-400 text-red-400' : 'text-gray-600'}`} aria-hidden="true" />
+            <Heart className={`h-4 w-4 ${isFavorite ? 'fill-red-400 text-red-400' : 'text-gray-600'}`} aria-hidden="true" />
           </button>
         )}
       </div>

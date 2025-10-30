@@ -1,4 +1,4 @@
-type TabType = 'explorar' | 'eventos' | 'para-ti' | 'calendario';
+type TabType = 'explorar' | 'eventos' | 'para-ti' | 'calendario' | 'mapa';
 
 type TabConfig = {
   key: TabType;
@@ -17,7 +17,7 @@ export default function TabNavigation({
   onTabChange
 }: TabNavigationProps) {
   return (
-    <nav className="flex-1 grid grid-cols-4 rounded-lg overflow-hidden border bg-white" role="tablist">
+    <nav className="flex-1 grid grid-cols-5 rounded-lg overflow-hidden border bg-white" role="tablist">
       {tabs.map((tab) => (
         <button
           key={tab.key}

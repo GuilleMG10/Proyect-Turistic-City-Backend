@@ -96,15 +96,20 @@ export const useUserStore = create<UserState>()(
       },
 
       removeInterest: async (eventId) => {
-        const { user, loadUserInterests } = get();
+        const { user } = get();
         if (!user) return;
         
         try {
+          // Optimistically update UI immediately TODO
+          set((state) => ({
+            interests: state.interests.filter(interest => interest.event_id !== eventId),
+          }));
+          
           await ApiService.removeUserInterest(user.id, eventId);
-          // Reload interests from server to ensure sync
-          await loadUserInterests();
         } catch (error) {
           console.error('Failed to remove interest:', error);
+          // Reload on error to restore correct state
+          await get().loadUserInterests();
         }
       },
 

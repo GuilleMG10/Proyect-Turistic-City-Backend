@@ -1,9 +1,12 @@
-import type { Event, User, Place, EventWithStatus, EventStatus, UserInterest } from '../types';
+import type { Event, User, Place, EventWithStatus, EventStatus, UserInterest, UserPreference, PlaceFavorite } from '../types';
+
+// RequestInit is a global type from lib.dom.d.ts
+/* global RequestInit */
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 // Simple in-memory cache
-const cache = new Map<string, { data: any; timestamp: number }>();
+const cache = new Map<string, { data: unknown; timestamp: number }>();
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 // Utility function to determine event status
@@ -32,7 +35,7 @@ export class ApiService {
   private static getCachedData<T>(key: string): T | null {
     const cached = cache.get(key);
     if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-      return cached.data;
+      return cached.data as T;
     }
     if (cached) {
       cache.delete(key); // Remove expired cache
@@ -40,7 +43,7 @@ export class ApiService {
     return null;
   }
 
-  private static setCachedData(key: string, data: any): void {
+  private static setCachedData(key: string, data: unknown): void {
     cache.set(key, { data, timestamp: Date.now() });
   }
 
@@ -101,7 +104,7 @@ export class ApiService {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
-      const data = await response.json();
+      const data = await response.json() as T;
       
       // Cache successful GET responses
       if (!options.method || options.method === 'GET') {
@@ -225,8 +228,8 @@ export class ApiService {
   }
 
   // Reviews API
-  static async getPlaceReviews(placeId: number): Promise<any[]> {
-    return this.request<any[]>(`/places/${placeId}/reviews`);
+  static async getPlaceReviews(placeId: number): Promise<unknown[]> {
+    return this.request<unknown[]>(`/places/${placeId}/reviews`);
   }
 
   // User Interests API (for favorites)
@@ -248,12 +251,12 @@ export class ApiService {
   }
 
   // Place Favorites API
-  static async getPlaceFavorites(userId: number): Promise<any[]> {
-    return this.request<any[]>(`/users/${userId}/favorites`);
+  static async getPlaceFavorites(userId: number): Promise<PlaceFavorite[]> {
+    return this.request<PlaceFavorite[]>(`/users/${userId}/favorites`);
   }
 
-  static async addPlaceFavorite(userId: number, placeId: number): Promise<any> {
-    return this.request<any>(`/users/${userId}/favorites`, {
+  static async addPlaceFavorite(userId: number, placeId: number): Promise<PlaceFavorite> {
+    return this.request<PlaceFavorite>(`/users/${userId}/favorites`, {
       method: 'POST',
       body: JSON.stringify({ place_id: placeId }),
     });
@@ -261,6 +264,24 @@ export class ApiService {
 
   static async removePlaceFavorite(userId: number, placeId: number): Promise<void> {
     return this.request<void>(`/users/${userId}/favorites/${placeId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // User Preferences API (category interests)
+  static async getUserPreferences(userId: number): Promise<UserPreference[]> {
+    return this.request<UserPreference[]>(`/users/${userId}/preferences`);
+  }
+
+  static async saveUserPreferences(userId: number, categories: string[]): Promise<void> {
+    return this.request<void>(`/users/${userId}/preferences`, {
+      method: 'POST',
+      body: JSON.stringify({ categories }),
+    });
+  }
+
+  static async deleteUserPreference(userId: number, category: string): Promise<void> {
+    return this.request<void>(`/users/${userId}/preferences/${encodeURIComponent(category)}`, {
       method: 'DELETE',
     });
   }

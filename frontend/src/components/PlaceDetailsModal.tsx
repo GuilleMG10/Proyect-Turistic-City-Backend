@@ -53,13 +53,13 @@ export default function PlaceDetailsModal({ place, isOpen, onClose, onUpdate }: 
       await ApiService.deletePlace(place.id);
       onClose();
       onUpdate?.();
-    } catch (error) {
+    } catch {
       alert('Error al eliminar el lugar');
       setIsDeleting(false);
     }
   };
 
-  const handleEditSuccess = async (_updatedPlace: Place) => {
+  const handleEditSuccess = async () => {
     setIsEditModalOpen(false);
     onClose();
     onUpdate?.();
@@ -80,7 +80,7 @@ export default function PlaceDetailsModal({ place, isOpen, onClose, onUpdate }: 
         onSuccess={handleEditSuccess}
       />
       <div 
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[70] p-4"
         onClick={onClose}
       >
       <section 

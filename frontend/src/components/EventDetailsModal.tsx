@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from 'react';
 import { X, MapPin, Star, Calendar, Users, DollarSign, Clock, Edit, Trash2 } from 'lucide-react';
-import type { Event as EventType, EventWithStatus } from '../types';
+import type { EventWithStatus } from '../types';
 import { getEventStatusColor } from '../utils/eventStatus';
 import { useUserStore } from '../store/userStore';
 import EventFormModal from './EventFormModal';
@@ -54,13 +54,13 @@ export default function EventDetailsModal({ event, isOpen, onClose, onUpdate }: 
       await ApiService.deleteEvent(event.id);
       onClose();
       onUpdate?.(); // Refetch immediately - backend query time provides natural delay
-    } catch (error) {
+    } catch {
       alert('Error al eliminar el evento');
       setIsDeleting(false);
     }
   };
 
-  const handleEditSuccess = (_updatedEvent: EventType) => {
+  const handleEditSuccess = () => {
     setIsEditModalOpen(false);
     onClose();
     onUpdate?.(); // Refetch immediately - backend query time provides natural delay
@@ -92,7 +92,7 @@ export default function EventDetailsModal({ event, isOpen, onClose, onUpdate }: 
         onSuccess={handleEditSuccess}
       />
       <div 
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[70] p-4"
         onClick={onClose}
       >
       <section 

@@ -16,3 +16,25 @@ body {
 img[src*="unsplash.com"] {
   transition: opacity 0.3s ease;
 }
+
+/* Leaflet Map Styles */
+.leaflet-container {
+  font-family: inherit;
+  z-index: 1 !important;
+}
+
+.leaflet-pane {
+  z-index: 400 !important;
+}
+
+.leaflet-popup-pane {
+  z-index: 600 !important;
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: 0.5rem;
+}
+
+.leaflet-popup-content {
+  margin: 0.5rem;
+}

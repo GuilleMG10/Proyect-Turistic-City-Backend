@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import React, { useState, useCallback } from 'react';
 
 type ValidationRule<T> = (value: T) => string | null;
 
@@ -7,11 +7,11 @@ type FieldConfig<T> = {
   validate?: ValidationRule<T>;
 };
 
-type FormConfig<T extends Record<string, any>> = {
+type FormConfig<T extends Record<string, unknown>> = {
   [K in keyof T]: FieldConfig<T[K]>;
 };
 
-type FormState<T extends Record<string, any>> = {
+type FormState<T extends Record<string, unknown>> = {
   values: T;
   errors: Partial<Record<keyof T, string>>;
   touched: Partial<Record<keyof T, boolean>>;
@@ -19,7 +19,7 @@ type FormState<T extends Record<string, any>> = {
   isDirty: boolean;
 };
 
-type FormActions<T extends Record<string, any>> = {
+type FormActions<T extends Record<string, unknown>> = {
   setValue: <K extends keyof T>(field: K, value: T[K]) => void;
   setTouched: <K extends keyof T>(field: K, touched?: boolean) => void;
   setError: <K extends keyof T>(field: K, error: string | null) => void;
@@ -29,7 +29,7 @@ type FormActions<T extends Record<string, any>> = {
   handleSubmit: (onSubmit: (values: T) => void | Promise<void>) => (e: React.FormEvent) => Promise<void>;
 };
 
-export function useFormState<T extends Record<string, any>>(
+export function useFormState<T extends Record<string, unknown>>(
   config: FormConfig<T>
 ): FormState<T> & FormActions<T> {
   // Initialize form state

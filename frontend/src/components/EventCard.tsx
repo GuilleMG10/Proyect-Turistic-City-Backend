@@ -12,7 +12,7 @@ type Props = {
 };
 
 const EventCard = memo(function EventCard({ event, onInterest, onView, showTag = false }: Props) {
-  const { user, addInterest, removeInterest, isInterested, interests } = useUserStore();
+  const { user, addInterest, removeInterest, isInterested } = useUserStore();
 
   // Memoize expensive calculations
   const eventDate = useMemo(() => new Date(event.event_date), [event.event_date]);
@@ -32,7 +32,7 @@ const EventCard = memo(function EventCard({ event, onInterest, onView, showTag =
     });
   }, [eventDate]);
 
-  const isEventInterested = useMemo(() => user ? isInterested(event.id) : false, [user, isInterested, event.id, interests]);
+  const isEventInterested = useMemo(() => user ? isInterested(event.id) : false, [user, isInterested, event.id]);
 
   const averageRating = useMemo(() => {
     return event.reviews && event.reviews.length > 0

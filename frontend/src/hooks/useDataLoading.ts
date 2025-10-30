@@ -20,7 +20,8 @@ export function useDataLoading() {
       loadUserInterests();
       loadFavorites(user.id);
     }
-  }, [user?.id, loadUserInterests, loadFavorites]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   useEffect(() => {
     let cancelled = false;

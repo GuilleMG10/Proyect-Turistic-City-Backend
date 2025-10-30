@@ -72,6 +72,15 @@ export type PlaceFavorite = {
   created_at: string;
 };
 
+// User preferences for categories
+export type UserPreference = {
+  id: number;
+  user_id: number;
+  category: string;
+  active: boolean;
+  created_at: string;
+};
+
 // Event status based on current time
 export type EventStatus = 'upcoming' | 'happening' | 'finished';
 

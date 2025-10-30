@@ -1,4 +1,4 @@
-import { useState, useEffect, Suspense, lazy } from "react";
+import { useState, useEffect, useMemo, Suspense, lazy } from "react";
 import { Plus } from "lucide-react";
 import PlaceGrid from "../components/PlaceGrid";
 import ErrorBanner from "../components/ErrorBanner";
@@ -19,12 +19,15 @@ import { useEventInterest } from "../hooks/useEventInterest";
 import { useFavorites } from "../hooks/useFavorites";
 import PlaceFormModal from "../components/PlaceFormModal";
 import EventFormModal from "../components/EventFormModal";
+import MapView from "../components/MapView";
+import type { Place, Event } from "../types";
+import { getEventStatus } from "../services/api";
 
 // Lazy load modal components
 const EventDetailsModal = lazy(() => import("../components/EventDetailsModal"));
 const PlaceDetailsModal = lazy(() => import("../components/PlaceDetailsModal"));
 
-type TabType = 'explorar' | 'eventos' | 'para-ti' | 'calendario';
+type TabType = 'explorar' | 'eventos' | 'para-ti' | 'calendario' | 'mapa';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<TabType>('explorar');
@@ -35,9 +38,10 @@ export default function Home() {
     explorar: 'Todos',
     eventos: 'Todos'
   });
-  const [liveMessage, setLiveMessage] = useState('');
   const [isPlaceFormOpen, setIsPlaceFormOpen] = useState(false);
   const [isEventFormOpen, setIsEventFormOpen] = useState(false);
+  const [showPlacesOnMap, setShowPlacesOnMap] = useState(true);
+  const [showEventsOnMap, setShowEventsOnMap] = useState(true);
   const [filters, setFilters] = useState({
     categories: [] as string[],
     priceRange: [0, 1000] as [number, number],
@@ -58,6 +62,8 @@ export default function Home() {
   );
 
   // Restore last selected category when switching tabs
+  // This setState in effect is INTENTIONAL and CORRECT - it synchronizes selectedCategory
+  // with the user's previous selection when switching tabs (controlled state synchronization)
   useEffect(() => {
     const tabKey = activeTab === 'explorar' || activeTab === 'para-ti' ? 'explorar' : 'eventos';
     const rememberedCategory = categoryMemory[tabKey];
@@ -69,47 +75,50 @@ export default function Home() {
       // Otherwise default to 'Todos'
       setSelectedCategory('Todos');
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, availableCategories]);
 
   // Save category selection to memory when it changes
+  // This setState in effect is INTENTIONAL - it's a side effect (caching user preference)
+  // that should happen when selectedCategory changes, not derivable state
   useEffect(() => {
     const tabKey = activeTab === 'explorar' || activeTab === 'para-ti' ? 'explorar' : 'eventos';
     setCategoryMemory(prev => ({
       ...prev,
       [tabKey]: selectedCategory
     }));
-  }, [selectedCategory, activeTab]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCategory]);
 
-  // Announce content changes to screen readers
-  useEffect(() => {
+  // Derive live message for screen readers (no setState needed)
+  const liveMessage = useMemo(() => {
     if (loading) {
-      setLiveMessage('Cargando contenido...');
-    } else if (error) {
-      setLiveMessage('Error al cargar el contenido. Por favor, intenta de nuevo.');
-    } else {
-      const tabNames = {
-        'explorar': 'lugares',
-        'eventos': 'eventos',
-        'para-ti': 'recomendaciones',
-        'calendario': 'calendario'
-      };
-
-      const itemCount = activeTab === 'explorar' || activeTab === 'para-ti'
-        ? filteredPlaces.length
-        : filteredEvents.length;
-
-      setLiveMessage(`Mostrando ${itemCount} ${tabNames[activeTab]} en la pestaña ${tabNames[activeTab]}.`);
+      return 'Cargando contenido...';
     }
-  }, [loading, error, activeTab, filteredPlaces.length, filteredEvents.length]);
-
-  // Announce filter changes
-  useEffect(() => {
+    if (error) {
+      return 'Error al cargar el contenido. Por favor, intenta de nuevo.';
+    }
     if (searchQuery) {
-      setLiveMessage(`Búsqueda aplicada: ${searchQuery}`);
-    } else if (selectedCategory !== 'Todos') {
-      setLiveMessage(`Categoría seleccionada: ${selectedCategory}`);
+      return `Búsqueda aplicada: ${searchQuery}`;
     }
-  }, [searchQuery, selectedCategory]);
+    if (selectedCategory !== 'Todos') {
+      return `Categoría seleccionada: ${selectedCategory}`;
+    }
+    
+    const tabNames = {
+      'explorar': 'lugares',
+      'eventos': 'eventos',
+      'para-ti': 'recomendaciones',
+      'calendario': 'calendario',
+      'mapa': 'mapa'
+    };
+
+    const itemCount = activeTab === 'explorar' || activeTab === 'para-ti'
+      ? filteredPlaces.length
+      : filteredEvents.length;
+
+    return `Mostrando ${itemCount} ${tabNames[activeTab]} en la pestaña ${tabNames[activeTab]}.`;
+  }, [loading, error, searchQuery, selectedCategory, activeTab, filteredPlaces.length, filteredEvents.length]);
 
   const modalState = useModalState();
   const { toggleInterest: toggleEventInterest } = useEventInterest();
@@ -117,18 +126,31 @@ export default function Home() {
   const { user } = useUserStore();
   const isAdmin = useUserStore((state) => state.isAdmin());
   
-  const handleFormSuccess = (_updatedItem: any) => {
+  const handleFormSuccess = () => {
     // Refetch to ensure we have the latest data from backend
     refetch();
     setIsPlaceFormOpen(false);
     setIsEventFormOpen(false);
   };
 
+  const handleMapMarkerClick = (item: Place | Event, type: 'place' | 'event') => {
+    if (type === 'place') {
+      modalState.openPlaceModal(item as Place);
+    } else {
+      const event = item as Event;
+      modalState.openEventModal({
+        ...event,
+        status: getEventStatus(event.event_date)
+      });
+    }
+  };
+
   const tabs = [
     { key: 'explorar' as const, label: 'Explorar' },
     { key: 'eventos' as const, label: 'Eventos' },
     { key: 'para-ti' as const, label: 'Para ti' },
-    { key: 'calendario' as const, label: 'Calendario' }
+    { key: 'calendario' as const, label: 'Calendario' },
+    { key: 'mapa' as const, label: 'Mapa' }
   ];
 
   const renderTabContent = () => {
@@ -174,7 +196,7 @@ export default function Home() {
               events={events}
               places={places}
               onEventView={modalState.openEventModal}
-              onEventInterest={(e) => toggleEventInterest(e)}
+              onEventInterest={toggleEventInterest}
               onPlaceView={modalState.openPlaceModal}
               onPlaceInterest={(p) => user && toggleFavorite(user.id, p.id)}
             />
@@ -190,6 +212,47 @@ export default function Home() {
               onEventView={modalState.openEventModal}
               onCreateEvent={(date) => console.log("Crear evento en:", date)}
             />
+          </section>
+        );
+
+      case 'mapa':
+        return (
+          <section aria-labelledby="mapa-heading" className="space-y-4">
+            <h2 id="mapa-heading" className="sr-only">Mapa de Lugares y Eventos</h2>
+            
+            {/* Map Controls */}
+            <div className="bg-white rounded-lg shadow-sm p-4 flex items-center gap-4 flex-wrap">
+              <span className="text-sm font-medium text-gray-700">Mostrar:</span>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={showPlacesOnMap}
+                  onChange={(e) => setShowPlacesOnMap(e.target.checked)}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <span className="text-sm text-gray-700">Lugares ({filteredPlaces.length})</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={showEventsOnMap}
+                  onChange={(e) => setShowEventsOnMap(e.target.checked)}
+                  className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                />
+                <span className="text-sm text-gray-700">Eventos ({filteredEvents.length})</span>
+              </label>
+            </div>
+
+            {/* Map Container */}
+            <div className="bg-white rounded-lg shadow-lg overflow-hidden relative" style={{ height: '600px', zIndex: 1 }}>
+              <MapView
+                places={filteredPlaces}
+                events={filteredEvents}
+                showPlaces={showPlacesOnMap}
+                showEvents={showEventsOnMap}
+                onMarkerClick={handleMapMarkerClick}
+              />
+            </div>
           </section>
         );
 

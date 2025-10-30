@@ -1,4 +1,5 @@
 // Utility to handle image loading with fallbacks using placehold.co
+import type React from 'react';
 
 /**
  * Gets initials from a name (e.g., "Dani Torrez" -> "DT")

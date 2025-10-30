@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { X, User, Lock, Mail, Calendar } from 'lucide-react';
 import { useUserStore } from '../store/userStore';
 
@@ -31,7 +31,13 @@ export default function LoginModal({ isOpen, onClose }: Props) {
         await login(formData.username, formData.password);
         onClose();
       } else {
-        const registerData: any = {
+        const registerData: {
+          name: string;
+          username: string;
+          password: string;
+          email?: string;
+          age?: number;
+        } = {
           name: formData.name,
           username: formData.username,
           password: formData.password,
@@ -43,7 +49,7 @@ export default function LoginModal({ isOpen, onClose }: Props) {
         await register(registerData);
         onClose();
       }
-    } catch (err) {
+    } catch {
       setLocalError(error || 'Ocurrió un error. Por favor intenta de nuevo.');
     }
   };

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from 'react';
 import { MessageCircle, Send, X } from "lucide-react";
 import { useUserStore } from "../store/userStore";
 import ReactMarkdown from 'react-markdown';
@@ -131,7 +131,7 @@ export default function AIChat({ isOpen, onClose }: Props) {
                         .replace(/\.(\d+)\.\s\*\*/g, '.\n\n$1. **')
                         // Fix spacing after punctuation before capital letters or question marks
                         .replace(/\.([A-ZÁÉÍÓÚÑ¿])/g, '. $1')
-                        .replace(/\!([A-ZÁÉÍÓÚÑ¿])/g, '! $1')
+                        .replace(/!([A-ZÁÉÍÓÚÑ¿])/g, '! $1')
                         .replace(/\?([A-ZÁÉÍÓÚÑ¿])/g, '? $1')
                         // Clean excessive line breaks
                         .replace(/\n{3,}/g, '\n\n');

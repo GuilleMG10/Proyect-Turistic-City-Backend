@@ -9,7 +9,7 @@ type Filters = {
   zones: string[];
 };
 
-type TabType = 'explorar' | 'eventos' | 'para-ti' | 'calendario';
+type TabType = 'explorar' | 'eventos' | 'para-ti' | 'calendario' | 'mapa';
 
 export function useFiltering(
   places: Place[],

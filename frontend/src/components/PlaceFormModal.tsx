@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { X, MapPin, Save, Loader2 } from 'lucide-react';
 import type { Place } from '../types';
 import { ApiService } from '../services/api';
 import { useUserStore } from '../store/userStore';
+import LocationPicker from './LocationPicker';
 
 type Props = {
   place?: Place;
@@ -67,6 +68,15 @@ export default function PlaceFormModal({ place, isOpen, onClose, onSuccess }: Pr
     }
   }, [isOpen, onClose]);
 
+  const handleLocationChange = (lat: number, lng: number, address?: string) => {
+    setFormData({ 
+      ...formData, 
+      latitude: lat, 
+      longitude: lng,
+      location: address || formData.location
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -98,7 +108,7 @@ export default function PlaceFormModal({ place, isOpen, onClose, onSuccess }: Pr
 
   return (
     <div 
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4"
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[80] p-4"
       onClick={onClose}
     >
       <section 
@@ -162,7 +172,7 @@ export default function PlaceFormModal({ place, isOpen, onClose, onSuccess }: Pr
             />
           </div>
 
-          {/* Location */}
+          {/* Location with Map Picker */}
           <div>
             <label htmlFor="place-location" className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
               <MapPin className="h-4 w-4" />
@@ -179,39 +189,12 @@ export default function PlaceFormModal({ place, isOpen, onClose, onSuccess }: Pr
             />
           </div>
 
-          {/* Coordinates */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="place-latitude" className="block text-sm font-medium text-gray-700 mb-1">
-                Latitud *
-              </label>
-              <input
-                id="place-latitude"
-                type="number"
-                step="0.000001"
-                required
-                value={formData.latitude}
-                onChange={(e) => setFormData({ ...formData, latitude: parseFloat(e.target.value) })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="-16.500000"
-              />
-            </div>
-            <div>
-              <label htmlFor="place-longitude" className="block text-sm font-medium text-gray-700 mb-1">
-                Longitud *
-              </label>
-              <input
-                id="place-longitude"
-                type="number"
-                step="0.000001"
-                required
-                value={formData.longitude}
-                onChange={(e) => setFormData({ ...formData, longitude: parseFloat(e.target.value) })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="-68.150000"
-              />
-            </div>
-          </div>
+          {/* Map Location Picker */}
+          <LocationPicker
+            latitude={formData.latitude}
+            longitude={formData.longitude}
+            onLocationChange={handleLocationChange}
+          />
 
           {/* Category */}
           <div>

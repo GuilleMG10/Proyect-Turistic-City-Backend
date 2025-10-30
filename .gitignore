@@ -1,6 +1,7 @@
 # Miscellaneous
 bin
 .env
+cmd/backend/*.exe
 
 # Dependencies
 frontend/node_modules/

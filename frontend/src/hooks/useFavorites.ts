@@ -17,7 +17,7 @@ export const useFavorites = create<FavoritesState>((set, get) => ({
 
   loadFavorites: async (userId: number) => {
     try {
-      const favorites = await ApiService.getPlaceFavorites(userId);
+      const favorites = await ApiService.getPlaceFavorites(userId) as PlaceFavorite[];
       set({ favorites: favorites.filter(f => f.active) });
     } catch (error) {
       console.error('Failed to load place favorites:', error);
