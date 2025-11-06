@@ -74,11 +74,10 @@ export const generateResponse = async (req, res) => {
                     `Lugares disponibles en memoria usando RAG:\n${placesContext || "(no hay lugares registrados)"}\n\n` +
                     `Contexto de conversaciones previas:\n${context || "(sin historial previo)"}\n\n` +
                     `Nueva solicitud del usuario:\n${prompt}\n\n` +
-                    `IA (responde considerando los intereses del usuario, los lugares obtenidos por RAG y el contexto de conversaciones previas). 
-                    Genera un **itinerario completo y cronológico**, distribuido entre la hora inicial y final que el usuario indique.
-                    - Asigna **horarios específicos (inicio–fin)** para cada actividad.
+                    `IA (responde considerando los lugares favoritos del usuario, los lugares disponibles en memoria usando RAG y el contexto de conversaciones previas). 
+                    Además si es que el usuario solicito un itinerario genera uno completo y cronológico, distribuido entre los diás, hora inicial y final que el usuario indique.
+                    - Asigna horarios específicos (inicio–fin) para cada actividad, considera que las actividades esten acordes a los dias y horarios del usuario.
                     - Asegúrate de que el total no exceda el presupuesto disponible.
-                    - Devuelve la respuesta en formato **Markdown**, con títulos claros y listas ordenadas.
                     `
     } else {
       finalPrompt = `Contexto previo:\n${context || "(sin historial previo)"}\n\n` +
