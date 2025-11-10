@@ -3,7 +3,8 @@ package handler
 import (
 	"net/http"
 	"strconv"
-
+	"errors" // <-- Importar
+    "github.com/go-playground/validator/v10"
 	"github.com/GuilleMG10/Proyect-Turistic-City-Backend/internal/auth"
 	"github.com/GuilleMG10/Proyect-Turistic-City-Backend/internal/model"
 	"github.com/gin-gonic/gin"
@@ -50,15 +51,30 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 
 func (h *UserHandler) Register(c *gin.Context) {
 	var req struct {
-		Name     string `json:"name"`
-		Age      int    `json:"age"`
-		Username string `json:"username"`
-		Password string `json:"password"`
-		Email    string `json:"email"`
+        // --- INICIO DE CAMBIOS ---
+		Name     string `json:"name" binding:"required,min=2,max=100"`
+		Age      int    `json:"age" binding:"required,gt=0,lt=120"` // gt=greater than, lt=less than
+		Username string `json:"username" binding:"required,min=3,max=50"`
+		Password string `json:"password" binding:"required,min=8,max=72"` // min 8 caracteres
+		Email    string `json:"email" binding:"required,email"`         // Valida formato email
+        // --- FIN DE CAMBIOS ---
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+        // --- INICIO DE CAMBIOS: MANEJO DETALLADO DE ERROR ---
+		var ve validator.ValidationErrors
+		if errors.As(err, &ve) {
+            // Construye un mapa de errores más útil
+			out := make(map[string]string, len(ve))
+			for _, fe := range ve {
+				out[fe.Field()] = getErrorMsg(fe) // Usa una función helper
+			}
+			c.JSON(http.StatusBadRequest, gin.H{"error": "validation failed", "details": out})
+		} else {
+            // Error de formato JSON, no de validación
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body", "details": err.Error()})
+		}
+        // --- FIN DE CAMBIOS ---
 		return
 	}
 
@@ -89,12 +105,12 @@ func (h *UserHandler) Register(c *gin.Context) {
 
 func (h *UserHandler) Login(c *gin.Context) {
 	var req struct {
-		Username string `json:"username"`
-		Password string `json:"password"`
+		Username string `json:"username" binding:"required"`
+		Password string `json:"password" binding:"required"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request", "details": err.Error()})
 		return
 	}
 
@@ -121,4 +137,22 @@ func (h *UserHandler) Login(c *gin.Context) {
 			"role_id":  user.RoleID,
 		},
 	})
+}
+
+func getErrorMsg(fe validator.FieldError) string {
+	switch fe.Tag() {
+	case "required":
+		return "This field is required"
+	case "email":
+		return "Invalid email format"
+	case "min":
+		return "Should be at least " + fe.Param() + " characters"
+	case "max":
+		return "Should be at most " + fe.Param() + " characters"
+    case "gt":
+        return "Should be greater than " + fe.Param()
+    case "lt":
+        return "Should be less than " + fe.Param()
+	}
+	return "Unknown validation error" // Fallback
 }

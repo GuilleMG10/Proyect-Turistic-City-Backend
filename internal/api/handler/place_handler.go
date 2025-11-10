@@ -55,10 +55,15 @@ func (h *PlaceHandler) UpdatePlace(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid place ID"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid place ID format"})
 		return
 	}
 
+	if id == 0 {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "invalid place ID"})
+		return
+    }
+	
 	var place model.Place
 	if err := c.ShouldBindJSON(&place); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
