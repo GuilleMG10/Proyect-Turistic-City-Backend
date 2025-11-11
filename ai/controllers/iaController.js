@@ -151,3 +151,72 @@ export const registerPlaces = async (req, res) => {
   }
 };
 
+
+
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+import { analyzeWithLLaVAStream, getBase64Image, buildProfilePrompt } from "../services/visionService.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+export const evaluateProfilePhoto = async (req, res) => {
+  try {
+    const { context } = req.body;
+    let imageBase64;
+
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+
+    if (req.file) {
+      imageBase64 = req.file.buffer.toString("base64");
+    } else if (req.body.imageBase64) {
+      imageBase64 = req.body.imageBase64;
+    }
+
+
+    if (!imageBase64) {
+      return res.status(400).json({ error: "Debe enviar una imagen en base64 o como archivo." });
+    }
+
+
+
+//     req.file = {
+//   fieldname: "image",
+//   originalname: "foto.jpg",
+//   encoding: "7bit",
+//   mimetype: "image/jpeg",
+//   buffer: <Buffer ff d8 ff e0 00 10 4a 46 49 46 00 01 ...>,
+//   size: 20342
+// }
+
+
+//tras aplicar toString se vuelve: /9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBxISEhUQEhIVFhUVFRUVFRUVFRUVFRUWFxUWFxUV
+//FhUYHSggGBolGxUVITEhJSkrLi4uFx8zODMtNygtLisBCgoKDg0OGxAQGy0lHyYtLS0tLS0tLS0t
+
+
+
+
+
+    const prompt = buildProfilePrompt(context);
+    let fullResponse = "";
+
+    console.log("📷 Streaming desde LLaVA...");
+    await analyzeWithLLaVAStream(prompt, imageBase64, (chunk) => {
+      fullResponse += chunk;
+      res.write(`data: ${chunk}\n\n`);
+    });
+
+    res.write("data: [DONE]\n\n");
+    res.end();
+
+    console.log("✅ Respuesta completa:", fullResponse);
+
+  } catch (error) {
+    console.error("❌ Error evaluando imagen:", error);
+    res.status(500).json({ error: "Error procesando la imagen" });
+  }
+};
