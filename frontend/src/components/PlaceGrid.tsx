@@ -12,7 +12,7 @@ export default function PlaceGrid({
 }) {
   if (!places.length) {
     return (
-      <section className="rounded-2xl border bg-white py-16 text-center text-gray-500">
+      <section className="rounded-2xl border dark:border-gray-700 bg-white dark:bg-gray-800 py-16 text-center text-gray-500 dark:text-gray-400">
         No se encontraron lugares
       </section>
     );

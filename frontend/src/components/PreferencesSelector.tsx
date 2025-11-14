@@ -92,7 +92,7 @@ export default function PreferencesSelector({ userId }: Props) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600 dark:text-blue-400" />
       </div>
     );
   }
@@ -101,12 +101,12 @@ export default function PreferencesSelector({ userId }: Props) {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-start gap-3">
-        <Heart className="h-6 w-6 text-red-500 mt-1 flex-shrink-0" />
+        <Heart className="h-6 w-6 text-red-500 dark:text-red-400 mt-1 flex-shrink-0" />
         <div>
-          <h3 className="text-xl font-bold text-gray-900">
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white">
             Tus Gustos e Intereses
           </h3>
-          <p className="text-gray-600 mt-1">
+          <p className="text-gray-600 dark:text-gray-300 mt-1">
             Selecciona las categorías que te interesan para recibir mejores recomendaciones
           </p>
         </div>
@@ -114,14 +114,14 @@ export default function PreferencesSelector({ userId }: Props) {
 
       {/* Error Message */}
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg">
           {error}
         </div>
       )}
 
       {/* Success Message */}
       {successMessage && (
-        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
+        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 px-4 py-3 rounded-lg">
           {successMessage}
         </div>
       )}
@@ -139,8 +139,8 @@ export default function PreferencesSelector({ userId }: Props) {
                 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
                 ${
                   isSelected
-                    ? 'bg-blue-600 border-blue-600 text-white hover:bg-blue-700'
-                    : 'bg-white border-gray-300 text-gray-700 hover:border-blue-400 hover:bg-blue-50'
+                    ? 'bg-blue-600 dark:bg-blue-500 border-blue-600 dark:border-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600'
+                    : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-gray-600'
                 }
               `}
             >
@@ -148,7 +148,7 @@ export default function PreferencesSelector({ userId }: Props) {
                 <div
                   className={`
                     h-5 w-5 rounded flex items-center justify-center flex-shrink-0
-                    ${isSelected ? 'bg-white' : 'bg-gray-200'}
+                    ${isSelected ? 'bg-white' : 'bg-gray-200 dark:bg-gray-600'}
                   `}
                 >
                   {isSelected && (
@@ -175,7 +175,7 @@ export default function PreferencesSelector({ userId }: Props) {
       </div>
 
       {/* Selected Count */}
-      <div className="text-sm text-gray-600">
+      <div className="text-sm text-gray-600 dark:text-gray-400">
         {selectedCategories.length} {selectedCategories.length === 1 ? 'categoría seleccionada' : 'categorías seleccionadas'}
       </div>
 
@@ -183,7 +183,7 @@ export default function PreferencesSelector({ userId }: Props) {
       <button
         onClick={handleSave}
         disabled={isSaving || selectedCategories.length === 0}
-        className="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        className="w-full sm:w-auto px-6 py-3 bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 dark:ring-offset-gray-800 focus:ring-offset-2"
       >
         {isSaving ? (
           <>

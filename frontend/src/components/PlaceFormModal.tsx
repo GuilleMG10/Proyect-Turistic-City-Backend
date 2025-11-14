@@ -112,20 +112,20 @@ export default function PlaceFormModal({ place, isOpen, onClose, onSuccess }: Pr
       onClick={onClose}
     >
       <section 
-        className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto" 
+        className="bg-white dark:bg-gray-800 rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto" 
         role="dialog" 
         aria-modal="true" 
         aria-labelledby="place-form-title"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <header className="sticky top-0 bg-white border-b p-4 flex items-center justify-between">
-          <h2 id="place-form-title" className="text-xl font-semibold">
+        <header className="bg-white dark:bg-gray-800 border-b dark:border-gray-700 p-4 flex items-center justify-between">
+          <h2 id="place-form-title" className="text-xl font-semibold text-gray-900 dark:text-white">
             {place ? 'Editar Lugar' : 'Crear Nuevo Lugar'}
           </h2>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-gray-100"
             aria-label="Cerrar formulario"
           >
             <X className="h-5 w-5" aria-hidden="true" />
@@ -135,14 +135,14 @@ export default function PlaceFormModal({ place, isOpen, onClose, onSuccess }: Pr
         {/* Content */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded" role="alert">
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded" role="alert">
               <strong className="font-medium">Error:</strong> {error}
             </div>
           )}
 
           {/* Name */}
           <div>
-            <label htmlFor="place-name" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="place-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Nombre del Lugar *
             </label>
             <input
@@ -151,14 +151,14 @@ export default function PlaceFormModal({ place, isOpen, onClose, onSuccess }: Pr
               required
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Ej: Plaza Murillo"
             />
           </div>
 
           {/* Description */}
           <div>
-            <label htmlFor="place-description" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="place-description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Descripción *
             </label>
             <textarea
@@ -167,14 +167,14 @@ export default function PlaceFormModal({ place, isOpen, onClose, onSuccess }: Pr
               rows={3}
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Describe el lugar turístico..."
             />
           </div>
 
           {/* Location with Map Picker */}
           <div>
-            <label htmlFor="place-location" className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
+            <label htmlFor="place-location" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-2">
               <MapPin className="h-4 w-4" />
               Ubicación *
             </label>
@@ -184,7 +184,7 @@ export default function PlaceFormModal({ place, isOpen, onClose, onSuccess }: Pr
               required
               value={formData.location}
               onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Ej: Centro, La Paz"
             />
           </div>
@@ -198,7 +198,7 @@ export default function PlaceFormModal({ place, isOpen, onClose, onSuccess }: Pr
 
           {/* Category */}
           <div>
-            <label htmlFor="place-category" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="place-category" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Categoría *
             </label>
             <input
@@ -207,14 +207,14 @@ export default function PlaceFormModal({ place, isOpen, onClose, onSuccess }: Pr
               required
               value={formData.category}
               onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Ej: Histórico, Natural, Cultural"
             />
           </div>
 
           {/* Image Link */}
           <div>
-            <label htmlFor="place-image" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="place-image" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               URL de la Imagen
             </label>
             <input
@@ -222,7 +222,7 @@ export default function PlaceFormModal({ place, isOpen, onClose, onSuccess }: Pr
               type="url"
               value={formData.link_image}
               onChange={(e) => setFormData({ ...formData, link_image: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="https://ejemplo.com/imagen.jpg"
             />
           </div>
@@ -234,19 +234,19 @@ export default function PlaceFormModal({ place, isOpen, onClose, onSuccess }: Pr
               type="checkbox"
               checked={formData.active}
               onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded"
             />
-            <label htmlFor="place-active" className="text-sm font-medium text-gray-700">
+            <label htmlFor="place-active" className="text-sm font-medium text-gray-700 dark:text-gray-300">
               Lugar activo
             </label>
           </div>
 
           {/* Action Buttons */}
-          <footer className="flex gap-3 pt-4 border-t">
+          <footer className="flex gap-3 pt-4 border-t dark:border-gray-700">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
               disabled={isLoading}
             >
               Cancelar

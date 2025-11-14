@@ -1,17 +1,19 @@
 import { useState, Suspense, lazy, useEffect } from "react";
 import { Outlet, Link } from "react-router-dom";
-import { Bell } from "lucide-react";
+import { Bell, Bot } from "lucide-react";
 import SkipLinks from "./components/SkipLinks";
 import UserMenu from "./components/UserMenu";
 import LoginModal from "./components/LoginModal";
 import NotificationsPopup from "./components/NotificationsPopup";
 import { checkAndGenerateNotifications, getUnreadCount, clearOldNotifications } from "./utils/eventNotifications";
 import { ApiService } from "./services/api";
+import { useTheme } from "./hooks/useTheme";
 
 // Lazy load AIChat component
 const AIChat = lazy(() => import("./components/AIChat"));
 
 export default function App() {
+  useTheme(); // Initialize theme
   const [isAIOpen, setIsAIOpen] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -56,19 +58,19 @@ export default function App() {
   }, [isAIOpen, isNotificationsOpen, isLoginOpen]);
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
       <SkipLinks />
 
-      <header className="sticky top-0 z-10 bg-white border-b">
+      <header className="sticky top-0 z-10 bg-white dark:bg-gray-800 border-b dark:border-gray-700">
         <div className="mx-auto max-w-7xl px-6 py-3 flex items-center justify-between">
           <Link to="/" className="text-2xl font-semibold hover:text-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md">
             <h1>Culturistas</h1>
           </Link>
 
-          <nav aria-label="Main navigation" className="flex items-center gap-3">
+          <nav aria-label="Main navigation" className="flex items-center gap-2 md:gap-3">
             <button
               onClick={() => setIsNotificationsOpen(true)}
-              className="relative rounded-md border px-3 py-1.5 text-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center gap-2"
+              className="relative rounded-md border dark:border-gray-600 p-2 md:px-3 md:py-1.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center gap-2"
               aria-label={`Notificaciones${unreadCount > 0 ? ` (${unreadCount} sin leer)` : ''}`}
             >
               <Bell className="h-4 w-4" />
@@ -80,10 +82,11 @@ export default function App() {
             </button>
             <button
               onClick={() => setIsAIOpen(true)}
-              className="rounded-md border px-3 py-1.5 text-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              aria-label="Open AI Assistant"
+              className="rounded-md border dark:border-gray-600 p-2 md:px-3 md:py-1.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center gap-2"
+              aria-label="Asistente de IA"
             >
-              Asistente
+              <Bot className="h-4 w-4" />
+              <span className="hidden sm:inline">Asistente</span>
             </button>
             <UserMenu onLoginClick={() => setIsLoginOpen(true)} />
           </nav>

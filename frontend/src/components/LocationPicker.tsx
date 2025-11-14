@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import { LatLng, Icon } from 'leaflet';
 import type * as L from 'leaflet';
 import { Search, MapPin, Loader2 } from 'lucide-react';
+import { useThemeStore } from '../store/themeStore';
 import 'leaflet/dist/leaflet.css';
 
 // Fix for default marker icon
@@ -38,6 +39,8 @@ function LocationMarker({ position, onPositionChange }: {
 }
 
 export default function LocationPicker({ latitude, longitude, onLocationChange, className = '' }: Props) {
+  const theme = useThemeStore((state) => state.theme);
+  const isDark = theme === 'dark';
   const [position, setPosition] = useState<LatLng>(new LatLng(latitude || -17.3935, longitude || -66.1570));
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
@@ -127,7 +130,7 @@ export default function LocationPicker({ latitude, longitude, onLocationChange, 
     <div className={className}>
       {/* Search Bar */}
       <form onSubmit={handleSearch} onClick={(e) => e.stopPropagation()} className="mb-3">
-        <label htmlFor="location-search" className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="location-search" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           Buscar Ubicación
         </label>
         <div className="flex gap-2">
@@ -138,10 +141,10 @@ export default function LocationPicker({ latitude, longitude, onLocationChange, 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Ej: Plaza Murillo, Cochabamba"
-              className="w-full px-3 py-2 pl-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 pl-10 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
               disabled={isSearching}
             />
-            <MapPin className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" aria-hidden="true" />
+            <MapPin className="absolute left-3 top-2.5 h-5 w-5 text-gray-400 dark:text-gray-500" aria-hidden="true" />
           </div>
           <button
             type="button"
@@ -150,7 +153,7 @@ export default function LocationPicker({ latitude, longitude, onLocationChange, 
               handleSearch(e as unknown as React.FormEvent<HTMLFormElement>);
             }}
             disabled={isSearching || !searchQuery.trim()}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-4 py-2 bg-blue-600 dark:bg-blue-700 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {isSearching ? (
               <>
@@ -166,28 +169,33 @@ export default function LocationPicker({ latitude, longitude, onLocationChange, 
           </button>
         </div>
         {searchError && (
-          <p className="text-sm text-red-600 mt-1">{searchError}</p>
+          <p className="text-sm text-red-600 dark:text-red-400 mt-1">{searchError}</p>
         )}
       </form>
 
       {/* Map */}
-      <div className="border border-gray-300 rounded-md overflow-hidden h-[300px] relative z-0">
+      <div className="border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden h-[300px] relative z-0">
         <MapContainer
           center={position}
           zoom={13}
           style={{ height: '100%', width: '100%' }}
           ref={mapRef}
+          attributionControl={false}
         >
           <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution=''
+            url={
+              isDark
+                ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            }
           />
           <LocationMarker position={position} onPositionChange={handlePositionChange} />
         </MapContainer>
       </div>
 
       {/* Coordinates Display */}
-      <div className="mt-2 text-sm text-gray-600 flex items-center gap-2">
+      <div className="mt-2 text-sm text-gray-600 dark:text-gray-400 flex items-center gap-2">
         <MapPin className="h-4 w-4" aria-hidden="true" />
         <span>
           Coordenadas seleccionadas: <strong>{position.lat.toFixed(6)}</strong>, <strong>{position.lng.toFixed(6)}</strong>

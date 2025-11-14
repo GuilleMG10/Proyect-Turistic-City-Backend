@@ -38,10 +38,10 @@ export default function SkipLinks() {
 
   return (
     <nav aria-label="Skip links" className="sr-only focus-within:not-sr-only">
-      <div className="fixed top-0 left-0 z-50 bg-white border border-gray-300 rounded-br-md shadow-lg">
+      <div className="fixed top-0 left-0 z-50 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-br-md shadow-lg">
         <a
           href="#main-content"
-          className="block px-4 py-2 text-sm text-blue-600 hover:text-blue-800 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-blue-50"
+          className="block px-4 py-2 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-blue-50 dark:focus:bg-gray-700"
           onClick={(e) => {
             e.preventDefault();
             const main = document.getElementById('main-content');
@@ -55,7 +55,7 @@ export default function SkipLinks() {
         </a>
         <a
           href="#main-navigation"
-          className="block px-4 py-2 text-sm text-blue-600 hover:text-blue-800 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-blue-50"
+          className="block px-4 py-2 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-blue-50 dark:focus:bg-gray-700"
           onClick={(e) => {
             e.preventDefault();
             const nav = document.querySelector('nav[aria-label="Main navigation"]');
@@ -68,7 +68,7 @@ export default function SkipLinks() {
         </a>
         <a
           href="#search"
-          className="block px-4 py-2 text-sm text-blue-600 hover:text-blue-800 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-blue-50"
+          className="block px-4 py-2 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-blue-50 dark:focus:bg-gray-700"
           onClick={(e) => {
             e.preventDefault();
             const search = document.querySelector('input[placeholder*="Buscar"]');

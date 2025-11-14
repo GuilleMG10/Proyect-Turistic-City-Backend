@@ -1,14 +1,19 @@
 @import "tailwindcss";
 
-/* Leaflet MarkerCluster styles */
-@import "leaflet.markercluster/dist/MarkerCluster.css";
-@import "leaflet.markercluster/dist/MarkerCluster.Default.css";
+@variant dark (&:where(.dark, .dark *));
 
 /* opcional: estilos globales */
 :root { color-scheme: light; }
+:root.dark { color-scheme: dark; }
 body { 
+  margin: 0;
   background-color: rgb(249 250 251);
   color: rgb(17 24 39);
+  transition: background-color 0.3s, color 0.3s;
+}
+.dark body { 
+  background-color: rgb(17 24 39);
+  color: rgb(243 244 246);
 }
 
 /* Image fallback styles */
@@ -41,6 +46,45 @@ img[src*="unsplash.com"] {
 
 .leaflet-popup-content {
   margin: 0.5rem;
+}
+
+/* Dark mode for Leaflet */
+.dark .leaflet-popup-content-wrapper {
+  background: rgb(31 41 55);
+  color: rgb(243 244 246);
+}
+
+.dark .leaflet-popup-tip {
+  background: rgb(31 41 55);
+}
+
+.dark .leaflet-control-zoom a {
+  background: rgb(31 41 55);
+  color: rgb(243 244 246);
+  border-color: rgb(55 65 81);
+}
+
+.dark .leaflet-control-zoom a:hover {
+  background: rgb(55 65 81);
+}
+
+.dark .leaflet-control-attribution {
+  background: rgba(31, 41, 55, 0.8);
+  color: rgb(209 213 219);
+}
+
+.dark .leaflet-control-attribution a {
+  color: rgb(147 197 253);
+}
+
+/* Hide scrollbar but keep functionality */
+* {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+*::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
 }
 
 /* Custom numbered icon styles */

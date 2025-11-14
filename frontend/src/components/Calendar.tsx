@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronLeft, ChevronRight, Plus, Heart } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Heart, MapPin, DollarSign } from "lucide-react";
 import type { EventWithStatus } from "../types";
 import { useUserStore } from "../store/userStore";
 
@@ -100,26 +100,26 @@ export default function Calendar({ events, onEventView, onCreateEvent }: Props) 
     <section className="space-y-6">
       {/* Calendar Header */}
       <header className="flex items-center justify-between">
-        <h2 className="text-2xl font-semibold">
+        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
           {MONTHS[currentMonth]} {currentYear}
         </h2>
         <nav className="flex items-center gap-2" aria-label="Navegación de calendario">
           <button
             onClick={() => navigateMonth('prev')}
-            className="p-2 hover:bg-gray-100 rounded-md"
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md text-gray-900 dark:text-gray-100"
             aria-label="Mes anterior"
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
           <button
             onClick={() => setCurrentDate(new Date())}
-            className="px-3 py-1 text-sm border rounded-md hover:bg-gray-50"
+            className="px-3 py-1 text-sm border dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100"
           >
             Hoy
           </button>
           <button
             onClick={() => navigateMonth('next')}
-            className="p-2 hover:bg-gray-100 rounded-md"
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md text-gray-900 dark:text-gray-100"
             aria-label="Mes siguiente"
           >
             <ChevronRight className="h-5 w-5" />
@@ -130,11 +130,11 @@ export default function Calendar({ events, onEventView, onCreateEvent }: Props) 
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Calendar Grid */}
         <section className="lg:col-span-2" aria-label="Calendario mensual">
-          <div className="bg-white rounded-lg border overflow-hidden">
+          <div className="bg-white dark:bg-gray-800 rounded-lg border dark:border-gray-700 overflow-hidden">
             {/* Days of week header */}
-            <header className="grid grid-cols-7 bg-gray-50">
+            <header className="grid grid-cols-7 bg-gray-50 dark:bg-gray-900">
               {DAYS.map(day => (
-                <div key={day} className="p-3 text-center text-sm font-medium text-gray-700">
+                <div key={day} className="p-3 text-center text-sm font-medium text-gray-700 dark:text-gray-300">
                   {day}
                 </div>
               ))}
@@ -148,14 +148,14 @@ export default function Calendar({ events, onEventView, onCreateEvent }: Props) 
                 return (
                   <div
                     key={index}
-                    className={`min-h-[120px] p-2 border-r border-b border-gray-100 cursor-pointer hover:bg-gray-50 ${day ? 'bg-white' : 'bg-gray-25'
-                      } ${isSelected(day || 0) ? 'bg-blue-50 border-blue-200' : ''}`}
+                    className={`min-h-[120px] p-2 border-r border-b border-gray-100 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 ${day ? 'bg-white dark:bg-gray-800' : 'bg-gray-25 dark:bg-gray-900'
+                      } ${isSelected(day || 0) ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-700' : ''}`}
                     onClick={() => day && handleDateClick(day)}
                   >
                     {day && (
                       <>
                         <div className="flex items-center justify-between mb-2">
-                          <time className={`text-sm font-medium ${isToday(day) ? 'bg-blue-600 text-white w-6 h-6 rounded-full flex items-center justify-center' : ''
+                          <time className={`text-sm font-medium ${isToday(day) ? 'bg-blue-600 text-white w-6 h-6 rounded-full flex items-center justify-center' : 'text-gray-900 dark:text-gray-100'
                             }`}>
                             {day}
                           </time>
@@ -179,7 +179,7 @@ export default function Calendar({ events, onEventView, onCreateEvent }: Props) 
                             {dayEvents.slice(0, 3).map((event) => (
                               <div
                                 key={event.id}
-                                className={`bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs cursor-pointer hover:bg-blue-200 transition-colors ${selectedDate && selectedDate.getDate() === day ? 'ring-2 ring-blue-300' : ''
+                                className={`bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200 px-2 py-1 rounded text-xs cursor-pointer hover:bg-blue-200 dark:hover:bg-blue-900/60 transition-colors ${selectedDate && selectedDate.getDate() === day ? 'ring-2 ring-blue-300 dark:ring-blue-600' : ''
                                   }`}
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -191,7 +191,7 @@ export default function Calendar({ events, onEventView, onCreateEvent }: Props) 
                               </div>
                             ))}
                             {dayEvents.length > 2 && (
-                              <div className="text-[9px] text-gray-500 text-center pt-0.5">
+                              <div className="text-[9px] text-gray-500 dark:text-gray-400 text-center pt-0.5">
                                 +{dayEvents.length - 2}
                               </div>
                             )}
@@ -200,7 +200,7 @@ export default function Calendar({ events, onEventView, onCreateEvent }: Props) 
                           {/* Mobile: Show count only */}
                           <div className="md:hidden">
                             {dayEvents.length > 0 && (
-                              <div className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-xs font-medium text-center">
+                              <div className="bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200 px-2 py-0.5 rounded text-xs font-medium text-center">
                                 ({dayEvents.length})
                               </div>
                             )}
@@ -217,7 +217,7 @@ export default function Calendar({ events, onEventView, onCreateEvent }: Props) 
 
         {/* Selected Date Events */}
         <aside className="space-y-4" aria-label="Eventos del día seleccionado">
-          <h3 className="text-lg font-semibold">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
             {selectedDate ? (
               `Eventos - ${selectedDate.toLocaleDateString('es-ES', {
                 day: 'numeric',
@@ -246,9 +246,9 @@ export default function Calendar({ events, onEventView, onCreateEvent }: Props) 
                   };
 
                   return (
-                    <div key={event.id} className="bg-white border rounded-lg p-4 hover:shadow-sm transition-shadow">
+                    <div key={event.id} className="bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg p-4 hover:shadow-sm transition-shadow">
                       <div className="flex items-start justify-between mb-2">
-                        <h4 className="font-semibold text-sm">{event.name}</h4>
+                        <h4 className="font-semibold text-sm text-gray-900 dark:text-white">{event.name}</h4>
                         <div className="flex items-center gap-2">
                           {user && event.status !== 'finished' && (
                             <button
@@ -267,13 +267,20 @@ export default function Calendar({ events, onEventView, onCreateEvent }: Props) 
                           </mark>
                         </div>
                       </div>
-                      <p className="text-xs text-gray-600 mb-2 line-clamp-2">{event.description}</p>
-                      <p className="text-xs text-gray-500 mb-3">
-                        📍 {event.location} • 💰 Bs {event.price}
+                      <p className="text-xs text-gray-600 dark:text-gray-400 mb-2 line-clamp-2">{event.description}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 flex items-center gap-3">
+                        <span className="flex items-center gap-1">
+                          <MapPin className="h-3 w-3" />
+                          {event.location}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <DollarSign className="h-3 w-3" />
+                          Bs {event.price}
+                        </span>
                       </p>
                       <button
                         onClick={() => onEventView?.(event)}
-                        className="w-full bg-gray-900 text-white text-xs py-2 px-3 rounded hover:bg-black transition-colors"
+                        className="w-full bg-gray-900 dark:bg-gray-700 text-white text-xs py-2 px-3 rounded hover:bg-black dark:hover:bg-gray-600 transition-colors"
                       >
                         Ver detalles completos
                       </button>
@@ -282,12 +289,12 @@ export default function Calendar({ events, onEventView, onCreateEvent }: Props) 
                 })}
               </div>
             ) : (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                 <p>No hay eventos este día</p>
                 {onCreateEvent && (
                   <button
                     onClick={() => onCreateEvent(selectedDate)}
-                    className="mt-2 text-blue-600 hover:text-blue-700 text-sm"
+                    className="mt-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm"
                   >
                     ¿Quieres crear uno?
                   </button>
@@ -295,7 +302,7 @@ export default function Calendar({ events, onEventView, onCreateEvent }: Props) 
               </div>
             )
           ) : (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
               <p>Haz clic en una fecha para ver los eventos</p>
             </div>
           )}

@@ -134,18 +134,18 @@ export default function PlaceDetailsModal({ place, isOpen, onClose, onUpdate }: 
         onClick={onClose}
       >
       <section 
-        className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto" 
+        className="bg-white dark:bg-gray-800 rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto" 
         role="dialog" 
         aria-modal="true" 
-        aria-labelledby="place-modal-title"
+        aria-labelledby="place-details-title"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <header className="sticky top-0 bg-white border-b p-4 flex items-center justify-between">
-          <h2 id="place-modal-title" className="text-xl font-semibold">{place.name}</h2>
+        <header className="bg-white dark:bg-gray-800 border-b dark:border-gray-700 p-4 flex items-center justify-between">
+          <h2 id="place-modal-title" className="text-xl font-semibold text-gray-900 dark:text-white">{place.name}</h2>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-gray-100"
             aria-label="Cerrar detalles del lugar"
           >
             <X className="h-5 w-5" aria-hidden="true" />
@@ -173,8 +173,8 @@ export default function PlaceDetailsModal({ place, isOpen, onClose, onUpdate }: 
           {/* Rating and Status */}
           <aside className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <MapPin className="h-5 w-5 text-gray-500" />
-              <address className="font-medium not-italic">{place.location}</address>
+              <MapPin className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+              <address className="font-medium not-italic text-gray-900 dark:text-white">{place.location}</address>
             </div>
             <div className="flex items-center gap-2">
               {averageRating && (
@@ -193,20 +193,20 @@ export default function PlaceDetailsModal({ place, isOpen, onClose, onUpdate }: 
 
           {/* Description */}
           <section>
-            <h3 className="font-semibold mb-2">Descripción</h3>
-            <p className="text-gray-700">{place.description}</p>
+            <h3 className="font-semibold mb-2 text-gray-900 dark:text-white">Descripción</h3>
+            <p className="text-gray-700 dark:text-gray-300">{place.description}</p>
           </section>
 
           {/* Location Details */}
           <section>
-            <h3 className="font-semibold mb-2 flex items-center gap-2">
+            <h3 className="font-semibold mb-2 flex items-center gap-2 text-gray-900 dark:text-white">
               <MapPin className="h-4 w-4" />
               Ubicación Detallada
             </h3>
-            <address className="text-gray-700 mb-2 not-italic">{place.location}</address>
+            <address className="text-gray-700 dark:text-gray-300 mb-2 not-italic">{place.location}</address>
             {place.latitude && place.longitude && (
-              <aside className="bg-gray-50 p-3 rounded-lg">
-                <p className="text-sm text-gray-600">
+              <aside className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                <p className="text-sm text-gray-600 dark:text-gray-300">
                   <strong>Coordenadas:</strong> {place.latitude.toFixed(6)}, {place.longitude.toFixed(6)}
                 </p>
                 <button 
@@ -228,20 +228,20 @@ export default function PlaceDetailsModal({ place, isOpen, onClose, onUpdate }: 
 
           {/* Details Grid */}
           <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <article className="bg-gray-50 p-3 rounded-lg">
-              <div className="flex items-center gap-2 text-gray-600 mb-1">
+            <article className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+              <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400 mb-1">
                 <Users className="h-4 w-4" />
                 <strong className="text-sm font-medium">Categoría</strong>
               </div>
-              <p className="font-semibold">{place.category}</p>
+              <p className="font-semibold text-gray-900 dark:text-white">{place.category}</p>
             </article>
 
-            <article className="bg-gray-50 p-3 rounded-lg">
-              <div className="flex items-center gap-2 text-gray-600 mb-1">
+            <article className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+              <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400 mb-1">
                 <Calendar className="h-4 w-4" />
                 <strong className="text-sm font-medium">Registrado</strong>
               </div>
-              <p className="font-semibold">
+              <p className="font-semibold text-gray-900 dark:text-white">
                 <time dateTime={place.created_at}>{new Date(place.created_at).toLocaleDateString('es-ES')}</time>
               </p>
             </article>
@@ -252,26 +252,26 @@ export default function PlaceDetailsModal({ place, isOpen, onClose, onUpdate }: 
             <section className="border-t pt-6">
               <button
                 onClick={() => setShowAdditionalInfo(!showAdditionalInfo)}
-                className="w-full flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <div className="flex items-center gap-2">
-                  <ImageIcon className="h-5 w-5 text-gray-600" />
-                  <h3 className="font-semibold">Mostrar información adicional</h3>
-                  <span className="text-sm text-gray-500">
+                  <ImageIcon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                  <h3 className="font-semibold text-gray-900 dark:text-white">Mostrar información adicional</h3>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
                     ({additionalImages.length} {additionalImages.length === 1 ? 'imagen' : 'imágenes'})
                   </span>
                 </div>
                 {showAdditionalInfo ? (
-                  <ChevronUp className="h-5 w-5 text-gray-600" />
+                  <ChevronUp className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                 ) : (
-                  <ChevronDown className="h-5 w-5 text-gray-600" />
+                  <ChevronDown className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                 )}
               </button>
 
               {showAdditionalInfo && (
                 <div className="mt-4 space-y-4">
                   {/* Upload Section */}
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                  <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center">
                     <input
                       type="file"
                       accept="image/jpeg,image/jpg"
@@ -287,10 +287,10 @@ export default function PlaceDetailsModal({ place, isOpen, onClose, onUpdate }: 
                       }`}
                     >
                       <Upload className="h-8 w-8 text-gray-400" />
-                      <span className="text-sm font-medium text-gray-700">
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                         {isUploadingImage ? 'Cargando...' : 'Cargar imagen JPG'}
                       </span>
-                      <span className="text-xs text-gray-500">Máx. 5MB</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">Máx. 5MB</span>
                     </label>
                   </div>
 
@@ -323,28 +323,28 @@ export default function PlaceDetailsModal({ place, isOpen, onClose, onUpdate }: 
           {/* Reviews */}
           {place.reviews && place.reviews.length > 0 && (
             <section>
-              <h3 className="font-semibold mb-3 flex items-center gap-2">
+              <h3 className="font-semibold mb-3 flex items-center gap-2 text-gray-900 dark:text-white">
                 <Star className="h-4 w-4" />
                 Reseñas ({place.reviews.length})
               </h3>
               <div className="space-y-3">
                 {place.reviews.map((review) => (
-                  <article key={review.id} className="bg-gray-50 p-3 rounded-lg">
+                  <article key={review.id} className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
                     <div className="flex items-center gap-2 mb-2">
                       <div className="flex items-center">
                         {[...Array(5)].map((_, i) => (
                           <Star
                             key={i}
                             className={`h-4 w-4 ${
-                              i < review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
+                              i < review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300 dark:text-gray-600'
                             }`}
                           />
                         ))}
                       </div>
-                      <strong className="text-sm font-medium">{review.rating}/5</strong>
+                      <strong className="text-sm font-medium text-gray-900 dark:text-white">{review.rating}/5</strong>
                     </div>
-                    <p className="text-sm text-gray-700">{review.comment}</p>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-sm text-gray-700 dark:text-gray-300">{review.comment}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                       <time dateTime={review.created_at}>{new Date(review.created_at).toLocaleDateString('es-ES')}</time>
                     </p>
                   </article>
@@ -377,7 +377,7 @@ export default function PlaceDetailsModal({ place, isOpen, onClose, onUpdate }: 
               <>
                 {user && (
                   <button 
-                    className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
                     aria-describedby="favorite-button-desc"
                   >
                     Agregar a favoritos
@@ -387,7 +387,7 @@ export default function PlaceDetailsModal({ place, isOpen, onClose, onUpdate }: 
                   </button>
                 )}
                 <button 
-                  className={`${user ? 'flex-1' : 'w-full'} border border-gray-300 px-4 py-2 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  className={`${user ? 'flex-1' : 'w-full'} border border-gray-300 dark:border-gray-600 px-4 py-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-gray-100`}
                   aria-describedby="share-place-desc"
                 >
                   Compartir lugar

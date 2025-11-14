@@ -171,16 +171,16 @@ export default function AIChat({ isOpen, onClose }: Props) {
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end md:items-center justify-center z-50 p-0 md:p-4" role="dialog" aria-modal="true">
-      <div className="bg-white rounded-t-lg md:rounded-lg w-full max-w-md max-h-[85vh] md:h-[600px] flex flex-col shadow-xl" role="document">
+      <div className="bg-white dark:bg-gray-800 rounded-t-lg md:rounded-lg w-full max-w-md max-h-[85vh] md:h-[600px] flex flex-col shadow-xl" role="document">
         {/* Header */}
-        <header className="flex items-center justify-between p-4 border-b">
+        <header className="flex items-center justify-between p-4 border-b dark:border-gray-700">
           <div className="flex items-center gap-2">
-            <MessageCircle className="h-5 w-5 text-blue-600" />
-            <h3 className="font-semibold">Asistente de inteligencia artificial</h3>
+            <MessageCircle className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            <h3 className="font-semibold text-gray-900 dark:text-white">Asistente de inteligencia artificial</h3>
           </div>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-gray-100 rounded"
+            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-900 dark:text-gray-100"
             aria-label="Cerrar chat"
           >
             <X className="h-5 w-5" />
@@ -190,8 +190,8 @@ export default function AIChat({ isOpen, onClose }: Props) {
         {/* Messages */}
         <section className="flex-1 overflow-y-auto p-4 space-y-4" aria-label="Mensajes del chat">
           {messages.length === 0 && (
-            <div className="text-center text-gray-500 mt-8">
-              <MessageCircle className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+            <div className="text-center text-gray-500 dark:text-gray-400 mt-8">
+              <MessageCircle className="h-12 w-12 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
               <p>¡Hola! Soy tu asistente turístico.</p>
               <p className="text-sm">Pregúntame sobre lugares para visitar en Cochabamba.</p>
             </div>
@@ -212,11 +212,11 @@ export default function AIChat({ isOpen, onClose }: Props) {
                   <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                 ) : (
                   <div className="text-sm prose prose-sm max-w-none 
-                    prose-headings:font-bold prose-headings:text-gray-900 prose-headings:mt-3 prose-headings:mb-2
+                    prose-headings:font-bold prose-headings:text-gray-900 dark:prose-headings:text-gray-100 prose-headings:mt-3 prose-headings:mb-2
                     prose-h3:text-base prose-h2:text-lg prose-h1:text-xl
-                    prose-p:my-2 prose-p:leading-relaxed
-                    prose-ul:my-2 prose-ol:my-2 prose-li:my-1
-                    prose-strong:text-gray-900 prose-strong:font-semibold">
+                    prose-p:my-2 prose-p:leading-relaxed dark:prose-p:text-gray-200
+                    prose-ul:my-2 prose-ol:my-2 prose-li:my-1 dark:prose-li:text-gray-200
+                    prose-strong:text-gray-900 dark:prose-strong:text-gray-100 prose-strong:font-semibold">
                     <ReactMarkdown>{message.content}</ReactMarkdown>
                   </div>
                 )}
@@ -233,7 +233,7 @@ export default function AIChat({ isOpen, onClose }: Props) {
         </section>
 
         {/* Input */}
-        <footer className="p-4 border-t">
+        <footer className="p-4 border-t dark:border-gray-700">
           <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); sendMessage(); }}>
             <input
               type="text"
@@ -241,7 +241,7 @@ export default function AIChat({ isOpen, onClose }: Props) {
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Pregunta sobre lugares turísticos..."
-              className="flex-1 rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 rounded-lg border dark:border-gray-600 px-3 py-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               disabled={isLoading}
               aria-label="Mensaje a enviar"
             />

@@ -78,7 +78,7 @@ const EventCard = memo(function EventCard({ event, onInterest, onView, showTag =
   }
 
   return (
-    <article className="overflow-hidden rounded-2xl bg-white shadow-sm border focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2">
+    <article className="overflow-hidden rounded-2xl bg-white dark:bg-gray-800 shadow-sm dark:shadow-gray-900/50 border dark:border-gray-700 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2">
       {/* Header with date and status */}
       <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4">
         <div className="flex items-center justify-between mb-2">
@@ -114,14 +114,14 @@ const EventCard = memo(function EventCard({ event, onInterest, onView, showTag =
         {/* Title + Rating */}
         <div className="flex items-start justify-between">
           <div className="min-w-0">
-            <h3 className="font-semibold text-lg leading-tight line-clamp-1">{event.name}</h3>
-            <div className="mt-1 flex items-center gap-1 text-sm text-gray-600">
+            <h3 className="font-semibold text-lg leading-tight line-clamp-1 dark:text-white">{event.name}</h3>
+            <div className="mt-1 flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
               <MapPin className="h-4 w-4" aria-hidden="true" />
               <address className="line-clamp-1 not-italic">{event.location}</address>
             </div>
           </div>
           {averageRating && (
-            <div className="flex items-center gap-1 text-amber-600" aria-label={`Calificación: ${averageRating.toFixed(1)} de 5 estrellas`}>
+            <div className="flex items-center gap-1 text-amber-600 dark:text-amber-500" aria-label={`Calificación: ${averageRating.toFixed(1)} de 5 estrellas`}>
               <Star className="h-5 w-5 fill-amber-500" aria-hidden="true" />
               <strong className="font-medium">
                 {averageRating.toFixed(1)}
@@ -130,24 +130,24 @@ const EventCard = memo(function EventCard({ event, onInterest, onView, showTag =
           )}
         </div>
 
-        <p className="text-sm text-gray-700 line-clamp-2">{event.description}</p>
+        <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-2">{event.description}</p>
 
         {/* Event details */}
         <div className="grid grid-cols-2 gap-2 text-xs">
-          <div className="flex items-center gap-2 rounded-full bg-gray-100 px-2 py-1">
+          <div className="flex items-center gap-2 rounded-full bg-gray-100 dark:bg-gray-700 dark:text-gray-300 px-2 py-1">
             <Clock className="h-3.5 w-3.5" aria-hidden="true" />
             <time dateTime={event.event_date}>{formattedTime}</time>
           </div>
-          <div className="flex items-center gap-2 rounded-full bg-gray-100 px-2 py-1">
+          <div className="flex items-center gap-2 rounded-full bg-gray-100 dark:bg-gray-700 dark:text-gray-300 px-2 py-1">
             <BadgeDollarSign className="h-3.5 w-3.5" aria-hidden="true" />
             <strong>Bs {event.price}</strong>
           </div>
-          <div className="flex items-center gap-2 rounded-full bg-gray-100 px-2 py-1">
+          <div className="flex items-center gap-2 rounded-full bg-gray-100 dark:bg-gray-700 dark:text-gray-300 px-2 py-1">
             <Users className="h-3.5 w-3.5" aria-hidden="true" />
             <small>Todas las edades</small>
           </div>
-          <div className="flex items-center gap-2 rounded-full bg-gray-100 px-2 py-1">
-            <i className="h-2 w-2 rounded-full bg-purple-500 inline-block" aria-hidden="true" />
+          <div className="flex items-center gap-2 rounded-full bg-gray-100 dark:bg-gray-700 dark:text-gray-300 px-2 py-1">
+            <i className="h-2 w-2 rounded-full bg-purple-500 dark:bg-purple-400 inline-block" aria-hidden="true" />
             <em>{event.category}</em>
           </div>
         </div>
@@ -156,7 +156,7 @@ const EventCard = memo(function EventCard({ event, onInterest, onView, showTag =
         <div className="pt-2 flex gap-3">
           {user && event.status !== 'finished' && (
             <button
-              className="flex-1 rounded-md border px-3 py-2 text-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              className="flex-1 rounded-md border dark:border-gray-600 dark:text-gray-200 px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               onClick={handleInterest}
               aria-label={`Mostrar interés en ${event.name}`}
             >
@@ -164,7 +164,7 @@ const EventCard = memo(function EventCard({ event, onInterest, onView, showTag =
             </button>
           )}
           <button
-            className={`${(user && event.status !== 'finished') ? 'flex-1' : 'w-full'} rounded-md bg-gray-900 text-white px-3 py-2 text-sm hover:bg-black focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2`}
+            className={`${(user && event.status !== 'finished') ? 'flex-1' : 'w-full'} rounded-md bg-gray-900 dark:bg-gray-700 text-white px-3 py-2 text-sm hover:bg-black dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2`}
             onClick={handleView}
             aria-label={`Ver detalles de ${event.name}`}
           >

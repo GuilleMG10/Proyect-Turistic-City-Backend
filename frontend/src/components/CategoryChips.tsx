@@ -47,8 +47,8 @@ export default function CategoryChips({
             onClick={() => onCategorySelect(category)}
             className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm border shadow-sm transition-colors whitespace-nowrap ${
               selectedCategory === category
-                ? "bg-gray-900 text-white border-gray-900"
-                : "bg-white hover:bg-gray-50"
+                ? "bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 border-gray-900 dark:border-gray-100"
+                : "bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100"
             }`}
           >
             {category}
@@ -60,7 +60,7 @@ export default function CategoryChips({
       <div className="md:hidden relative" ref={dropdownRef}>
         <button
           onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-          className="w-full flex items-center justify-between gap-2 rounded-lg px-4 py-3 text-sm border shadow-sm bg-white hover:bg-gray-50 transition-colors"
+          className="w-full flex items-center justify-between gap-2 rounded-lg px-4 py-3 text-sm border dark:border-gray-700 shadow-sm bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-gray-900 dark:text-gray-100"
           aria-label="Seleccionar categoría"
           aria-expanded={isDropdownOpen}
         >
@@ -72,15 +72,15 @@ export default function CategoryChips({
         </button>
 
         {isDropdownOpen && (
-          <div className="absolute top-full left-0 right-0 mt-2 bg-white border rounded-lg shadow-lg max-h-60 overflow-y-auto z-50">
+          <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto z-50">
             {categories.map((category) => (
               <button
                 key={category}
                 onClick={() => handleCategorySelect(category)}
                 className={`w-full text-left px-4 py-3 text-sm transition-colors ${
                   selectedCategory === category
-                    ? "bg-gray-900 text-white font-medium"
-                    : "hover:bg-gray-50"
+                    ? "bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 font-medium"
+                    : "hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100"
                 }`}
               >
                 {category}

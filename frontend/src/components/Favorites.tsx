@@ -69,7 +69,7 @@ export default function Favorites({
           <section className="space-y-6">
             {favoriteEvents.length > 0 && (
               <section>
-                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-900 dark:text-white">
                   <Heart className="h-5 w-5 text-red-500" />
                   Eventos Favoritos ({favoriteEvents.length})
                 </h3>

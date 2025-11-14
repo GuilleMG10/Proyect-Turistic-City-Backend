@@ -1,4 +1,4 @@
-import type { Event, User, Place, EventWithStatus, EventStatus, UserInterest, UserPreference, PlaceFavorite } from '../types';
+import type { Event, User, Place, EventWithStatus, EventStatus, UserInterest, UserPreference, PlaceFavorite, Itinerary, ItineraryItem } from '../types';
 
 // RequestInit is a global type from lib.dom.d.ts
 /* global RequestInit */
@@ -319,5 +319,56 @@ export class ApiService {
       method: 'DELETE',
     });
   }
+
+  // Itineraries API
+  static async getItineraries(): Promise<Itinerary[]> {
+    return this.request<Itinerary[]>('/itineraries');
+  }
+
+  static async getItineraryById(id: number): Promise<Itinerary> {
+    return this.request<Itinerary>(`/itineraries/${id}`);
+  }
+
+  static async createItinerary(itinerary: Omit<Itinerary, 'id' | 'created_at'>): Promise<Itinerary> {
+    const result = await this.request<Itinerary>('/itineraries', {
+      method: 'POST',
+      body: JSON.stringify(itinerary),
+    });
+    this.clearCache();
+    return result;
+  }
+
+  static async updateItinerary(id: number, itinerary: Partial<Omit<Itinerary, 'id' | 'created_at'>>): Promise<Itinerary> {
+    const result = await this.request<Itinerary>(`/itineraries/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(itinerary),
+    });
+    this.clearCache();
+    return result;
+  }
+
+  static async deleteItinerary(id: number): Promise<void> {
+    await this.request<void>(`/itineraries/${id}`, {
+      method: 'DELETE',
+    });
+    this.clearCache();
+  }
+
+  static async addItineraryItem(itineraryId: number, item: Omit<ItineraryItem, 'id' | 'itinerary_id'>): Promise<ItineraryItem> {
+    const result = await this.request<ItineraryItem>(`/itineraries/${itineraryId}/items`, {
+      method: 'POST',
+      body: JSON.stringify(item),
+    });
+    this.clearCache();
+    return result;
+  }
+
+  static async deleteItineraryItem(itineraryId: number, itemId: number): Promise<void> {
+    await this.request<void>(`/itineraries/${itineraryId}/items/${itemId}`, {
+      method: 'DELETE',
+    });
+    this.clearCache();
+  }
 }
+
 

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
-import { User, LogOut, UserCircle } from 'lucide-react';
+import { User, LogOut, UserCircle, Moon, Sun } from 'lucide-react';
 import { useUserStore } from '../store/userStore';
+import { useTheme } from '../hooks/useTheme';
 import { useNavigate } from 'react-router-dom';
 
 type Props = {
@@ -9,6 +10,7 @@ type Props = {
 
 export default function UserMenu({ onLoginClick }: Props) {
   const { user, logout } = useUserStore();
+  const { theme, toggleTheme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -41,7 +43,7 @@ export default function UserMenu({ onLoginClick }: Props) {
     return (
       <button
         onClick={onLoginClick}
-        className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
       >
         <User className="h-4 w-4" />
         <span className="hidden sm:inline">Iniciar Sesión</span>
@@ -53,20 +55,20 @@ export default function UserMenu({ onLoginClick }: Props) {
     <div className="relative" ref={menuRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         aria-label="Menú de usuario"
         aria-expanded={isOpen}
       >
         <div className="h-8 w-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
           {user.name.charAt(0).toUpperCase()}
         </div>
-        <span className="hidden sm:inline font-medium">{user.name}</span>
+        <span className="hidden sm:inline font-medium text-gray-900 dark:text-gray-100">{user.name}</span>
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border overflow-hidden z-50">
+        <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-xl dark:shadow-gray-900/50 border dark:border-gray-700 overflow-hidden z-50">
           {/* User Info */}
-          <div className="p-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white">
+          <div className="p-4 bg-gradient-to-r from-cyan-500 to-blue-600 text-white">
             <div className="flex items-center gap-3">
               <div className="h-12 w-12 bg-white/20 rounded-full flex items-center justify-center text-xl font-bold">
                 {user.name.charAt(0).toUpperCase()}
@@ -80,7 +82,7 @@ export default function UserMenu({ onLoginClick }: Props) {
 
           {/* Menu Items */}
           <div className="py-2">
-            <div className="px-4 py-2 text-sm text-gray-500">
+            <div className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">
               {user.email && (
                 <p className="truncate">{user.email}</p>
               )}
@@ -89,19 +91,36 @@ export default function UserMenu({ onLoginClick }: Props) {
               )}
             </div>
 
-            <hr className="my-2" />
+            <hr className="my-2 border-gray-200 dark:border-gray-600" />
 
             <button
               onClick={handleViewProfile}
-              className="w-full px-4 py-2 text-left flex items-center gap-3 hover:bg-gray-100 transition-colors text-gray-700"
+              className="w-full px-4 py-2 text-left flex items-center gap-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-200"
             >
               <UserCircle className="h-4 w-4" />
               <span className="font-medium">Ver Perfil</span>
             </button>
 
             <button
+              onClick={() => {
+                toggleTheme();
+                setIsOpen(false);
+              }}
+              className="w-full px-4 py-2 text-left flex items-center gap-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-200"
+            >
+              {theme === 'light' ? (
+                <Moon className="h-4 w-4" />
+              ) : (
+                <Sun className="h-4 w-4" />
+              )}
+              <span className="font-medium">
+                Tema {theme === 'light' ? 'Oscuro' : 'Claro'}
+              </span>
+            </button>
+
+            <button
               onClick={handleLogout}
-              className="w-full px-4 py-2 text-left flex items-center gap-3 hover:bg-gray-100 transition-colors text-red-600"
+              className="w-full px-4 py-2 text-left flex items-center gap-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-red-600 dark:text-red-400"
             >
               <LogOut className="h-4 w-4" />
               <span className="font-medium">Cerrar Sesión</span>

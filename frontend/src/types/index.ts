@@ -8,6 +8,7 @@ export type Place = {
   latitude: number;
   longitude: number;
   category: string;
+  price: number;               // Added price field for itinerary
   created_at: string;          // timestamp
   link_image: string | null;   // matches DB field name
   active: boolean;             // matches DB field name
@@ -87,4 +88,61 @@ export type EventStatus = 'upcoming' | 'happening' | 'finished';
 
 export type EventWithStatus = Event & {
   status: EventStatus;
+};
+
+// Itinerary types
+export type Itinerary = {
+  id: number;
+  user_id: number;
+  name: string;
+  date: string;                // Date of the itinerary
+  start_time: string;          // Start time (e.g., "09:00")
+  end_time: string;            // End time (e.g., "18:00")
+  budget: number;              // Total budget
+  preferences: string;         // JSON string of category preferences
+  total_cost: number;          // Calculated total cost
+  created_at: string;
+  items?: ItineraryItem[];
+};
+
+export type ItineraryItem = {
+  id: number;
+  itinerary_id: number;
+  place_id: number | null;     // Reference to place
+  event_id: number | null;     // Reference to event
+  order: number;               // Order in the itinerary
+  start_time: string;          // Start time for this item (e.g., "09:00")
+  end_time: string;            // End time for this item (e.g., "11:00")
+  notes: string;               // Additional notes
+  place?: Place;               // Populated place data
+  event?: EventWithStatus;     // Populated event data
+};
+
+// For AI generation request
+export type ItineraryGenerateRequest = {
+  date: string;
+  start_time: string;
+  end_time: string;
+  budget: number;
+  preferences: string[];       // Array of category preferences
+  pace?: 'relaxed' | 'moderate' | 'intense';
+  starting_point?: {
+    latitude: number;
+    longitude: number;
+  };
+};
+
+// AI generated itinerary response (before saving)
+export type GeneratedItinerary = {
+  items: Array<{
+    type: 'place' | 'event';
+    item_id: number;
+    start_time: string;
+    end_time: string;
+    estimated_cost: number;
+    notes: string;
+  }>;
+  total_cost: number;
+  total_duration: string;
+  route_optimization: string;
 };

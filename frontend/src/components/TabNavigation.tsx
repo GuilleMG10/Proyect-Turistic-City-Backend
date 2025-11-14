@@ -1,4 +1,4 @@
-type TabType = 'explorar' | 'eventos' | 'para-ti' | 'calendario' | 'mapa';
+type TabType = 'explorar' | 'eventos' | 'para-ti' | 'calendario' | 'mapa' | 'itinerario';
 
 type TabConfig = {
   key: TabType;
@@ -17,15 +17,15 @@ export default function TabNavigation({
   onTabChange
 }: TabNavigationProps) {
   return (
-    <nav className="flex-1 grid grid-cols-5 rounded-lg overflow-hidden border bg-white" role="tablist">
+    <nav className="flex-1 grid grid-cols-6 rounded-lg overflow-hidden border dark:border-gray-700 bg-white dark:bg-gray-800" role="tablist">
       {tabs.map((tab) => (
         <button
           key={tab.key}
           onClick={() => onTabChange(tab.key)}
           className={`py-2.5 text-sm transition-colors ${
             activeTab === tab.key
-              ? "bg-gray-100 font-medium"
-              : "hover:bg-gray-50"
+              ? "bg-gray-100 dark:bg-gray-700 font-medium text-gray-900 dark:text-white"
+              : "hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
           }`}
           role="tab"
           aria-selected={activeTab === tab.key}

@@ -52,7 +52,7 @@ export default function SearchBar({
           placeholder="Buscar lugares, eventos, restaurantes..."
           value={localQuery}
           onChange={(e) => setLocalQuery(e.target.value)}
-          className="w-full rounded-full border px-5 py-2.5 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full rounded-full border dark:border-gray-600 px-5 py-2.5 bg-white dark:bg-gray-800 dark:text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           aria-describedby="search-help"
         />
         <span id="search-help" className="sr-only">
@@ -61,10 +61,10 @@ export default function SearchBar({
       </div>
       <button
         onClick={onOpenFilters}
-        className={`rounded-full border px-4 py-2 shadow-sm hover:bg-gray-50 relative ${
+        className={`rounded-full border dark:border-gray-600 px-4 py-2 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 relative ${
           hasActiveFilters
-            ? 'bg-blue-100 border-blue-300 text-blue-700'
-            : 'bg-white'
+            ? 'bg-blue-100 dark:bg-blue-900/40 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300'
+            : 'bg-white dark:bg-gray-800 dark:text-gray-200'
         }`}
         aria-label={hasActiveFilters ? `Filtros (activos)` : 'Filtros'}
         aria-expanded="false"

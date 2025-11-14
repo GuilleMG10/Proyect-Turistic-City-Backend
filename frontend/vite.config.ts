@@ -19,7 +19,8 @@ export default defineConfig({
   },
   build: {
     target: 'esnext',
-    minify: 'esbuild'
+    minify: 'esbuild',
+    sourcemap: true
   },
   optimizeDeps: {
     include: ['react', 'react-dom', 'react-router-dom']

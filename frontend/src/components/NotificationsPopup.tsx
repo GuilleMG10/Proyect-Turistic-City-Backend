@@ -111,26 +111,26 @@ export default function NotificationsPopup({ isOpen, onClose }: Props) {
       onClick={onClose}
     >
       <div 
-        className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col" 
+        className="bg-white dark:bg-gray-800 rounded-lg w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col" 
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-labelledby="notifications-title"
       >
         {/* Header */}
-        <header className="bg-white border-b p-4 flex items-center justify-between">
+        <header className="bg-white dark:bg-gray-800 border-b dark:border-gray-700 p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Bell className="h-6 w-6 text-blue-600" />
+            <Bell className="h-6 w-6 text-blue-600 dark:text-blue-400" />
             <div>
-              <h2 id="notifications-title" className="text-xl font-semibold">Notificaciones de Eventos</h2>
+              <h2 id="notifications-title" className="text-xl font-semibold text-gray-900 dark:text-white">Notificaciones de Eventos</h2>
               {unreadCount > 0 && (
-                <p className="text-sm text-gray-600">{unreadCount} sin leer</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">{unreadCount} sin leer</p>
               )}
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-gray-100"
             aria-label="Cerrar notificaciones"
           >
             <X className="h-5 w-5" />
@@ -139,14 +139,14 @@ export default function NotificationsPopup({ isOpen, onClose }: Props) {
 
         {/* Actions Bar */}
         {notifications.length > 0 && (
-          <div className="bg-gray-50 px-4 py-2 border-b flex items-center justify-between">
-            <p className="text-sm text-gray-600">
+          <div className="bg-gray-50 dark:bg-gray-900 px-4 py-2 border-b dark:border-gray-700 flex items-center justify-between">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
               {notifications.length} {notifications.length === 1 ? 'notificación' : 'notificaciones'}
             </p>
             {unreadCount > 0 && (
               <button
                 onClick={handleMarkAllRead}
-                className="text-sm text-blue-600 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded px-2 py-1"
+                className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded px-2 py-1"
               >
                 Marcar todas como leídas
               </button>
@@ -158,9 +158,9 @@ export default function NotificationsPopup({ isOpen, onClose }: Props) {
         <div className="flex-1 overflow-y-auto p-4">
           {notifications.length === 0 ? (
             <div className="text-center py-12">
-              <Bell className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500 text-lg">No hay notificaciones</p>
-              <p className="text-gray-400 text-sm mt-2">
+              <Bell className="h-16 w-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+              <p className="text-gray-500 dark:text-gray-400 text-lg">No hay notificaciones</p>
+              <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">
                 Te notificaremos sobre eventos próximos
               </p>
             </div>
@@ -170,7 +170,7 @@ export default function NotificationsPopup({ isOpen, onClose }: Props) {
                 <article
                   key={notification.id}
                   className={`border rounded-lg p-4 transition-colors ${
-                    notification.read ? 'bg-white' : 'bg-blue-50 border-blue-200'
+                    notification.read ? 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700' : 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
@@ -186,12 +186,12 @@ export default function NotificationsPopup({ isOpen, onClose }: Props) {
                       </div>
 
                       {/* Message */}
-                      <p className="text-sm text-gray-900 mb-3">
+                      <p className="text-sm text-gray-900 dark:text-gray-100 mb-3">
                         {notification.message}
                       </p>
 
                       {/* Event Details */}
-                      <div className="flex items-center gap-3 text-xs text-gray-500 mb-3">
+                      <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400 mb-3">
                         <span className="flex items-center gap-1">
                           <Calendar className="h-3 w-3" />
                           {new Date(notification.eventDate).toLocaleDateString('es-ES', {
@@ -210,7 +210,7 @@ export default function NotificationsPopup({ isOpen, onClose }: Props) {
                       </div>
 
                       {/* Timestamp */}
-                      <p className="text-xs text-gray-400">
+                      <p className="text-xs text-gray-400 dark:text-gray-500">
                         {formatTimestamp(notification.timestamp)}
                       </p>
                     </div>
@@ -220,7 +220,7 @@ export default function NotificationsPopup({ isOpen, onClose }: Props) {
                       {!notification.read && (
                         <button
                           onClick={() => handleMarkRead(notification.id)}
-                          className="p-1 hover:bg-gray-100 rounded text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-blue-600 dark:text-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                           aria-label="Marcar como leída"
                           title="Marcar como leída"
                         >
@@ -229,7 +229,7 @@ export default function NotificationsPopup({ isOpen, onClose }: Props) {
                       )}
                       <button
                         onClick={() => handleMuteEvent(notification.eventId, notification.eventName)}
-                        className="p-1 hover:bg-gray-100 rounded text-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-orange-600 dark:text-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
                         aria-label="Dejar de notificar"
                         title="Dejar de notificar"
                       >
@@ -237,7 +237,7 @@ export default function NotificationsPopup({ isOpen, onClose }: Props) {
                       </button>
                       <button
                         onClick={() => handleDelete(notification.id)}
-                        className="p-1 hover:bg-gray-100 rounded text-red-600 focus:outline-none focus:ring-2 focus:ring-red-500"
+                        className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-red-600 dark:text-red-400 focus:outline-none focus:ring-2 focus:ring-red-500"
                         aria-label="Eliminar notificación"
                         title="Eliminar"
                       >

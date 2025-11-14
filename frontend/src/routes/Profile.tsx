@@ -17,7 +17,7 @@ export default function Profile() {
   return (
     <div className="space-y-6">
       {/* Profile Card */}
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg dark:shadow-gray-900/50 overflow-hidden">
             {/* Header with gradient */}
             <div className="bg-gradient-to-r from-blue-500 to-purple-600 px-6 py-8">
               <div className="flex items-center gap-6">
@@ -41,48 +41,48 @@ export default function Profile() {
 
             {/* User Details */}
             <div className="px-6 py-6 space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                 Información Personal
               </h3>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Email */}
                 {user.email && (
-                  <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
-                    <Mail className="h-5 w-5 text-gray-500 mt-0.5 flex-shrink-0" />
+                  <div className="flex items-start gap-3 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <Mail className="h-5 w-5 text-gray-500 dark:text-gray-400 mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="text-sm text-gray-500">Correo Electrónico</p>
-                      <p className="text-gray-900 font-medium break-all">{user.email}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Correo Electrónico</p>
+                      <p className="text-gray-900 dark:text-white font-medium break-all">{user.email}</p>
                     </div>
                   </div>
                 )}
 
                 {/* Age */}
                 {user.age && (
-                  <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
-                    <Calendar className="h-5 w-5 text-gray-500 mt-0.5 flex-shrink-0" />
+                  <div className="flex items-start gap-3 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <Calendar className="h-5 w-5 text-gray-500 dark:text-gray-400 mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="text-sm text-gray-500">Edad</p>
-                      <p className="text-gray-900 font-medium">{user.age} años</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Edad</p>
+                      <p className="text-gray-900 dark:text-white font-medium">{user.age} años</p>
                     </div>
                   </div>
                 )}
 
                 {/* Username */}
-                <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
-                  <User className="h-5 w-5 text-gray-500 mt-0.5 flex-shrink-0" />
+                <div className="flex items-start gap-3 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <User className="h-5 w-5 text-gray-500 dark:text-gray-400 mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-sm text-gray-500">Usuario</p>
-                    <p className="text-gray-900 font-medium">@{user.username}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Usuario</p>
+                    <p className="text-gray-900 dark:text-white font-medium">@{user.username}</p>
                   </div>
                 </div>
 
                 {/* Account Created */}
-                <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
-                  <Calendar className="h-5 w-5 text-gray-500 mt-0.5 flex-shrink-0" />
+                <div className="flex items-start gap-3 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <Calendar className="h-5 w-5 text-gray-500 dark:text-gray-400 mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-sm text-gray-500">Miembro desde</p>
-                    <p className="text-gray-900 font-medium">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Miembro desde</p>
+                    <p className="text-gray-900 dark:text-white font-medium">
                       {new Date(user.created_at).toLocaleDateString('es-ES', {
                         year: 'numeric',
                         month: 'long',
@@ -96,7 +96,7 @@ export default function Profile() {
           </div>
 
       {/* Preferences Section */}
-      <div className="bg-white rounded-xl shadow-lg px-6 py-8">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg dark:shadow-gray-900/50 px-6 py-8">
         <PreferencesSelector userId={user.id} />
       </div>
     </div>
