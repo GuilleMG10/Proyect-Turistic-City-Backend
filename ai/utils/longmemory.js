@@ -225,7 +225,7 @@ export const searchPlacesMemory = async (query, topK = 10) => {
 
   return results.map(r => ({
     name: r.metadata.name,
-    desciption: r.metadata.desciption,
+    description: r.metadata.description,
     category: r.metadata.category,
     type: r.metadata.type,
     atencion: r.metadata.atencion,

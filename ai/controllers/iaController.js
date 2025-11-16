@@ -55,17 +55,10 @@ export const generateResponse = async (req, res) => {
     let placesContext = "";
     if (placesMemory.length > 0) {
       placesContext = placesMemory
-        .map(p => {
-          return  `Nombre: ${p.name}`,
-                  `Descripcion: ${p.description}`,
-                  `Categoria: ${p.category}`,
-                  `Tipo: ${p.type}`,
-                  `Atención: ${p.atencion}`,
-                  `Tiempo estimado de visita: ${p.tiempoEstimadoVisita}`,
-                  `Lo mas iconico del lugar: ${p.loMasIconicoDelLugar}`,
-                  `Precio estimado: ${p.estimatedPrice} Bs`
-        })
-        .join("\n");
+      .map(p => {
+        return p.content;
+      })
+      .join("\n\n"); // <-- separación entre lugares
     }
 
     // ==============================================
