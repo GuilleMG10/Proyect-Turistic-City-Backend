@@ -164,7 +164,7 @@ export const upsertPlaces = async (places) => {
     const type = place.type?.toLowerCase() === "evento" ? "evento" : "lugar";
     const atencion = place.atencion || "Horario no especificado";
     const tiempoEstimadoVisita = place.tiempoEstimadoVisita || "Tiempo de visita no especificado";
-    const loMásIconicoDelLugar = place.loMásIconicoDelLugar || "No especificado";
+    const loMasIconicoDelLugar = place.loMasIconicoDelLugar || "No especificado";
     const estimatedPrice = place.estimatedPrice || "Precio estimado no especificado";
 
     // Construir texto a indexar
@@ -175,7 +175,7 @@ export const upsertPlaces = async (places) => {
       `Tipo: ${type}`,
       `Atención: ${atencion}`,
       `Tiempo estimado de visita: ${tiempoEstimadoVisita}`,
-      `Lo mas iconico del lugar: ${loMásIconicoDelLugar}`,
+      `Lo mas iconico del lugar: ${loMasIconicoDelLugar}`,
       `Precio estimado: ${estimatedPrice} Bs`,
     ].join("\n");
 
@@ -194,7 +194,7 @@ export const upsertPlaces = async (places) => {
     await store.addDocuments([
       {
         pageContent: content,
-        metadata: { name, description, category, type, atencion, tiempoEstimadoVisita, loMásIconicoDelLugar, estimatedPrice},
+        metadata: { name, description, category, type, atencion, tiempoEstimadoVisita, loMasIconicoDelLugar, estimatedPrice},
       },
     ]);
 
@@ -230,7 +230,7 @@ export const searchPlacesMemory = async (query, topK = 10) => {
     type: r.metadata.type,
     atencion: r.metadata.atencion,
     tiempoEstimadoVisita: r.metadata.tiempoEstimadoVisita,
-    loMásIconicoDelLugar: r.metadata.loMásIconicoDelLugar,
+    loMasIconicoDelLugar: r.metadata.loMasIconicoDelLugar,
     estimatedPrice: r.metadata.estimatedPrice,
     content: r.pageContent,
   }));

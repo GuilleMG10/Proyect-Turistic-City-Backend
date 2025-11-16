@@ -60,9 +60,9 @@ export const generateResponse = async (req, res) => {
                   `Descripcion: ${p.description}`,
                   `Categoria: ${p.category}`,
                   `Tipo: ${p.type}`,
-                  `Atención: ${atencion}`,
+                  `Atención: ${p.atencion}`,
                   `Tiempo estimado de visita: ${p.tiempoEstimadoVisita}`,
-                  `Lo mas iconico del lugar: ${p.loMásIconicoDelLugar}`,
+                  `Lo mas iconico del lugar: ${p.loMasIconicoDelLugar}`,
                   `Precio estimado: ${p.estimatedPrice} Bs`
         })
         .join("\n");
