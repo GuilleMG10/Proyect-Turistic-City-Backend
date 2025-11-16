@@ -160,17 +160,26 @@ export const upsertPlaces = async (places) => {
 
     const name = place.name.trim();
     const description = place.description || "Sin descripción";
-    const category = place.category || "No especificada";
+    const category = place.category || "Categoria no especificada";
     const type = place.type?.toLowerCase() === "evento" ? "evento" : "lugar";
     const atencion = place.atencion || "Horario no especificado";
-    const estimatedPrice = place.estimatedPrice || "No indicado";
+    const tiempoEstimadoVisita = place.tiempoEstimadoVisita || "Tiempo de visita no especificado";
+    const loMásIconicoDelLugar = place.loMásIconicoDelLugar || "No especificado";
+    const estimatedPrice = place.estimatedPrice || "Precio estimado no especificado";
 
-    // 🔹 Construir texto a indexar
+    // Construir texto a indexar
     const content = [
-      `${name}: ${description} (categoría: ${category}, tipo: ${type})`,
+      `Nombre: ${name}`,
+      `Descripcion: ${description}`,
+      `Categoria: ${category}`,
+      `Tipo: ${type}`,
       `Atención: ${atencion}`,
+      `Tiempo estimado de visita: ${tiempoEstimadoVisita}`,
+      `Lo mas iconico del lugar: ${loMásIconicoDelLugar}`,
       `Precio estimado: ${estimatedPrice} Bs`,
     ].join("\n");
+
+    
 
     // 🧹 Eliminar cualquier registro previo que tenga el mismo nombre
     try {
@@ -185,7 +194,7 @@ export const upsertPlaces = async (places) => {
     await store.addDocuments([
       {
         pageContent: content,
-        metadata: { name, category, type, atencion, estimatedPrice },
+        metadata: { name, description, category, type, atencion, tiempoEstimadoVisita, loMásIconicoDelLugar, estimatedPrice},
       },
     ]);
 
@@ -216,9 +225,12 @@ export const searchPlacesMemory = async (query, topK = 10) => {
 
   return results.map(r => ({
     name: r.metadata.name,
-    type: r.metadata.type,
+    desciption: r.metadata.desciption,
     category: r.metadata.category,
+    type: r.metadata.type,
     atencion: r.metadata.atencion,
+    tiempoEstimadoVisita: r.metadata.tiempoEstimadoVisita,
+    loMásIconicoDelLugar: r.metadata.loMásIconicoDelLugar,
     estimatedPrice: r.metadata.estimatedPrice,
     content: r.pageContent,
   }));

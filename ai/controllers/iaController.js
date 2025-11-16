@@ -22,7 +22,7 @@ export const generateResponse = async (req, res) => {
 
     if (interests && Array.isArray(interests) && interests.length > 0) {
       const formatted = interests.map(ev => {
-        const category = ev.category ? ` (categoría: ${ev.category})` : "";
+        const category = ev.category ? `(categoría: ${ev.category})` : "";
         return `${ev.name}: ${ev.description}${category}`;
       }).join("\n");
 
@@ -56,12 +56,16 @@ export const generateResponse = async (req, res) => {
     if (placesMemory.length > 0) {
       placesContext = placesMemory
         .map(p => {
-          return `• ${p.name || "(sin nombre)"}: (${p.type}) ${p.category || "Sin categoría"}\n` +
-                 `  Descripción: ${p.description || "Sin descripción"}\n` +
-                 `  Horario: ${p.atencion || "No especificado"}\n` +
-                 `  Precio estimado: ${p.estimatedPrice || "Desconocido"} Bs`;
+          return  `Nombre: ${p.name}`,
+                  `Descripcion: ${p.description}`,
+                  `Categoria: ${p.category}`,
+                  `Tipo: ${p.type}`,
+                  `Atención: ${atencion}`,
+                  `Tiempo estimado de visita: ${p.tiempoEstimadoVisita}`,
+                  `Lo mas iconico del lugar: ${p.loMásIconicoDelLugar}`,
+                  `Precio estimado: ${p.estimatedPrice} Bs`
         })
-        .join("\n\n");
+        .join("\n");
     }
 
     // ==============================================
@@ -73,12 +77,7 @@ export const generateResponse = async (req, res) => {
       finalPrompt = `Información de lugares favoritos del usuario:\n${userContextText || "(sin datos)"}\n\n` +
                     `Lugares disponibles en memoria usando RAG:\n${placesContext || "(no hay lugares registrados)"}\n\n` +
                     `Contexto de conversaciones previas:\n${context || "(sin historial previo)"}\n\n` +
-                    `Nueva solicitud del usuario:\n${prompt}\n\n` +
-                    `IA (responde considerando los lugares favoritos del usuario, los lugares disponibles en memoria usando RAG y el contexto de conversaciones previas). 
-                    Además si es que el usuario solicito un itinerario genera uno completo y cronológico, distribuido entre los diás, hora inicial y final que el usuario indique.
-                    - Asigna horarios específicos (inicio–fin) para cada actividad, considera que las actividades esten acordes a los dias y horarios del usuario.
-                    - Asegúrate de que el total no exceda el presupuesto disponible.
-                    `
+                    `Nueva pregunta del usuario:\n${prompt}\n\n`
     } else {
       finalPrompt = `Contexto previo:\n${context || "(sin historial previo)"}\n\n` +
                     `Nueva pregunta del usuario:\n${prompt}\n\nIA:`;
