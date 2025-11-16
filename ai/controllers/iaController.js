@@ -212,3 +212,225 @@ export const evaluateProfilePhoto = async (req, res) => {
     res.status(500).json({ error: "Error procesando la imagen" });
   }
 };
+
+
+export const generateItinerary = async (req, res) => {
+  try {
+    const {
+      nearbyPlaces = [],
+      interests = [],
+      placesAlreadySelected = [],
+      budget,
+      scheduleAvailability,
+      maximumItinerarySize
+    } = req.body;
+
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+
+    console.log("\n==============================");
+    console.log("🧭 NUEVA SOLICITUD DE ITINERARIO");
+    console.log("==============================\n");
+
+    // ==========================================================
+    // 1. Vector donde juntaremos todos los lugares (sin duplicados)
+    // ==========================================================
+    let collected = [];
+
+    // ==========================================================
+    // 2. Buscar lugares según nearbyPlaces (topK = 1)
+    // ==========================================================
+    console.log("\n🔎 Buscando lugares (nearbyPlaces)...");
+
+    for (const place of nearbyPlaces) {
+      console.log(`➡️ Buscando nearby: "${place.name}"`);
+
+      const results = await searchPlacesMemory(place.name, 1);
+
+      if (results.length === 0) {
+        console.log(`   ❌ No se encontró información en Chroma para "${place.name}"`);
+      }
+
+      results.forEach(r => {
+        if (!collected.some(c => c.name === r.name)) {
+          console.log(`   ✅ Añadido desde nearbyPlaces: ${r.name}`);
+          collected.push(r);
+        } else {
+          console.log(`   ⚠️ Saltado (duplicado): ${r.name}`);
+        }
+      });
+    }
+
+    // ==========================================================
+    // 3. Buscar lugares según placesAlreadySelected (topK = 1)
+    // ==========================================================
+    console.log("\n🔎 Buscando lugares (placesAlreadySelected)...");
+
+    for (const place of placesAlreadySelected) {
+      console.log(`➡️ Buscando seleccionado por usuario: "${place.name}"`);
+
+      const results = await searchPlacesMemory(place.name, 1);
+
+      if (results.length === 0) {
+        console.log(`   ❌ No se encontró información en Chroma para "${place.name}"`);
+      }
+
+      results.forEach(r => {
+        if (!collected.some(c => c.name === r.name)) {
+          console.log(`   ✅ Añadido desde placesAlreadySelected: ${r.name}`);
+          collected.push(r);
+        } else {
+          console.log(`   ⚠️ Saltado (duplicado): ${r.name}`);
+        }
+      });
+    }
+
+    // ==========================================================
+    // 4. Buscar lugares según interests (topK flexible)
+    // ==========================================================
+    const interestTopK = 2;
+
+    console.log(`\n🔎 Buscando lugares (interests) con topK = ${interestTopK}...`);
+
+    for (const place of interests) {
+      console.log(`➡️ Buscando interés del usuario: "${place.name}"`);
+
+      const results = await searchPlacesMemory(place.name, interestTopK);
+
+      if (results.length === 0) {
+        console.log(`   ❌ No se encontró información en Chroma para "${place.name}"`);
+      }
+
+      results.forEach(r => {
+        if (!collected.some(c => c.name === r.name)) {
+          console.log(`   ✅ Añadido desde interests: ${r.name}`);
+          collected.push(r);
+        } else {
+          console.log(`   ⚠️ Saltado (duplicado): ${r.name}`);
+        }
+      });
+    }
+
+    console.log("\n📌 TOTAL de lugares únicos recopilados:", collected.length);
+    console.log("📍 Lugares finales:", collected.map(x => x.name));
+    console.log("\n------------------------------------------------------\n");
+
+    // ==========================================================
+    // 5. Construir el PROMPT final para IA
+    // ==========================================================
+    const namesNearby = nearbyPlaces.map(p => p.name).join(", ");
+    const namesSelected = placesAlreadySelected.map(p => p.name).join(", ");
+    const namesInterests = interests.map(p => p.name).join(", ");
+
+    const placesDetails = collected
+      .map(p => `• ${p.name}
+  - Categoria: ${p.category}
+  - Horario: ${p.atencion}
+  - Precio estimado: ${p.estimatedPrice}
+  - Lo más iconico: ${p.loMasIconicoDelLugar}
+  - Tiempo estimado de visita: ${p.tiempoEstimadoVisita}
+  `)
+      .join("\n\n");
+
+
+
+    const finalPrompt = `
+Eres un generador de itinerarios. Debes responder exclusivamente en JSON válido.
+
+INSTRUCCIONES OBLIGATORIAS Y ESTRICTAS:
+- Tu salida debe ser exclusivamente un JSON válido.
+- No debes agregar texto fuera del JSON.
+- No debes explicar nada.
+- No debes añadir títulos.
+- No uses asteriscos, viñetas, markdown, comentarios ni texto adicional.
+- Solo devuelve el JSON EXACTO.
+- Si quieres explicar algo, hazlo dentro de "notas_adicionales".
+- Respeta la disponibilidad horaria del usuario (si un lugar no calza, NO lo incluyas).
+- Respeta el presupuesto total del usuario.
+- Respeta el límite máximo de lugares.
+- Incluye los lugares los lugares obligatorios que el usuario quiere incluir en "placesAlreadySelected" solamente si es posible según horarios.
+- Cada lugar tiene un tiempo estimado de visita: puedes igualarlo o reducirlo al crear el itinerario, pero nunca excederlo.
+
+LUGARES CERCANOS:
+${namesNearby || "(sin datos)"}
+
+LUGARES OBLIGATORIOS QUE EL USUARIO QUIERE INCLUIR:
+${namesSelected || "(sin datos)"}
+
+LUGARES FAVORITOS DEL USUARIO:
+${namesInterests || "(sin datos)"}
+
+INFORMACIÓN COMPLETA DE LOS LUGARES DISPONIBLES (RAG):
+${placesDetails}
+
+DATOS DEL USUARIO:
+- Presupuesto total: ${budget} Bs
+- Horario disponible: ${scheduleAvailability}
+- Máximo de lugares: ${maximumItinerarySize}
+
+
+FORMATO ESTRICTO (OBLIGATORIO).
+Debes responder EXACTAMENTE con esta estructura JSON, sin agregar ni quitar claves:
+
+\`\`\`json
+{
+  "itinerario": [
+    {
+      "lugar": "",
+      "dia_sugerido": "",
+      "horario_sugerido": "",
+      "costo_estimado": "",
+      "motivo_eleccion": "",
+      "tiempo_estimado_visita": ""
+    }
+  ],
+  "resumen": {
+    "presupuesto_total_estimado": "",
+    "cantidad_lugares": "",
+    "tiempo_total_estimado": "",
+    "notas_adicionales": ""
+  }
+}
+\`\`\`
+
+NO ESCRIBAS NINGÚN TEXTO FUERA DEL JSON.
+
+Devuelve SOLO el JSON. Nada más.
+`;
+
+
+
+    console.log("📝 PROMPT FINAL PARA ITINERARIO CREADO:\n");
+    console.log(finalPrompt)
+
+    // ==========================================================
+    // 6. Enviar prompt a IA con streaming SSE
+    // ==========================================================
+    let buffer = "";
+    const handleChunk = (chunk) => {
+      buffer += chunk;
+      res.write(`data: ${chunk}\n\n`);
+    };
+
+    await generateAIResponse(finalPrompt, "ollama", handleChunk);
+
+    res.write("data: [DONE]\n\n");
+    res.end();
+
+    console.log("🎉 BUFFER SIN MODIFICAR.\n");
+    console.log(buffer)
+
+    try {
+      const jsonResponse = JSON.parse(buffer);
+      console.log("BUFFER MODIFICADO:", jsonResponse);
+    } catch (err) {
+      console.log("⚠️ El JSON está incompleto o mal formado:", err.message);
+      console.log("Respuesta cruda:", buffer);
+    }
+
+  } catch (err) {
+    console.error("❌ Error generando itinerario:", err);
+    res.status(500).json({ error: "Error generando itinerario" });
+  }
+};

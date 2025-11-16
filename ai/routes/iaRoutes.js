@@ -1,5 +1,5 @@
 import express from "express";
-import { generateResponse, registerPlaces, evaluateProfilePhoto } from "../controllers/iaController.js";
+import { generateResponse, registerPlaces, evaluateProfilePhoto, generateItinerary } from "../controllers/iaController.js";
 import multer from "multer";
 
 
@@ -17,6 +17,9 @@ router.post("/places", registerPlaces);
 router.post("/vision/profile", upload.single("image"), evaluateProfilePhoto);
 
 //upload.single("image") Lo convierte a req.file.buffer.
+
+router.post("/itinerary", generateItinerary);
+
 
 
 
