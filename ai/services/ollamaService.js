@@ -153,7 +153,6 @@ export const callGroqStream = async (prompt, onData) => {
 
     // Leer el stream de Groq
     for await (const chunk of stream) {
-      console.log("CHUNKK", chunk)
       const delta = chunk.choices?.[0]?.delta?.content;
       if (delta) onData(delta);
     }
