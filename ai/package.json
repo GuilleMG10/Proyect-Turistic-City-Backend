@@ -19,7 +19,8 @@
     "langchain": "^0.3.36",
     "multer": "^2.0.2",
     "node-fetch": "^3.3.2",
-    "nomic": "^1.0.0"
+    "nomic": "^1.0.0",
+    "openai": "^6.9.0"
   },
   "devDependencies": {
     "jest": "^30.2.0",

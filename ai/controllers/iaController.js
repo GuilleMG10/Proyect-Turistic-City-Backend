@@ -312,6 +312,22 @@ export const generateItinerary = async (req, res) => {
       });
     }
 
+    const scheduleResults = await searchPlacesMemory(scheduleAvailability, 5);
+
+
+    if (scheduleResults.length === 0) {
+      console.log(`   ❌ No se encontró nada relevante a "${scheduleAvailability}" en memoria`);
+    }
+
+    scheduleResults.forEach(r => {
+      if (!collected.some(c => c.name === r.name)) {
+        console.log(`   ⏰ Añadido desde scheduleAvailability (embedding): ${r.name}`);
+        collected.push(r);
+      } else {
+        console.log(`   ⚠️ Saltado (duplicado): ${r.name}`);
+      }
+    });
+
     console.log("\n📌 TOTAL de lugares únicos recopilados:", collected.length);
     console.log("📍 Lugares finales:", collected.map(x => x.name));
     console.log("\n------------------------------------------------------\n");
@@ -413,7 +429,7 @@ Devuelve SOLO el JSON. Nada más.
       res.write(`data: ${chunk}\n\n`);
     };
 
-    await generateAIResponse(finalPrompt, "ollama", handleChunk);
+    await generateAIResponse(finalPrompt, "groq", handleChunk);
 
     res.write("data: [DONE]\n\n");
     res.end();

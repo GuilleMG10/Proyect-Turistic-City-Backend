@@ -2,11 +2,14 @@ import dotenv from 'dotenv';
 import fetch from "node-fetch";
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import OpenAI from "openai";
+
 
 // Load .env from project root
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-dotenv.config({ path: join(__dirname, '../../.env') });
+dotenv.config({ path: join(__dirname, '../.env') });
+
 
 export const callOllamaStream = async (prompt, onData) => {
   const response = await fetch("http://127.0.0.1:11434/api/generate", {
@@ -124,11 +127,50 @@ export const callHuggingFace = async (prompt) => {
   }
 };
 
+// const client = new OpenAI({
+//   apiKey: process.env.GROQ_API_KEY,
+//   baseURL: "https://api.groq.com/openai/v1"
+// });
+
+export const callGroqStream = async (prompt, onData) => {
+  const API_KEY = process.env.GROQ_API_KEY;
+
+  if (!API_KEY) {
+    throw new Error("Falta GROQ_API_KEY en .env");
+  }
+
+  const client = new OpenAI({
+    apiKey: API_KEY,
+    baseURL: "https://api.groq.com/openai/v1"
+  });
+
+  try {
+    const stream = await client.chat.completions.create({
+      model: "openai/gpt-oss-120b", 
+      messages: [{ role: "user", content: prompt }],
+      stream: true
+    });
+
+    // Leer el stream de Groq
+    for await (const chunk of stream) {
+      console.log("CHUNKK", chunk)
+      const delta = chunk.choices?.[0]?.delta?.content;
+      if (delta) onData(delta);
+    }
+
+  } catch (err) {
+    console.error("Error en Groq streaming:", err);
+    throw err;
+  }
+};
+
 export const generateAIResponse = async (prompt, provider = "ollama", onData) => {
   if (!prompt) throw new Error("El prompt es obligatorio");
 
   if (provider === "ollama") return await callOllamaStream(prompt, onData);
   if (provider === "huggingface") return await callHuggingFace(prompt);
+  if (provider === "groq")
+    return await callGroqStream(prompt, onData);
 
   throw new Error(`Proveedor desconocido: ${provider}`);
 };
