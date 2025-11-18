@@ -60,8 +60,6 @@ func main() {
 	eventService := service.NewEventService(eventRepo)
 	eventHandler := handler.NewEventHandler(eventService)
 
-	iaHandler := handler.NewIAHandler(userService)
-
 	userInterestRepo := repository.NewUserInterestRepository(db)
 	userInterestService := service.NewUserInterestService(userInterestRepo)
 	userInterestHandler := handler.NewUserInterestHandler(userInterestService)
@@ -69,6 +67,9 @@ func main() {
 	placeFavoriteRepo := repository.NewPlaceFavoriteRepository(db)
 	placeFavoriteService := service.NewPlaceFavoriteService(placeFavoriteRepo)
 	placeFavoriteHandler := handler.NewPlaceFavoriteHandler(placeFavoriteService)
+
+	// Modificado: Se pasa userService y placeFavoriteService
+	iaHandler := handler.NewIAHandler(userService, placeFavoriteService)
 
 	router := gin.Default()
 	router.Use(middleware.CORS())

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Sparkles, Calendar } from "lucide-react";
-import type { Itinerary, ItineraryGenerateRequest } from "../../types";
+import type { Itinerary, ItineraryGenerateRequest, Place } from "../../types";
 import { useUserStore } from "../../store/userStore";
 import EmptyState from "../EmptyState";
 import ErrorModal from "../ErrorModal";
@@ -44,13 +44,13 @@ export default function ItineraryTab() {
             description: "Monumento emblemático de Cochabamba",
             location: "Cerro San Pedro",
             latitude: -17.3935,
-            longitude: -66.1450,
+            longitude: -66.145,
             category: "Cultural",
             price: 20,
             created_at: new Date().toISOString(),
             link_image: null,
-            active: true
-          }
+            active: true,
+          },
         },
         {
           id: 2,
@@ -68,13 +68,13 @@ export default function ItineraryTab() {
             description: "Mercado más grande de Bolivia",
             location: "Zona La Cancha",
             latitude: -17.3928,
-            longitude: -66.1570,
+            longitude: -66.157,
             category: "Gastronomía",
             price: 150,
             created_at: new Date().toISOString(),
             link_image: null,
-            active: true
-          }
+            active: true,
+          },
         },
         {
           id: 3,
@@ -92,15 +92,15 @@ export default function ItineraryTab() {
             description: "Plaza principal de Cochabamba",
             location: "Centro",
             latitude: -17.3935,
-            longitude: -66.1570,
+            longitude: -66.157,
             category: "Historia",
             price: 0,
             created_at: new Date().toISOString(),
             link_image: null,
-            active: true
-          }
-        }
-      ]
+            active: true,
+          },
+        },
+      ],
     },
     {
       id: 2,
@@ -110,19 +110,29 @@ export default function ItineraryTab() {
       start_time: "08:00",
       end_time: "18:00",
       budget: 800,
-      preferences: JSON.stringify(["Naturaleza", "Deportes", "Entretenimiento"]),
+      preferences: JSON.stringify([
+        "Naturaleza",
+        "Deportes",
+        "Entretenimiento",
+      ]),
       total_cost: 650,
       created_at: new Date().toISOString(),
-      items: []
-    }
+      items: [],
+    },
   ]);
   const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
-  const [selectedItinerary, setSelectedItinerary] = useState<Itinerary | null>(null);
+  const [selectedItinerary, setSelectedItinerary] = useState<Itinerary | null>(
+    null,
+  );
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
-  const [itineraryToDelete, setItineraryToDelete] = useState<number | null>(null);
+  const [itineraryToDelete, setItineraryToDelete] = useState<number | null>(
+    null,
+  );
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationProgress, setGenerationProgress] = useState("");
-  const [error, setError] = useState<{ title: string; message: string } | null>(null);
+  const [error, setError] = useState<{ title: string; message: string } | null>(
+    null,
+  );
 
   const handleGenerate = async (formData: ItineraryGenerateRequest) => {
     if (!user) return;
@@ -135,8 +145,11 @@ export default function ItineraryTab() {
       const result = await ItineraryService.generateItinerary(
         formData,
         (text) => {
-          setGenerationProgress(prev => prev + text);
-        }
+          // Mostrar solo el texto en progreso si no es un JSON
+          if (!text.trim().startsWith("{")) {
+            setGenerationProgress((prev) => prev + text);
+          }
+        },
       );
 
       setGenerationProgress("¡Itinerario generado exitosamente!");
@@ -144,67 +157,126 @@ export default function ItineraryTab() {
       // Fetch places and events to populate items
       const [places, events] = await Promise.all([
         ApiService.getPlaces(),
-        ApiService.getEvents()
+        ApiService.getEvents(),
       ]);
+
+      // Modificado: Lógica para parsear la respuesta de la IA
+      const findItem = (name: string) => {
+        const place = places.find(
+          (p) => p.name.toLowerCase() === name.toLowerCase(),
+        );
+        if (place) return { type: "place" as const, item: place };
+
+        const event = events.find(
+          (e) => e.name.toLowerCase() === name.toLowerCase(),
+        );
+        if (event) return { type: "event" as const, item: event };
+
+        return null;
+      };
+
+      const parseCost = (costStr: string) => {
+        const match = costStr.match(/(\d+(\.\d+)?)/);
+        return match ? parseFloat(match[1]) : 0;
+      };
+
+      const [startTime, endTime] =
+        result.itinerario[0]?.horario_sugerido?.split(" - ") || [
+          formData.start_time,
+          formData.end_time,
+        ];
+
+      const totalCostNum = parseCost(result.resumen.presupuesto_total_estimado);
 
       // Convert generated result to Itinerary format
       const newItinerary: Itinerary = {
         id: Date.now(), // Temporary ID
         user_id: user.id,
-        name: `Itinerario ${new Date(formData.date).toLocaleDateString('es-ES')}`,
+        name: `Itinerario ${new Date(formData.date).toLocaleDateString("es-ES")}`,
         date: formData.date,
-        start_time: formData.start_time,
-        end_time: formData.end_time,
+        start_time: startTime || formData.start_time,
+        end_time: endTime || formData.end_time,
         budget: formData.budget,
         preferences: JSON.stringify(formData.preferences),
-        total_cost: result.total_cost,
+        total_cost: totalCostNum,
         created_at: new Date().toISOString(),
-        items: result.items.map((item, index) => {
-          if (item.type === 'place') {
-            const place = places.find(p => p.id === item.item_id);
+        items: result.itinerario.map((item, index) => {
+          const foundItem = findItem(item.lugar);
+          const cost = parseCost(item.costo_estimado);
+          const [itemStart, itemEnd] = item.horario_sugerido.split(" - ");
+
+          if (foundItem?.type === "place") {
             return {
               id: Date.now() + index,
               itinerary_id: Date.now(),
-              place_id: item.item_id,
+              place_id: foundItem.item.id,
               event_id: null,
               order: index + 1,
-              start_time: item.start_time,
-              end_time: item.end_time,
-              notes: item.notes,
-              place: place,
+              start_time: itemStart || item.horario_sugerido,
+              end_time: itemEnd || itemStart || item.horario_sugerido,
+              notes: item.motivo_eleccion,
+              place: { ...foundItem.item, price: cost },
               event: undefined,
             };
-          } else {
-            const event = events.find(e => e.id === item.item_id);
+          } else if (foundItem?.type === "event") {
             return {
               id: Date.now() + index,
               itinerary_id: Date.now(),
               place_id: null,
-              event_id: item.item_id,
+              event_id: foundItem.item.id,
               order: index + 1,
-              start_time: item.start_time,
-              end_time: item.end_time,
-              notes: item.notes,
+              start_time: itemStart || item.horario_sugerido,
+              end_time: itemEnd || itemStart || item.horario_sugerido,
+              notes: item.motivo_eleccion,
               place: undefined,
-              event: event,
+              event: { ...foundItem.item, price: cost },
+            };
+          } else {
+            // Handle case where AI suggests a place not in DB
+            return {
+              id: Date.now() + index,
+              itinerary_id: Date.now(),
+              place_id: null,
+              event_id: null,
+              order: index + 1,
+              start_time: itemStart || item.horario_sugerido,
+              end_time: itemEnd || itemStart || item.horario_sugerido,
+              notes: `(Sugerencia IA) ${item.lugar}: ${item.motivo_eleccion}`,
+              place: {
+                id: Date.now() + index + 1000,
+                user_id: 0,
+                name: item.lugar,
+                description: item.motivo_eleccion,
+                location: "Desconocida",
+                latitude: -17.3935,
+                longitude: -66.157,
+                category: "Sugerencia",
+                price: cost,
+                created_at: new Date().toISOString(),
+                link_image: null,
+                active: true,
+              } as Place,
+              event: undefined,
             };
           }
-        })
+        }),
       };
 
       // Add to itineraries list
-      setItineraries(prev => [newItinerary, ...prev]);
-      
+      setItineraries((prev) => [newItinerary, ...prev]);
+
       // Show the new itinerary
       setSelectedItinerary(newItinerary);
       setIsViewModalOpen(true);
       setIsGenerateModalOpen(false);
-      
     } catch (error) {
-      console.error('Error generating itinerary:', error);
+      console.error("Error generating itinerary:", error);
       setError({
-        title: '¡Oh no! Algo salio mal...',
-        message: error instanceof Error ? error.message : 'No se pudo generar el itinerario. Por favor verifica tu conexión e intenta de nuevo.'
+        title: "¡Oh no! Algo salio mal...",
+        message:
+          error instanceof Error
+            ? error.message
+            : "No se pudo generar el itinerario. Por favor verifica tu conexión e intenta de nuevo.",
       });
     } finally {
       setIsGenerating(false);
@@ -228,36 +300,38 @@ export default function ItineraryTab() {
 
   const confirmDelete = () => {
     if (itineraryToDelete) {
-      setItineraries(prev => prev.filter(it => it.id !== itineraryToDelete));
+      setItineraries((prev) =>
+        prev.filter((it) => it.id !== itineraryToDelete),
+      );
       setItineraryToDelete(null);
-      console.log('Itinerario eliminado:', itineraryToDelete);
+      console.log("Itinerario eliminado:", itineraryToDelete);
       // TODO: Conectar con API para eliminar
     }
   };
 
   const handleShare = (itinerary: Itinerary) => {
-    console.log('Compartir itinerario:', itinerary);
+    console.log("Compartir itinerario:", itinerary);
     // TODO: Implementar funcionalidad de compartir
   };
 
   const handleSaveItinerary = (updatedItinerary: Itinerary) => {
-    setItineraries(prev => 
-      prev.map(it => it.id === updatedItinerary.id ? updatedItinerary : it)
+    setItineraries((prev) =>
+      prev.map((it) => (it.id === updatedItinerary.id ? updatedItinerary : it)),
     );
-    console.log('Itinerario actualizado:', updatedItinerary);
+    console.log("Itinerario actualizado:", updatedItinerary);
     // TODO: Conectar con API para guardar cambios
   };
 
   // Lock body scroll when modal is open
   useEffect(() => {
     if (isGenerateModalOpen) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     }
-    
+
     return () => {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     };
   }, [isGenerateModalOpen]);
 
@@ -271,7 +345,9 @@ export default function ItineraryTab() {
       <section className="bg-white dark:bg-gray-800 rounded-lg shadow-sm dark:shadow-gray-900/50 p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Mis Itinerarios</h2>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+              Mis Itinerarios
+            </h2>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
               Crea y gestiona tus rutas turísticas personalizadas
             </p>
@@ -345,7 +421,9 @@ export default function ItineraryTab() {
             if (selectedItinerary) {
               const updatedItinerary = {
                 ...selectedItinerary,
-                items: selectedItinerary.items?.filter(item => item.id !== itemId)
+                items: selectedItinerary.items?.filter(
+                  (item) => item.id !== itemId,
+                ),
               };
               handleSaveItinerary(updatedItinerary);
               setSelectedItinerary(updatedItinerary);
@@ -366,10 +444,7 @@ export default function ItineraryTab() {
       />
 
       {/* Generating Modal */}
-      <GeneratingModal
-        isOpen={isGenerating}
-        progress={generationProgress}
-      />
+      <GeneratingModal isOpen={isGenerating} progress={generationProgress} />
 
       {/* Error Modal */}
       {error && (

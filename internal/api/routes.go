@@ -31,6 +31,7 @@ type EventHandler interface {
 
 type IAHandler interface {
 	GenerateAIResponse(c *gin.Context)
+	GenerateItinerary(c *gin.Context)
 }
 
 type UserInterestHandler interface {
@@ -62,6 +63,7 @@ func RegisterRoutes(router *gin.Engine, u UserHandler, p PlaceHandler, r ReviewH
 	{
 		// AI Assistant
 		authGroup.POST("/ia/prompt", ia.GenerateAIResponse)
+		authGroup.POST("/ia/itinerary", ia.GenerateItinerary)
 
 		// User info
 		authGroup.GET("/users/:id", u.GetUser)

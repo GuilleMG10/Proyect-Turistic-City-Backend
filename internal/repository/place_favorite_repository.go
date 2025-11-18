@@ -16,7 +16,8 @@ func NewPlaceFavoriteRepository(db *gorm.DB) *PlaceFavoriteRepository {
 // GetUserFavorites returns all active favorite places for a user
 func (r *PlaceFavoriteRepository) GetUserFavorites(userID int) ([]model.PlaceFavorite, error) {
 	var favorites []model.PlaceFavorite
-	if err := r.db.Where("user_id = ? AND active = ?", userID, true).Find(&favorites).Error; err != nil {
+	// Modificado: Añadido Preload("Place")
+	if err := r.db.Preload("Place").Where("user_id = ? AND active = ?", userID, true).Find(&favorites).Error; err != nil {
 		return nil, err
 	}
 	return favorites, nil

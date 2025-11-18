@@ -9,6 +9,8 @@ type PlaceFavorite struct {
 	PlaceID   int       `gorm:"not null;index" json:"place_id"`
 	Active    bool      `gorm:"default:true" json:"active"`
 	CreatedAt time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
+
+	Place Place `gorm:"foreignKey:PlaceID" json:"place,omitempty"`
 }
 
 // TableName specifies the table name for PlaceFavorite
