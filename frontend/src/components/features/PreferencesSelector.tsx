@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Heart, Save, Loader2 } from 'lucide-react';
-import { ApiService } from '../services/api';
-import type { UserPreference } from '../types';
+import { ApiService } from '../../services/api';
+import type { UserPreference } from '../../types';
 
 type Props = {
   userId: number;
@@ -92,7 +92,7 @@ export default function PreferencesSelector({ userId }: Props) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600 dark:text-blue-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary-600 dark:text-primary-400" />
       </div>
     );
   }
@@ -101,12 +101,14 @@ export default function PreferencesSelector({ userId }: Props) {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-start gap-3">
-        <Heart className="h-6 w-6 text-red-500 dark:text-red-400 mt-1 flex-shrink-0" />
+        <div className="p-2 bg-red-50 dark:bg-red-900/20 rounded-xl">
+          <Heart className="h-6 w-6 text-red-500 dark:text-red-400" />
+        </div>
         <div>
-          <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+          <h3 className="text-xl font-bold text-slate-900 dark:text-white">
             Tus Gustos e Intereses
           </h3>
-          <p className="text-gray-600 dark:text-gray-300 mt-1">
+          <p className="text-slate-600 dark:text-slate-400 mt-1">
             Selecciona las categorías que te interesan para recibir mejores recomendaciones
           </p>
         </div>
@@ -114,14 +116,14 @@ export default function PreferencesSelector({ userId }: Props) {
 
       {/* Error Message */}
       {error && (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-xl">
           {error}
         </div>
       )}
 
       {/* Success Message */}
       {successMessage && (
-        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 px-4 py-3 rounded-lg">
+        <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 px-4 py-3 rounded-xl">
           {successMessage}
         </div>
       )}
@@ -135,25 +137,25 @@ export default function PreferencesSelector({ userId }: Props) {
               key={category}
               onClick={() => handleToggleCategory(category)}
               className={`
-                px-4 py-3 rounded-lg border-2 transition-all text-left font-medium
-                focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                px-4 py-3 rounded-xl border transition-all text-left font-medium
+                focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2
                 ${
                   isSelected
-                    ? 'bg-blue-600 dark:bg-blue-500 border-blue-600 dark:border-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600'
-                    : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-gray-600'
+                    ? 'bg-primary-600 dark:bg-primary-600 border-primary-600 dark:border-primary-600 text-white shadow-md shadow-primary-600/20 hover:bg-primary-700 dark:hover:bg-primary-500'
+                    : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-primary-400 dark:hover:border-primary-500 hover:bg-slate-50 dark:hover:bg-slate-700'
                 }
               `}
             >
               <div className="flex items-center gap-2">
                 <div
                   className={`
-                    h-5 w-5 rounded flex items-center justify-center flex-shrink-0
-                    ${isSelected ? 'bg-white' : 'bg-gray-200 dark:bg-gray-600'}
+                    h-5 w-5 rounded-md flex items-center justify-center flex-shrink-0 transition-colors
+                    ${isSelected ? 'bg-white/20' : 'bg-slate-100 dark:bg-slate-700'}
                   `}
                 >
                   {isSelected && (
                     <svg
-                      className="h-4 w-4 text-blue-600"
+                      className="h-3.5 w-3.5 text-white"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -175,7 +177,7 @@ export default function PreferencesSelector({ userId }: Props) {
       </div>
 
       {/* Selected Count */}
-      <div className="text-sm text-gray-600 dark:text-gray-400">
+      <div className="text-sm text-slate-600 dark:text-slate-400 font-medium">
         {selectedCategories.length} {selectedCategories.length === 1 ? 'categoría seleccionada' : 'categorías seleccionadas'}
       </div>
 
@@ -183,7 +185,7 @@ export default function PreferencesSelector({ userId }: Props) {
       <button
         onClick={handleSave}
         disabled={isSaving || selectedCategories.length === 0}
-        className="w-full sm:w-auto px-6 py-3 bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 dark:ring-offset-gray-800 focus:ring-offset-2"
+        className="w-full sm:w-auto px-8 py-3.5 bg-primary-600 dark:bg-primary-600 hover:bg-primary-700 dark:hover:bg-primary-500 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-primary-500 dark:ring-offset-slate-800 focus:ring-offset-2 shadow-lg shadow-primary-600/20 hover:shadow-primary-600/30 hover:-translate-y-0.5"
       >
         {isSaving ? (
           <>

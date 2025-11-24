@@ -1,5 +1,6 @@
-import type { Place } from "../types";
-import PlaceCard from "./PlaceCard";
+import type { Place } from "../../types";
+import PlaceCard from "../cards/PlaceCard";
+import EmptyState from "../ui/EmptyState";
 
 export default function PlaceGrid({
   places,
@@ -11,11 +12,7 @@ export default function PlaceGrid({
   onView?: (p: Place) => void;
 }) {
   if (!places.length) {
-    return (
-      <section className="rounded-2xl border dark:border-gray-700 bg-white dark:bg-gray-800 py-16 text-center text-gray-500 dark:text-gray-400">
-        No se encontraron lugares
-      </section>
-    );
+    return <EmptyState type="no-places" />;
   }
 
   return (

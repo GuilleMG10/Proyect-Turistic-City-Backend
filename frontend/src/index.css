@@ -7,13 +7,16 @@
 :root.dark { color-scheme: dark; }
 body { 
   margin: 0;
-  background-color: rgb(249 250 251);
-  color: rgb(17 24 39);
+  font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #f8fafc; /* gray-50 */
+  color: #0f172a; /* gray-900 */
   transition: background-color 0.3s, color 0.3s;
 }
 .dark body { 
-  background-color: rgb(17 24 39);
-  color: rgb(243 244 246);
+  background-color: #0f172a; /* gray-900 */
+  color: #f1f5f9; /* gray-100 */
 }
 
 /* Image fallback styles */
@@ -45,7 +48,9 @@ img[src*="unsplash.com"] {
 }
 
 .leaflet-popup-content {
-  margin: 0.5rem;
+  margin: 0 !important;
+  width: auto !important;
+  line-height: 1.5;
 }
 
 /* Dark mode for Leaflet */

@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import { LatLng, Icon } from 'leaflet';
 import type * as L from 'leaflet';
 import { Search, MapPin, Loader2 } from 'lucide-react';
-import { useThemeStore } from '../store/themeStore';
+import { useThemeStore } from '../../store/themeStore';
 import 'leaflet/dist/leaflet.css';
 
 // Fix for default marker icon
@@ -130,7 +130,7 @@ export default function LocationPicker({ latitude, longitude, onLocationChange, 
     <div className={className}>
       {/* Search Bar */}
       <form onSubmit={handleSearch} onClick={(e) => e.stopPropagation()} className="mb-3">
-        <label htmlFor="location-search" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+        <label htmlFor="location-search" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
           Buscar Ubicación
         </label>
         <div className="flex gap-2">
@@ -141,10 +141,10 @@ export default function LocationPicker({ latitude, longitude, onLocationChange, 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Ej: Plaza Murillo, Cochabamba"
-              className="w-full px-3 py-2 pl-10 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+              className="w-full px-4 py-2.5 pl-10 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 dark:focus:ring-cyan-400 transition-all shadow-sm"
               disabled={isSearching}
             />
-            <MapPin className="absolute left-3 top-2.5 h-5 w-5 text-gray-400 dark:text-gray-500" aria-hidden="true" />
+            <MapPin className="absolute left-3 top-3 h-5 w-5 text-gray-400 dark:text-gray-500" aria-hidden="true" />
           </div>
           <button
             type="button"
@@ -153,28 +153,31 @@ export default function LocationPicker({ latitude, longitude, onLocationChange, 
               handleSearch(e as unknown as React.FormEvent<HTMLFormElement>);
             }}
             disabled={isSearching || !searchQuery.trim()}
-            className="px-4 py-2 bg-blue-600 dark:bg-blue-700 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-4 py-2.5 bg-cyan-600 dark:bg-cyan-700 text-white rounded-xl hover:bg-cyan-700 dark:hover:bg-cyan-800 focus:outline-none focus:ring-2 focus:ring-cyan-500 dark:focus:ring-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-all shadow-sm hover:shadow-md active:scale-95"
           >
             {isSearching ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Buscando...
+                <span className="hidden sm:inline">Buscando...</span>
               </>
             ) : (
               <>
                 <Search className="h-4 w-4" />
-                Buscar
+                <span className="hidden sm:inline">Buscar</span>
               </>
             )}
           </button>
         </div>
         {searchError && (
-          <p className="text-sm text-red-600 dark:text-red-400 mt-1">{searchError}</p>
+          <p className="text-sm text-red-600 dark:text-red-400 mt-2 flex items-center gap-1 animate-in fade-in slide-in-from-top-1">
+            <span className="h-1.5 w-1.5 rounded-full bg-red-500 inline-block"></span>
+            {searchError}
+          </p>
         )}
       </form>
 
       {/* Map */}
-      <div className="border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden h-[300px] relative z-0">
+      <div className="border border-gray-300 dark:border-gray-600 rounded-xl overflow-hidden h-[300px] relative z-0 shadow-inner">
         <MapContainer
           center={position}
           zoom={13}
@@ -195,10 +198,10 @@ export default function LocationPicker({ latitude, longitude, onLocationChange, 
       </div>
 
       {/* Coordinates Display */}
-      <div className="mt-2 text-sm text-gray-600 dark:text-gray-400 flex items-center gap-2">
-        <MapPin className="h-4 w-4" aria-hidden="true" />
+      <div className="mt-2 text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1.5 px-1">
+        <MapPin className="h-3.5 w-3.5 text-cyan-500" aria-hidden="true" />
         <span>
-          Coordenadas seleccionadas: <strong>{position.lat.toFixed(6)}</strong>, <strong>{position.lng.toFixed(6)}</strong>
+          Coordenadas: <span className="font-mono bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-gray-700 dark:text-gray-300">{position.lat.toFixed(6)}, {position.lng.toFixed(6)}</span>
         </span>
       </div>
     </div>

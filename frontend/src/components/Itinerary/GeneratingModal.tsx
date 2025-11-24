@@ -10,14 +10,17 @@ export default function GeneratingModal({ isOpen, progress }: Props) {
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-xl w-full max-w-md shadow-2xl overflow-hidden">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-purple-600 to-purple-700 text-white p-6">
-          <div className="flex items-center justify-center gap-3 mb-2">
-            <Sparkles className="h-6 w-6 animate-pulse" />
+        <div className="bg-gradient-to-r from-primary-600 to-primary-800 text-white p-6 relative overflow-hidden">
+          <div className="absolute inset-0 bg-white/10 backdrop-blur-sm" />
+          <div className="flex items-center justify-center gap-3 mb-2 relative z-10">
+            <div className="p-2 bg-white/20 rounded-xl backdrop-blur-md">
+              <Sparkles className="h-6 w-6 animate-pulse" />
+            </div>
             <h2 className="text-xl font-bold">Generando Itinerario</h2>
           </div>
-          <p className="text-center text-sm opacity-90">
+          <p className="text-center text-sm opacity-90 relative z-10">
             Se está creando tu itinerario personalizado...
           </p>
         </div>
@@ -26,39 +29,39 @@ export default function GeneratingModal({ isOpen, progress }: Props) {
         <div className="p-6 space-y-6">
           {/* Spinner */}
           <div className="flex justify-center">
-            <Loader2 className="h-16 w-16 text-purple-600 animate-spin" />
+            <Loader2 className="h-16 w-16 text-primary-600 dark:text-primary-400 animate-spin" />
           </div>
 
           {/* Progress Text */}
           {progress && (
-            <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 max-h-48 overflow-y-auto">
-              <p className="text-sm text-gray-700 dark:text-gray-200 whitespace-pre-wrap leading-relaxed">
+            <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-4 max-h-48 overflow-y-auto border border-slate-100 dark:border-slate-700">
+              <p className="text-sm text-slate-700 dark:text-slate-200 whitespace-pre-wrap leading-relaxed font-mono">
                 {progress}
               </p>
             </div>
           )}
 
           {/* Loading Steps */}
-          <div className="space-y-3">
+          <div className="space-y-4">
             <div className="flex items-center gap-3 text-sm">
-              <div className="w-2 h-2 bg-purple-600 dark:bg-purple-400 rounded-full animate-pulse"></div>
-              <span className="text-gray-600 dark:text-gray-300">Analizando preferencias...</span>
+              <div className="w-2.5 h-2.5 bg-primary-600 dark:bg-primary-400 rounded-full animate-pulse"></div>
+              <span className="text-slate-600 dark:text-slate-300 font-medium">Analizando preferencias...</span>
             </div>
             <div className="flex items-center gap-3 text-sm">
-              <div className="w-2 h-2 bg-purple-600 dark:bg-purple-400 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-              <span className="text-gray-600 dark:text-gray-300">Consultando lugares disponibles...</span>
+              <div className="w-2.5 h-2.5 bg-primary-600 dark:bg-primary-400 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+              <span className="text-slate-600 dark:text-slate-300 font-medium">Consultando lugares disponibles...</span>
             </div>
             <div className="flex items-center gap-3 text-sm">
-              <div className="w-2 h-2 bg-purple-600 dark:bg-purple-400 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
-              <span className="text-gray-600 dark:text-gray-300">Optimizando ruta...</span>
+              <div className="w-2.5 h-2.5 bg-primary-600 dark:bg-primary-400 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+              <span className="text-slate-600 dark:text-slate-300 font-medium">Optimizando ruta...</span>
             </div>
             <div className="flex items-center gap-3 text-sm">
-              <div className="w-2 h-2 bg-purple-600 dark:bg-purple-400 rounded-full animate-pulse" style={{ animationDelay: '0.6s' }}></div>
-              <span className="text-gray-600 dark:text-gray-300">Calculando costos y tiempos...</span>
+              <div className="w-2.5 h-2.5 bg-primary-600 dark:bg-primary-400 rounded-full animate-pulse" style={{ animationDelay: '0.6s' }}></div>
+              <span className="text-slate-600 dark:text-slate-300 font-medium">Calculando costos y tiempos...</span>
             </div>
           </div>
 
-          <p className="text-center text-xs text-gray-500 dark:text-gray-400">
+          <p className="text-center text-xs text-slate-500 dark:text-slate-400">
             Esto puede tomar unos segundos...
           </p>
         </div>

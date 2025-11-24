@@ -6,6 +6,12 @@ import App from "./App";
 import Home from "./routes/Home";
 import Explore from "./routes/Explore";
 import Profile from "./routes/Profile";
+import ExplorePlaces from "./routes/explore/ExplorePlaces";
+import ExploreEvents from "./routes/explore/ExploreEvents";
+import ExploreForYou from "./routes/explore/ExploreForYou";
+import ExploreCalendar from "./routes/explore/ExploreCalendar";
+import ExploreMap from "./routes/explore/ExploreMap";
+import ExploreItinerary from "./routes/explore/ExploreItinerary";
 
 const router = createBrowserRouter([
   { 
@@ -13,7 +19,18 @@ const router = createBrowserRouter([
     element: <App />, 
     children: [
       { index: true, element: <Home /> },
-      { path: "explore", element: <Explore /> },
+      { 
+        path: "explore", 
+        element: <Explore />,
+        children: [
+          { index: true, element: <ExplorePlaces /> },
+          { path: "events", element: <ExploreEvents /> },
+          { path: "for-you", element: <ExploreForYou /> },
+          { path: "calendar", element: <ExploreCalendar /> },
+          { path: "map", element: <ExploreMap /> },
+          { path: "itinerary", element: <ExploreItinerary /> }
+        ]
+      },
       { path: "profile", element: <Profile /> }
     ] 
   },

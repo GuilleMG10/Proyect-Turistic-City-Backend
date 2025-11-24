@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
-import ErrorBanner from '../components/ErrorBanner';
-import PlaceCard from '../components/PlaceCard';
+import ErrorBanner from '../components/ui/ErrorBanner';
+import PlaceCard from '../components/cards/PlaceCard';
 import type { Place } from '../types';
 
 // Pruebas para el componente ErrorBanner
@@ -27,6 +27,7 @@ describe('PlaceCard', () => {
     created_at: '2025-01-01T00:00:00Z',
     link_image: 'https://placehold.co/800x533',
     active: true,
+    price: 0,
   };
 
   it('debería renderizar la información del lugar', () => {

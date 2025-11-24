@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { ApiService } from '../services/api';
 import type { PlaceFavorite } from '../types';
 
-interface FavoritesState {
+export interface FavoritesState {
   favorites: PlaceFavorite[];
   loadFavorites: (userId: number) => Promise<void>;
   addFavorite: (userId: number, placeId: number) => Promise<void>;

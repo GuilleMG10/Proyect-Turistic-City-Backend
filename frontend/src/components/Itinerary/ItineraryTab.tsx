@@ -2,12 +2,12 @@ import { useState, useEffect } from "react";
 import { Sparkles, Calendar } from "lucide-react";
 import type { Itinerary, ItineraryGenerateRequest } from "../../types";
 import { useUserStore } from "../../store/userStore";
-import EmptyState from "../EmptyState";
-import ErrorModal from "../ErrorModal";
+import EmptyState from "../ui/EmptyState";
+import ErrorModal from "../modals/ErrorModal";
 import ItineraryGenerateModal from "./ItineraryGenerateModal";
 import ItineraryCard from "./ItineraryCard";
 import ItineraryViewModal from "./ItineraryViewModal";
-import ConfirmModal from "../ConfirmModal";
+import ConfirmModal from "../modals/ConfirmModal";
 import GeneratingModal from "./GeneratingModal";
 import { ItineraryService } from "../../services/itineraryService";
 import { ApiService } from "../../services/api";
@@ -111,7 +111,7 @@ export default function ItineraryTab() {
       end_time: "18:00",
       budget: 800,
       preferences: JSON.stringify(["Naturaleza", "Deportes", "Entretenimiento"]),
-      total_cost: 650,
+      total_cost: 0,
       created_at: new Date().toISOString(),
       items: []
     }
@@ -268,48 +268,50 @@ export default function ItineraryTab() {
   return (
     <main className="space-y-6">
       {/* Header with Generate Button */}
-      <section className="bg-white dark:bg-gray-800 rounded-lg shadow-sm dark:shadow-gray-900/50 p-6">
-        <div className="flex items-center justify-between mb-4">
+      <section className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md rounded-2xl shadow-sm dark:shadow-slate-900/50 p-6 border border-slate-200 dark:border-slate-700">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Mis Itinerarios</h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Mis Itinerarios</h2>
+            <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
               Crea y gestiona tus rutas turísticas personalizadas
             </p>
           </div>
           <button
             onClick={() => setIsGenerateModalOpen(true)}
-            className="flex items-center gap-2 bg-cyan-600 text-white px-4 py-2 rounded-lg hover:bg-cyan-700 transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2"
+            className="flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20 hover:shadow-blue-600/30 hover:-translate-y-0.5 font-semibold"
             aria-label="Generar nuevo itinerario con IA"
           >
             <Sparkles className="h-5 w-5" />
-            <span>Generar</span>
+            <span>Generar con IA</span>
           </button>
         </div>
       </section>
 
       {/* Itineraries List or Empty State */}
       {itineraries.length === 0 ? (
-        <section className="bg-white dark:bg-gray-800 rounded-lg shadow-sm dark:shadow-gray-900/50 p-12 text-center">
+        <section className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm dark:shadow-slate-900/50 p-12 text-center border border-slate-200 dark:border-slate-700">
           <div className="max-w-md mx-auto">
-            <Calendar className="h-16 w-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" />
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+            <div className="w-20 h-20 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Calendar className="h-10 w-10 text-slate-400 dark:text-slate-500" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3">
               No tienes itinerarios aún
             </h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
+            <p className="text-slate-600 dark:text-slate-400 mb-8 leading-relaxed">
               Crea tu primer itinerario personalizado con ayuda de nuestra IA.
               Te ayudaremos a planificar tu visita perfecta a Cochabamba.
             </p>
             <button
               onClick={() => setIsGenerateModalOpen(true)}
-              className="inline-flex items-center gap-2 bg-cyan-600 dark:bg-cyan-700 text-white px-6 py-3 rounded-lg hover:bg-cyan-700 dark:hover:bg-cyan-800 transition-colors"
+              className="inline-flex items-center gap-2 bg-blue-600 dark:bg-blue-700 text-white px-8 py-4 rounded-xl hover:bg-blue-700 dark:hover:bg-blue-800 transition-all shadow-lg shadow-blue-600/20 hover:shadow-blue-600/30 hover:-translate-y-0.5 font-bold text-lg"
             >
-              <Sparkles className="h-5 w-5" />
+              <Sparkles className="h-6 w-6" />
               <span>Crear Primer Itinerario</span>
             </button>
           </div>
         </section>
       ) : (
-        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {itineraries.map((itinerary) => (
             <ItineraryCard
               key={itinerary.id}

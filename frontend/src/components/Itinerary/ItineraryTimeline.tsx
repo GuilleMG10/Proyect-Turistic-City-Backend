@@ -27,72 +27,69 @@ export default function ItineraryTimeline({ items, onRemoveItem, onViewDetails }
         if (!itemData) return null;
 
         return (
-          <div key={item.id} className="relative flex gap-4 pb-8 last:pb-0">
+          <div key={item.id} className="relative flex gap-4 pb-8 last:pb-0 group">
             {/* Timeline Line and Dot */}
             <div className="relative flex flex-col items-center">
               {/* Time Badge */}
-              <div className="bg-gradient-to-br from-cyan-600 to-blue-600 dark:from-cyan-700 dark:to-blue-700 text-white p-3 rounded-lg shadow-lg flex flex-col items-center justify-center min-w-[100px] z-10">
-                <span className="text-xs font-medium opacity-90">Paso {index + 1}</span>
-                <span className="text-base font-bold mt-1">{item.start_time}</span>
-                <span className="text-xs opacity-75">a</span>
-                <span className="text-base font-bold">{item.end_time}</span>
+              <div className="bg-gradient-to-br from-primary-600 to-primary-800 text-white p-3 rounded-xl shadow-lg shadow-primary-900/20 flex flex-col items-center justify-center min-w-[100px] z-10 relative overflow-hidden">
+                <div className="absolute inset-0 bg-white/10 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <span className="text-xs font-medium opacity-90 relative z-10">Paso {index + 1}</span>
+                <span className="text-base font-bold mt-1 relative z-10">{item.start_time}</span>
+                <span className="text-xs opacity-75 relative z-10">a</span>
+                <span className="text-base font-bold relative z-10">{item.end_time}</span>
               </div>
               
               {/* Timeline Connector */}
               {!isLast && (
-                <div className="absolute top-[120px] left-1/2 -translate-x-1/2 flex flex-col items-center">
+                <div className="absolute top-[120px] left-1/2 -translate-x-1/2 flex flex-col items-center h-[calc(100%-100px)]">
                   {/* Vertical Line */}
-                  <div className="w-0.5 h-8 bg-gradient-to-b from-cyan-400 to-blue-400 dark:from-cyan-500 dark:to-blue-600"></div>
-                  {/* Connection Dot */}
-                  <div className="w-3 h-3 rounded-full bg-cyan-500 dark:bg-cyan-600 border-2 border-white dark:border-gray-800 shadow-md"></div>
-                  {/* Vertical Line continues */}
-                  <div className="w-0.5 h-full bg-gradient-to-b from-blue-400 to-cyan-300 dark:from-blue-600 dark:to-cyan-700"></div>
+                  <div className="w-0.5 h-full bg-gradient-to-b from-primary-400 to-primary-200 dark:from-primary-600 dark:to-slate-700"></div>
                 </div>
               )}
             </div>
 
             {/* Content Card */}
-            <article className="flex-1 bg-white dark:bg-gray-800 rounded-lg shadow-sm dark:shadow-gray-900/50 border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow">
-              <div className="p-4">
+            <article className="flex-1 bg-white dark:bg-slate-800 rounded-2xl shadow-sm dark:shadow-slate-900/50 border border-slate-200 dark:border-slate-700 overflow-hidden hover:shadow-md transition-all duration-300">
+              <div className="p-5">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className={`text-xs px-2 py-1 rounded-full ${
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
                         isPlace 
-                          ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300' 
+                          ? 'bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300' 
                           : 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300'
                       }`}>
                         {itemType}
                       </span>
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                      <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                         {itemData.category}
                       </span>
                     </div>
                     
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
                       {itemData.name}
                     </h3>
                     
-                    <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400 mb-2">
-                      <MapPin className="h-4 w-4" />
+                    <div className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-400 mb-3">
+                      <MapPin className="h-4 w-4 text-primary-500" />
                       <span>{itemData.location}</span>
                     </div>
 
                     {isPlace && item.place && (
-                      <div className="text-sm text-gray-700 dark:text-gray-300 font-medium">
+                      <div className="text-sm text-slate-700 dark:text-slate-300 font-medium bg-slate-50 dark:bg-slate-700/50 inline-block px-3 py-1 rounded-lg">
                         Costo: Bs. {item.place.price.toFixed(2)}
                       </div>
                     )}
 
                     {!isPlace && item.event && (
-                      <div className="text-sm text-gray-700 dark:text-gray-300 font-medium">
+                      <div className="text-sm text-slate-700 dark:text-slate-300 font-medium bg-slate-50 dark:bg-slate-700/50 inline-block px-3 py-1 rounded-lg">
                         Costo: Bs. {item.event.price.toFixed(2)}
                       </div>
                     )}
 
                     {item.notes && (
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-2 italic">
-                        {item.notes}
+                      <p className="text-sm text-slate-600 dark:text-slate-400 mt-3 italic border-l-2 border-primary-200 dark:border-primary-800 pl-3 py-1">
+                        "{item.notes}"
                       </p>
                     )}
                   </div>
@@ -101,7 +98,7 @@ export default function ItineraryTimeline({ items, onRemoveItem, onViewDetails }
                   <div className="flex gap-2 ml-4">
                     <button
                       onClick={() => onViewDetails(item)}
-                      className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
+                      className="p-2.5 text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-xl transition-colors"
                       aria-label="Ver detalles"
                       title="Ver detalles"
                     >
@@ -109,7 +106,7 @@ export default function ItineraryTimeline({ items, onRemoveItem, onViewDetails }
                     </button>
                     <button
                       onClick={() => onRemoveItem(item.id)}
-                      className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                      className="p-2.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-xl transition-colors"
                       aria-label="Eliminar del itinerario"
                       title="Eliminar"
                     >

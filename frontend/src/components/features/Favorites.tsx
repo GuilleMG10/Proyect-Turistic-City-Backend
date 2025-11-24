@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { Heart, Sparkles, MapPin } from "lucide-react";
-import type { EventWithStatus, Place } from "../types";
-import { useUserStore } from "../store/userStore";
-import EventCard from "./EventCard";
-import PlaceCard from "./PlaceCard";
-import ErrorBanner from "./ErrorBanner";
+import type { EventWithStatus, Place, UserInterest, PlaceFavorite } from "../../types";
+import { useUserStore } from "../../store/userStore";
+import EventCard from "../cards/EventCard";
+import PlaceCard from "../cards/PlaceCard";
+import ErrorBanner from "../ui/ErrorBanner";
 import RecommendationTabs from "./RecommendationTabs";
-import EmptyState from "./EmptyState";
-import { useRecommendations } from "../hooks/useRecommendations";
-import { useFavorites } from "../hooks/useFavorites";
+import EmptyState from "../ui/EmptyState";
+import { useRecommendations } from "../../hooks/useRecommendations";
+import { useFavorites, type FavoritesState } from "../../hooks/useFavorites";
 
 type Props = {
   events: EventWithStatus[];
@@ -25,7 +25,6 @@ export default function Favorites({
   events, 
   places, 
   onEventView, 
-  onEventInterest, 
   onPlaceView, 
   onPlaceInterest 
 }: Props) {
@@ -36,12 +35,12 @@ export default function Favorites({
 
   // Get user's interested events (from user_interests table)
   const favoriteEvents = events.filter(event => 
-    interests.some(interest => interest.event_id === event.id && interest.active)
+    interests.some((interest: UserInterest) => interest.event_id === event.id && interest.active)
   );
   
-  const placeFavorites = useFavorites((state) => state.favorites);
+  const placeFavorites = useFavorites((state: FavoritesState) => state.favorites);
   const favoritePlaces = places.filter(place => 
-    placeFavorites.some(fav => fav.place_id === place.id && fav.active)
+    placeFavorites.some((fav: PlaceFavorite) => fav.place_id === place.id && fav.active)
   );
 
   const { aiSuggestions, popularContent } = useRecommendations(
@@ -79,7 +78,6 @@ export default function Favorites({
                       key={event.id}
                       event={event}
                       onView={onEventView}
-                      onInterest={onEventInterest}
                     />
                   ))}
                 </div>
@@ -123,12 +121,11 @@ export default function Favorites({
                   Eventos recomendados para ti
                 </h3>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {suggestedEvents.map(event => (
+                  {suggestedEvents.map((event: EventWithStatus) => (
                     <EventCard
                       key={event.id}
                       event={event}
                       onView={onEventView}
-                      onInterest={onEventInterest}
                     />
                   ))}
                 </div>
@@ -141,7 +138,7 @@ export default function Favorites({
                   Lugares que podrían gustarte
                 </h3>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {suggestedPlaces.map(place => (
+                  {suggestedPlaces.map((place: Place) => (
                     <PlaceCard
                       key={place.id}
                       place={place}
@@ -164,12 +161,11 @@ export default function Favorites({
                   Eventos Populares
                 </h3>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {popularEvents.map(event => (
+                  {popularEvents.map((event: EventWithStatus) => (
                     <EventCard
                       key={event.id}
                       event={event}
                       onView={onEventView}
-                      onInterest={onEventInterest}
                     />
                   ))}
                 </div>
@@ -182,7 +178,7 @@ export default function Favorites({
                   Lugares Mejor Valorados
                 </h3>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {popularPlaces.map(place => (
+                  {popularPlaces.map((place: Place) => (
                     <PlaceCard
                       key={place.id}
                       place={place}

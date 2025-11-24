@@ -1,37 +1,42 @@
 import { useState, useEffect, useMemo, Suspense, lazy } from "react";
 import { Plus } from "lucide-react";
-import PlaceGrid from "../components/PlaceGrid";
-import ErrorBanner from "../components/ErrorBanner";
-import Calendar from "../components/Calendar";
-import Favorites from "../components/Favorites";
-import ItineraryTab from "../components/Itinerary/ItineraryTab";
-import EventCard from "../components/EventCard";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import ErrorBanner from "../components/ui/ErrorBanner";
 import { useUserStore } from "../store/userStore";
-import FilterModal from "../components/FilterModal";
-import SearchBar from "../components/SearchBar";
-import CategoryChips from "../components/CategoryChips";
-import TabNavigation from "../components/TabNavigation";
-import LoadingGrid from "../components/LoadingGrid";
-import LiveRegion from "../components/LiveRegion";
+import FilterModal from "../components/modals/FilterModal";
+import SearchBar from "../components/ui/SearchBar";
+import CategoryChips from "../components/ui/CategoryChips";
+import LiveRegion from "../components/ui/LiveRegion";
 import { useDataLoading } from "../hooks/useDataLoading";
 import { useFiltering } from "../hooks/useFiltering";
 import { useModalState } from "../hooks/useModalState";
 import { useEventInterest } from "../hooks/useEventInterest";
 import { useFavorites } from "../hooks/useFavorites";
-import PlaceFormModal from "../components/PlaceFormModal";
-import EventFormModal from "../components/EventFormModal";
-import MapView from "../components/MapView";
-import type { Place, Event } from "../types";
-import { getEventStatus } from "../services/api";
+import PlaceFormModal from "../components/modals/PlaceFormModal";
+import EventFormModal from "../components/modals/EventFormModal";
+import type { ExploreContextType } from "./explore/types";
 
 // Lazy load modal components
-const EventDetailsModal = lazy(() => import("../components/EventDetailsModal"));
-const PlaceDetailsModal = lazy(() => import("../components/PlaceDetailsModal"));
+const EventDetailsModal = lazy(() => import("../components/modals/EventDetailsModal"));
+const PlaceDetailsModal = lazy(() => import("../components/modals/PlaceDetailsModal"));
 
 type TabType = 'explorar' | 'eventos' | 'para-ti' | 'calendario' | 'mapa' | 'itinerario';
 
 export default function Explore() {
-  const [activeTab, setActiveTab] = useState<TabType>('explorar');
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const getActiveTab = (pathname: string): TabType => {
+    if (pathname.includes('/events')) return 'eventos';
+    if (pathname.includes('/for-you')) return 'para-ti';
+    if (pathname.includes('/calendar')) return 'calendario';
+    if (pathname.includes('/map')) return 'mapa';
+    if (pathname.includes('/itinerary')) return 'itinerario';
+    return 'explorar';
+  };
+
+  const activeTab = getActiveTab(location.pathname);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Todos');
   // Store last selected category per tab
@@ -41,9 +46,6 @@ export default function Explore() {
   });
   const [isPlaceFormOpen, setIsPlaceFormOpen] = useState(false);
   const [isEventFormOpen, setIsEventFormOpen] = useState(false);
-  const [showPlacesOnMap, setShowPlacesOnMap] = useState(true);
-  const [showEventsOnMap, setShowEventsOnMap] = useState(true);
-  const [mapCenter, setMapCenter] = useState<[number, number] | undefined>(undefined);
   const [filters, setFilters] = useState({
     categories: [] as string[],
     priceRange: [0, 1000] as [number, number],
@@ -97,18 +99,14 @@ export default function Explore() {
     const handleNavigateToMap = (event: globalThis.Event) => {
       const customEvent = event as CustomEvent<{ placeId: number; displayNumber: number; latitude: number; longitude: number }>;
       const { latitude, longitude } = customEvent.detail;
-      
-      setActiveTab('mapa');
-      setShowPlacesOnMap(true);
-      setShowEventsOnMap(false);
-      setMapCenter([latitude, longitude]);
+      navigate('/explore/map', { state: { center: [latitude, longitude] } });
     };
 
     window.addEventListener('navigateToMapWithPlace', handleNavigateToMap);
     return () => {
       window.removeEventListener('navigateToMapWithPlace', handleNavigateToMap);
     };
-  }, []);
+  }, [navigate]);
 
   const liveMessage = useMemo(() => {
     if (loading) return 'Cargando contenido...';
@@ -138,18 +136,6 @@ export default function Explore() {
     setIsEventFormOpen(false);
   };
 
-  const handleMapMarkerClick = (item: Place | Event, type: 'place' | 'event') => {
-    if (type === 'place') {
-      modalState.openPlaceModal(item as Place);
-    } else {
-      const event = item as Event;
-      modalState.openEventModal({
-        ...event,
-        status: getEventStatus(event.event_date)
-      });
-    }
-  };
-
   useEffect(() => {
     const isAnyModalOpen = 
       modalState.isEventModalOpen || 
@@ -169,129 +155,17 @@ export default function Explore() {
     };
   }, [modalState.isEventModalOpen, modalState.isPlaceModalOpen, isPlaceFormOpen, isEventFormOpen, modalState.isFilterModalOpen]);
 
-  const tabs = [
-    { key: 'explorar' as const, label: 'Explorar' },
-    { key: 'eventos' as const, label: 'Eventos' },
-    { key: 'para-ti' as const, label: 'Para ti' },
-    { key: 'calendario' as const, label: 'Calendario' },
-    { key: 'mapa' as const, label: 'Mapa' },
-    { key: 'itinerario' as const, label: 'Itinerario' }
-  ];
-
-  const renderTabContent = () => {
-    if (loading) {
-      return <LoadingGrid count={6} />;
-    }
-
-    switch (activeTab) {
-      case 'explorar':
-        return (
-          <section aria-labelledby="explorar-heading">
-            <h2 id="explorar-heading" className="sr-only">Explorar Lugares</h2>
-            <PlaceGrid
-              places={filteredPlaces}
-              onInterest={(p) => user && toggleFavorite(user.id, p.id)}
-              onView={modalState.openPlaceModal}
-            />
-          </section>
-        );
-
-      case 'eventos':
-        return (
-          <section aria-labelledby="eventos-heading">
-            <h2 id="eventos-heading" className="sr-only">Eventos Disponibles</h2>
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {filteredEvents.map((event) => (
-                <EventCard
-                  key={event.id}
-                  event={event}
-                  onInterest={() => toggleEventInterest(event)}
-                  onView={modalState.openEventModal}
-                />
-              ))}
-            </div>
-          </section>
-        );
-
-      case 'para-ti':
-        return (
-          <section aria-labelledby="recomendaciones-heading">
-            <h2 id="recomendaciones-heading" className="sr-only">Recomendaciones Personalizadas</h2>
-            <Favorites
-              events={events}
-              places={places}
-              onEventView={modalState.openEventModal}
-              onEventInterest={toggleEventInterest}
-              onPlaceView={modalState.openPlaceModal}
-              onPlaceInterest={(p) => user && toggleFavorite(user.id, p.id)}
-            />
-          </section>
-        );
-
-      case 'calendario':
-        return (
-          <section aria-labelledby="calendario-heading">
-            <h2 id="calendario-heading" className="sr-only">Calendario de Eventos</h2>
-            <Calendar
-              events={events}
-              onEventView={modalState.openEventModal}
-              onCreateEvent={(date) => console.log("Crear evento en:", date)}
-            />
-          </section>
-        );
-
-      case 'mapa':
-        return (
-          <section aria-labelledby="mapa-heading" className="space-y-4">
-            <h2 id="mapa-heading" className="sr-only">Mapa de Lugares y Eventos</h2>
-            
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 flex items-center gap-4 flex-wrap border dark:border-gray-700">
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Mostrar:</span>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={showPlacesOnMap}
-                  onChange={(e) => setShowPlacesOnMap(e.target.checked)}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded"
-                />
-                <span className="text-sm text-gray-700 dark:text-gray-300">Lugares ({filteredPlaces.length})</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={showEventsOnMap}
-                  onChange={(e) => setShowEventsOnMap(e.target.checked)}
-                  className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 dark:border-gray-600 rounded"
-                />
-                <span className="text-sm text-gray-700 dark:text-gray-300">Eventos ({filteredEvents.length})</span>
-              </label>
-            </div>
-
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden relative border dark:border-gray-700" style={{ height: '600px', zIndex: 1 }}>
-              <MapView
-                places={filteredPlaces}
-                events={filteredEvents}
-                showPlaces={showPlacesOnMap}
-                showEvents={showEventsOnMap}
-                center={mapCenter}
-                zoom={mapCenter ? 17 : undefined}
-                onMarkerClick={handleMapMarkerClick}
-              />
-            </div>
-          </section>
-        );
-
-      case 'itinerario':
-        return (
-          <section aria-labelledby="itinerario-heading">
-            <h2 id="itinerario-heading" className="sr-only">Mis Itinerarios</h2>
-            <ItineraryTab />
-          </section>
-        );
-
-      default:
-        return null;
-    }
+  const contextValue: ExploreContextType = {
+    places,
+    events,
+    filteredPlaces,
+    filteredEvents,
+    loading,
+    user,
+    toggleFavorite,
+    toggleEventInterest,
+    openPlaceModal: modalState.openPlaceModal,
+    openEventModal: modalState.openEventModal
   };
 
   return (
@@ -299,42 +173,28 @@ export default function Explore() {
       <section className="space-y-6">
         {error && <ErrorBanner message={error} />}
 
-        <SearchBar
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          filters={filters}
-          onOpenFilters={modalState.openFilterModal}
-        />
-
-        {(activeTab === 'explorar' || activeTab === 'eventos') && (
-          <CategoryChips
-            categories={availableCategories}
-            selectedCategory={selectedCategory}
-            onCategorySelect={setSelectedCategory}
+        {/* Search & Filters Area */}
+        <div className="space-y-4 bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
+          <SearchBar
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            filters={filters}
+            onOpenFilters={modalState.openFilterModal}
           />
-        )}
 
-        <div className="flex items-center justify-between gap-4">
-          <TabNavigation
-            tabs={tabs}
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-          />
-          
-          {isAdmin && (activeTab === 'explorar' || activeTab === 'eventos') && (
-            <button
-              onClick={() => activeTab === 'explorar' ? setIsPlaceFormOpen(true) : setIsEventFormOpen(true)}
-              className="flex items-center gap-2 bg-green-600 dark:bg-green-700 text-white px-3 md:px-4 py-2 rounded-lg hover:bg-green-700 dark:hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-green-500 dark:ring-offset-gray-900 focus:ring-offset-2 shrink-0"
-              aria-label={`Crear nuevo ${activeTab === 'explorar' ? 'lugar' : 'evento'}`}
-            >
-              <Plus className="h-5 w-5" />
-              <span className="hidden md:inline">Crear {activeTab === 'explorar' ? 'Lugar' : 'Evento'}</span>
-            </button>
+          {(activeTab === 'explorar' || activeTab === 'eventos') && (
+            <div className="pt-2 border-t border-gray-100 dark:border-gray-700">
+              <CategoryChips
+                categories={availableCategories}
+                selectedCategory={selectedCategory}
+                onCategorySelect={setSelectedCategory}
+              />
+            </div>
           )}
         </div>
 
         <section className="tab-content" role="tabpanel" aria-labelledby={`tab-${activeTab}`}>
-          {renderTabContent()}
+          <Outlet context={contextValue} />
         </section>
 
         <LiveRegion message={liveMessage} priority="polite" />
@@ -381,6 +241,17 @@ export default function Explore() {
         }}
         currentFilters={filters}
       />
+
+      {/* Floating Action Button for Creation */}
+      {isAdmin && (activeTab === 'explorar' || activeTab === 'eventos') && (
+        <button
+          onClick={() => activeTab === 'explorar' ? setIsPlaceFormOpen(true) : setIsEventFormOpen(true)}
+          className="fixed bottom-6 right-6 z-50 p-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+          aria-label={`Crear nuevo ${activeTab === 'explorar' ? 'lugar' : 'evento'}`}
+        >
+          <Plus className="h-6 w-6" />
+        </button>
+      )}
     </>
   );
 }
