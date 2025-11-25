@@ -40,9 +40,12 @@ func (s *UserService) AddUser(user *model.User, rawPassword string) error {
 	return s.userRepository.CreateUser(user)
 }
 
+var dummyHash = "$2a$10$X7SV1X0YHk.xTza.j4.RFOc.1.1.1.1.1.1.1.1.1.1.1.1.1.1" //use for avoid hacker for time 
+
 func (s *UserService) Login(username, password string) (*model.User, error) {
 	user, err := s.userRepository.FindUserByUsername(username)
 	if err != nil {
+		bcrypt.CompareHashAndPassword([]byte(dummyHash), []byte(password))
 		return nil, err
 	}
 	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
