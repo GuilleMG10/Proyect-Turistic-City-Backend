@@ -41,13 +41,53 @@ export default function UserMenu({ onLoginClick }: Props) {
 
   if (!user) {
     return (
-      <button
-        onClick={onLoginClick}
-        className="flex items-center gap-2 px-5 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-full font-medium transition-all shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 active:scale-95"
-      >
-        <User className="h-4 w-4" />
-        <span className="hidden sm:inline">Iniciar Sesión</span>
-      </button>
+      <div className="relative" ref={menuRef}>
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="flex items-center gap-2 pl-1 pr-3 py-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-cyan-500 shadow-sm hover:shadow-md"
+          aria-label="Menú de invitado"
+          aria-expanded={isOpen}
+        >
+          <div className="h-8 w-8 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center text-gray-500 dark:text-gray-400">
+            <User className="h-5 w-5" />
+          </div>
+          <span className="hidden sm:inline font-medium text-sm text-gray-700 dark:text-gray-200">Visitante</span>
+        </button>
+
+        {isOpen && (
+          <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-2xl shadow-xl dark:shadow-gray-900/50 border border-gray-100 dark:border-gray-700 overflow-hidden z-50 ring-1 ring-black/5 animate-in fade-in zoom-in-95 duration-100">
+            <div className="p-2 space-y-1">
+              <button
+                onClick={() => {
+                  onLoginClick();
+                  setIsOpen(false);
+                }}
+                className="w-full px-3 py-2 text-left flex items-center gap-3 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors text-primary-600 dark:text-primary-400 font-medium"
+              >
+                <User className="h-4.5 w-4.5" />
+                <span>Iniciar Sesión</span>
+              </button>
+              
+              <button
+                onClick={() => {
+                  toggleTheme();
+                  setIsOpen(false);
+                }}
+                className="w-full px-3 py-2 text-left flex items-center gap-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors text-gray-700 dark:text-gray-200 font-medium"
+              >
+                {theme === 'light' ? (
+                  <Moon className="h-4.5 w-4.5 text-gray-400" />
+                ) : (
+                  <Sun className="h-4.5 w-4.5 text-gray-400" />
+                )}
+                <span>
+                  Tema {theme === 'light' ? 'Oscuro' : 'Claro'}
+                </span>
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     );
   }
 

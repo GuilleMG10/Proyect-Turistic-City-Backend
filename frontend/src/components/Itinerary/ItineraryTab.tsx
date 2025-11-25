@@ -14,132 +14,48 @@ import { ApiService } from "../../services/api";
 
 export default function ItineraryTab() {
   const { user } = useUserStore();
-  // TODO: Replace with actual API data
-  const [itineraries, setItineraries] = useState<Itinerary[]>([
-    {
-      id: 1,
-      user_id: user?.id || 1,
-      name: "Tour Centro Histórico",
-      date: "2025-11-15",
-      start_time: "09:00",
-      end_time: "17:00",
-      budget: 500,
-      preferences: JSON.stringify(["Cultural", "Historia", "Gastronomía"]),
-      total_cost: 380,
-      created_at: new Date().toISOString(),
-      items: [
-        {
-          id: 1,
-          itinerary_id: 1,
-          place_id: 1,
-          event_id: null,
-          order: 1,
-          start_time: "09:00",
-          end_time: "11:00",
-          notes: "Visita guiada incluida",
-          place: {
-            id: 1,
-            user_id: 1,
-            name: "Cristo de la Concordia",
-            description: "Monumento emblemático de Cochabamba",
-            location: "Cerro San Pedro",
-            latitude: -17.3935,
-            longitude: -66.1450,
-            category: "Cultural",
-            price: 20,
-            created_at: new Date().toISOString(),
-            link_image: null,
-            active: true
-          }
-        },
-        {
-          id: 2,
-          itinerary_id: 1,
-          place_id: 2,
-          event_id: null,
-          order: 2,
-          start_time: "11:30",
-          end_time: "13:00",
-          notes: "Almuerzo tradicional",
-          place: {
-            id: 2,
-            user_id: 1,
-            name: "La Cancha",
-            description: "Mercado más grande de Bolivia",
-            location: "Zona La Cancha",
-            latitude: -17.3928,
-            longitude: -66.1570,
-            category: "Gastronomía",
-            price: 150,
-            created_at: new Date().toISOString(),
-            link_image: null,
-            active: true
-          }
-        },
-        {
-          id: 3,
-          itinerary_id: 1,
-          place_id: 3,
-          event_id: null,
-          order: 3,
-          start_time: "14:00",
-          end_time: "16:30",
-          notes: "Recorrido histórico",
-          place: {
-            id: 3,
-            user_id: 1,
-            name: "Plaza 14 de Septiembre",
-            description: "Plaza principal de Cochabamba",
-            location: "Centro",
-            latitude: -17.3935,
-            longitude: -66.1570,
-            category: "Historia",
-            price: 0,
-            created_at: new Date().toISOString(),
-            link_image: null,
-            active: true
-          }
-        }
-      ]
-    },
-    {
-      id: 2,
-      user_id: user?.id || 1,
-      name: "Aventura en Naturaleza",
-      date: "2025-11-20",
-      start_time: "08:00",
-      end_time: "18:00",
-      budget: 800,
-      preferences: JSON.stringify(["Naturaleza", "Deportes", "Entretenimiento"]),
-      total_cost: 0,
-      created_at: new Date().toISOString(),
-      items: []
-    }
-  ]);
+  // Itineraries loaded from API - starts empty
+  const [itineraries, setItineraries] = useState<Itinerary[]>([]);
   const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
   const [selectedItinerary, setSelectedItinerary] = useState<Itinerary | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [itineraryToDelete, setItineraryToDelete] = useState<number | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generationProgress, setGenerationProgress] = useState("");
   const [error, setError] = useState<{ title: string; message: string } | null>(null);
+
+  // Load itineraries from API on mount
+  useEffect(() => {
+    const loadItineraries = async () => {
+      if (!user) {
+        return;
+      }
+      
+      try {
+        const data = await ItineraryService.getItineraries();
+        setItineraries(data);
+      } catch (err) {
+        console.error('Error loading itineraries:', err);
+        // Don't show error for empty itineraries, just set empty array
+        setItineraries([]);
+      }
+    };
+
+    loadItineraries();
+  }, [user]);
 
   const handleGenerate = async (formData: ItineraryGenerateRequest) => {
     if (!user) return;
 
     setIsGenerating(true);
-    setGenerationProgress("Iniciando generación del itinerario...");
 
     try {
       // Call AI service to generate itinerary
       const result = await ItineraryService.generateItinerary(
         formData,
-        (text) => {
-          setGenerationProgress(prev => prev + text);
+        () => {
+          // Progress callback (not displayed but kept for future use)
         }
       );
-
-      setGenerationProgress("¡Itinerario generado exitosamente!");
 
       // Fetch places and events to populate items
       const [places, events] = await Promise.all([
@@ -208,7 +124,6 @@ export default function ItineraryTab() {
       });
     } finally {
       setIsGenerating(false);
-      setGenerationProgress("");
     }
   };
 
@@ -370,7 +285,6 @@ export default function ItineraryTab() {
       {/* Generating Modal */}
       <GeneratingModal
         isOpen={isGenerating}
-        progress={generationProgress}
       />
 
       {/* Error Modal */}

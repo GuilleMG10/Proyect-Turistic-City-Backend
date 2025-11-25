@@ -43,13 +43,13 @@ export default function ItineraryTimeline({ items, onRemoveItem, onViewDetails }
               {!isLast && (
                 <div className="absolute top-[120px] left-1/2 -translate-x-1/2 flex flex-col items-center h-[calc(100%-100px)]">
                   {/* Vertical Line */}
-                  <div className="w-0.5 h-full bg-gradient-to-b from-primary-400 to-primary-200 dark:from-primary-600 dark:to-slate-700"></div>
+                  <div className="w-0.5 h-full bg-gradient-to-b from-primary-400 to-primary-200 dark:from-primary-600 dark:to-gray-700"></div>
                 </div>
               )}
             </div>
 
             {/* Content Card */}
-            <article className="flex-1 bg-white dark:bg-slate-800 rounded-2xl shadow-sm dark:shadow-slate-900/50 border border-slate-200 dark:border-slate-700 overflow-hidden hover:shadow-md transition-all duration-300">
+            <article className="flex-1 bg-white dark:bg-gray-800 rounded-2xl shadow-sm dark:shadow-gray-900/50 border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md transition-all duration-300">
               <div className="p-5">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -61,34 +61,34 @@ export default function ItineraryTimeline({ items, onRemoveItem, onViewDetails }
                       }`}>
                         {itemType}
                       </span>
-                      <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                      <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
                         {itemData.category}
                       </span>
                     </div>
                     
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
                       {itemData.name}
                     </h3>
                     
-                    <div className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-400 mb-3">
+                    <div className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400 mb-3">
                       <MapPin className="h-4 w-4 text-primary-500" />
                       <span>{itemData.location}</span>
                     </div>
 
                     {isPlace && item.place && (
-                      <div className="text-sm text-slate-700 dark:text-slate-300 font-medium bg-slate-50 dark:bg-slate-700/50 inline-block px-3 py-1 rounded-lg">
+                      <div className="text-sm text-gray-700 dark:text-gray-300 font-medium bg-gray-50 dark:bg-gray-700/50 inline-block px-3 py-1 rounded-lg">
                         Costo: Bs. {item.place.price.toFixed(2)}
                       </div>
                     )}
 
                     {!isPlace && item.event && (
-                      <div className="text-sm text-slate-700 dark:text-slate-300 font-medium bg-slate-50 dark:bg-slate-700/50 inline-block px-3 py-1 rounded-lg">
+                      <div className="text-sm text-gray-700 dark:text-gray-300 font-medium bg-gray-50 dark:bg-gray-700/50 inline-block px-3 py-1 rounded-lg">
                         Costo: Bs. {item.event.price.toFixed(2)}
                       </div>
                     )}
 
                     {item.notes && (
-                      <p className="text-sm text-slate-600 dark:text-slate-400 mt-3 italic border-l-2 border-primary-200 dark:border-primary-800 pl-3 py-1">
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-3 italic border-l-2 border-primary-200 dark:border-primary-800 pl-3 py-1">
                         "{item.notes}"
                       </p>
                     )}

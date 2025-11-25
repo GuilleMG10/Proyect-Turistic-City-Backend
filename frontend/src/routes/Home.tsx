@@ -1,13 +1,19 @@
 import { useMemo } from "react";
-import { Link } from "react-router-dom";
-import { MapPin, Calendar as CalendarIcon, Sparkles, TrendingUp, Users, Heart, ArrowRight, Clock } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { MapPin, Calendar as CalendarIcon, TrendingUp, Heart, ArrowRight } from "lucide-react";
 import { useDataLoading } from "../hooks/useDataLoading";
 import { useUserStore } from "../store/userStore";
 import { getEventStatus } from "../services/api";
+import PlaceCard from "../components/cards/PlaceCard";
+import EventCard from "../components/cards/EventCard";
+import { useFavorites } from "../hooks/useFavorites";
+import LoadingSpinner from "../components/ui/LoadingSpinner";
 
 export default function Home() {
   const { places, events, loading } = useDataLoading();
   const { user } = useUserStore();
+  const navigate = useNavigate();
+  const toggleFavorite = useFavorites((state) => state.toggleFavorite);
 
   // Calculate stats using useMemo
   const stats = useMemo(() => {
@@ -43,13 +49,14 @@ export default function Home() {
     const upcoming = events.filter(e => getEventStatus(e.event_date) === 'upcoming');
     return upcoming
       .sort((a, b) => new Date(a.event_date).getTime() - new Date(b.event_date).getTime())
-      .slice(0, 3);
+      .slice(0, 3)
+      .map(e => ({ ...e, status: 'upcoming' as const }));
   }, [events]);
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-600"></div>
+        <LoadingSpinner size="xl" text="Espera..." />
       </div>
     );
   }
@@ -64,25 +71,9 @@ export default function Home() {
           <h1 className="text-3xl md:text-5xl font-bold mb-4 tracking-tight">
             {user ? `¡Hola ${user.name}!` : '¡Bienvenido a Culturistas!'}
           </h1>
-          <p className="text-lg md:text-xl text-blue-100 mb-8 leading-relaxed">
+          <p className="text-lg md:text-xl text-blue-100 leading-relaxed">
             Descubre los mejores lugares y eventos de Cochabamba. Tu próxima aventura comienza aquí.
           </p>
-          <div className="flex flex-wrap gap-4">
-            <Link
-              to="/explore"
-              className="inline-flex items-center gap-2 bg-white text-blue-600 px-6 py-3.5 rounded-xl font-bold hover:bg-blue-50 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
-            >
-              <MapPin className="h-5 w-5" />
-              Explorar Lugares
-            </Link>
-            <Link
-              to="/explore?tab=itinerario"
-              className="inline-flex items-center gap-2 bg-blue-500/20 backdrop-blur-md text-white border border-white/30 px-6 py-3.5 rounded-xl font-bold hover:bg-white/30 transition-all hover:-translate-y-0.5"
-            >
-              <Sparkles className="h-5 w-5" />
-              Crear Itinerario
-            </Link>
-          </div>
         </div>
       </section>
 
@@ -140,40 +131,12 @@ export default function Home() {
 
           <div className="grid md:grid-cols-3 gap-6">
             {featuredPlaces.map((place) => (
-              <Link
-                key={place.id}
-                to="/explore"
-                className="group bg-white dark:bg-gray-800 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all hover:-translate-y-1"
-              >
-                <div className="aspect-video bg-gradient-to-br from-blue-400 to-purple-500 relative overflow-hidden">
-                  {place.link_image ? (
-                    <img
-                      src={place.link_image}
-                      alt={place.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                  ) : (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <MapPin className="h-16 w-16 text-white/30" />
-                    </div>
-                  )}
-                  <div className="absolute top-3 right-3 bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-sm">
-                    {place.category}
-                  </div>
-                </div>
-                <div className="p-4">
-                  <h3 className="font-semibold text-lg text-gray-900 dark:text-white mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                    {place.name}
-                  </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-3">
-                    {place.description}
-                  </p>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-500 dark:text-gray-500">{place.location}</span>
-                    <span className="font-semibold text-blue-600 dark:text-blue-400">Bs. {place.price}</span>
-                  </div>
-                </div>
-              </Link>
+              <PlaceCard 
+                key={place.id} 
+                place={place} 
+                onInterest={(p) => user && toggleFavorite(user.id, p.id)}
+                onView={() => navigate('/explore')}
+              />
             ))}
           </div>
         </section>
@@ -188,7 +151,7 @@ export default function Home() {
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">No te pierdas estas actividades</p>
             </div>
             <Link
-              to="/explore?tab=eventos"
+              to="/explore/events"
               className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium flex items-center gap-1"
             >
               Ver todos
@@ -198,64 +161,15 @@ export default function Home() {
 
           <div className="grid md:grid-cols-3 gap-6">
             {upcomingEvents.map((event) => (
-              <Link
-                key={event.id}
-                to="/explore?tab=eventos"
-                className="group bg-white dark:bg-gray-800 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all hover:-translate-y-1"
-              >
-                <div className="aspect-video bg-gradient-to-br from-purple-500 to-pink-600 relative overflow-hidden">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <CalendarIcon className="h-16 w-16 text-white/30" />
-                  </div>
-                  <div className="absolute top-3 right-3 bg-white/20 backdrop-blur-md text-white border border-white/20 px-3 py-1 rounded-full text-xs font-semibold">
-                    {event.category}
-                  </div>
-                </div>
-                <div className="p-4">
-                  <h3 className="font-semibold text-lg text-gray-900 dark:text-white mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                    {event.name}
-                  </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-3">
-                    {event.description}
-                  </p>
-                  <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
-                    <span className="flex items-center gap-1">
-                      <CalendarIcon className="h-4 w-4 text-purple-500" />
-                      {new Date(event.event_date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Clock className="h-4 w-4 text-pink-500" />
-                      {new Date(event.event_date).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  </div>
-                </div>
-              </Link>
+              <EventCard 
+                key={event.id} 
+                event={event} 
+                onView={() => navigate('/explore/events')}
+              />
             ))}
           </div>
         </section>
       )}
-
-      {/* CTA Section */}
-      <section className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-gray-800 dark:to-gray-700 rounded-2xl p-8 md:p-12 text-center border border-blue-100 dark:border-gray-600">
-        <Users className="h-16 w-16 text-blue-600 dark:text-blue-400 mx-auto mb-4" />
-        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-4">
-          ¿Listo para tu próxima aventura?
-        </h2>
-        <p className="text-gray-600 dark:text-gray-300 mb-6 max-w-2xl mx-auto">
-          {user 
-            ? 'Explora lugares increíbles, participa en eventos emocionantes y crea tus propios itinerarios personalizados.'
-            : 'Inicia sesión para guardar tus lugares favoritos, recibir recomendaciones personalizadas y crear itinerarios únicos.'
-          }
-        </p>
-        <Link
-          to="/explore"
-          className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-3.5 rounded-xl font-bold hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
-        >
-          <Sparkles className="h-5 w-5" />
-          Comenzar Ahora
-          <ArrowRight className="h-5 w-5" />
-        </Link>
-      </section>
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { ApiService } from "../services/api";
 import { useUserStore } from "../store/userStore";
 import { useFavorites } from "./useFavorites";
 import { assignPlaceNumbers } from "../utils/placeNumbering";
+import { useToastStore } from "../store/toastStore";
 
 export function useDataLoading() {
   const [places, setPlaces] = useState<Place[]>([]);
@@ -14,6 +15,7 @@ export function useDataLoading() {
 
   const { user, loadUserInterests } = useUserStore();
   const { loadFavorites } = useFavorites();
+  const addToast = useToastStore((state) => state.addToast);
 
   // Load user-specific data when user exists (on login or page reload)
   useEffect(() => {
@@ -47,7 +49,9 @@ export function useDataLoading() {
       } catch (err) {
         console.error('Error loading data:', err);
         if (!cancelled) {
-          setError('Error al cargar los datos. Intentando de nuevo...');
+          const msg = 'Error al cargar los datos. Intentando de nuevo...';
+          // setError(msg); // Disable setting error state to avoid banner
+          addToast(msg, 'error');
         }
       }
 
@@ -61,7 +65,7 @@ export function useDataLoading() {
     return () => {
       cancelled = true;
     };
-  }, [refetchTrigger]);
+  }, [refetchTrigger, addToast]);
 
   return {
     places,

@@ -28,6 +28,7 @@ export type Event = {
   event_date: string;          // timestamp without time zone
   category: string;
   price: number;
+  link_image: string | null;   // matches DB field name
   created_at: string;
   reviews?: Review[];
   user?: User;

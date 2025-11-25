@@ -135,7 +135,7 @@ export default function PlaceDetailsModal({ place, isOpen, onClose, onUpdate }: 
         onClick={onClose}
       >
       <section 
-        className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl" 
+        className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl animate-in slide-in-from-bottom duration-300 md:animate-in md:fade-in md:zoom-in-95" 
         role="dialog" 
         aria-modal="true" 
         aria-labelledby="place-details-title"

@@ -118,7 +118,7 @@ export default function NotificationsPopup({ isOpen, onClose }: Props) {
         aria-labelledby="notifications-title"
       >
         {/* Header */}
-        <header className="bg-gradient-to-r from-primary-600 to-primary-800 p-4 flex items-center justify-between relative overflow-hidden">
+        <header className="bg-gradient-to-r from-blue-600 to-blue-800 p-4 flex items-center justify-between relative overflow-hidden">
           <div className="absolute inset-0 bg-white/10 backdrop-blur-sm" />
           <div className="flex items-center gap-3 relative z-10">
             <div className="p-2 bg-white/20 rounded-xl backdrop-blur-md">
@@ -127,7 +127,7 @@ export default function NotificationsPopup({ isOpen, onClose }: Props) {
             <div>
               <h2 id="notifications-title" className="text-xl font-bold text-white">Notificaciones</h2>
               {unreadCount > 0 && (
-                <p className="text-sm text-primary-100 font-medium">{unreadCount} sin leer</p>
+                <p className="text-sm text-blue-100 font-medium">{unreadCount} sin leer</p>
               )}
             </div>
           </div>

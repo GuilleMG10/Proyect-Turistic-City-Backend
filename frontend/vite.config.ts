@@ -20,7 +20,17 @@ export default defineConfig({
   build: {
     target: 'esnext',
     minify: 'esbuild',
-    sourcemap: true
+    sourcemap: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'ui-vendor': ['lucide-react'],
+          'map-vendor': ['leaflet', 'react-leaflet'],
+          'markdown-vendor': ['react-markdown']
+        }
+      }
+    }
   },
   optimizeDeps: {
     include: ['react', 'react-dom', 'react-router-dom']

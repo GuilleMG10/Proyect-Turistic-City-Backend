@@ -29,7 +29,7 @@ export default function ItineraryEditModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl">
         {/* Header */}
         <header className="bg-gradient-to-r from-primary-600 to-primary-800 text-white p-4 md:p-6 rounded-t-2xl flex items-center justify-between relative overflow-hidden">
           <div className="absolute inset-0 bg-white/10 backdrop-blur-sm" />
@@ -52,71 +52,71 @@ export default function ItineraryEditModal({
         <div className="p-4 md:p-6 space-y-4 md:space-y-6">
           {/* Name */}
           <section>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Nombre del Itinerario
             </label>
             <input
               type="text"
               value={editedItinerary.name}
               onChange={(e) => setEditedItinerary(prev => ({ ...prev, name: e.target.value }))}
-              className="w-full px-4 py-3 border border-slate-200 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 transition-all"
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 transition-all"
             />
           </section>
 
           {/* Date and Times */}
           <section className="grid grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Fecha
               </label>
               <input
                 type="date"
                 value={editedItinerary.date}
                 onChange={(e) => setEditedItinerary(prev => ({ ...prev, date: e.target.value }))}
-                className="w-full px-4 py-3 border border-slate-200 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 transition-all"
+                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 transition-all"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Hora Inicio
               </label>
               <input
                 type="time"
                 value={editedItinerary.start_time}
                 onChange={(e) => setEditedItinerary(prev => ({ ...prev, start_time: e.target.value }))}
-                className="w-full px-4 py-3 border border-slate-200 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 transition-all"
+                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 transition-all"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Hora Fin
               </label>
               <input
                 type="time"
                 value={editedItinerary.end_time}
                 onChange={(e) => setEditedItinerary(prev => ({ ...prev, end_time: e.target.value }))}
-                className="w-full px-4 py-3 border border-slate-200 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 transition-all"
+                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 transition-all"
               />
             </div>
           </section>
 
           {/* Budget */}
           <section>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Presupuesto (Bs.)
             </label>
             <input
               type="number"
               value={editedItinerary.budget}
               onChange={(e) => setEditedItinerary(prev => ({ ...prev, budget: parseFloat(e.target.value) || 0 }))}
-              className="w-full px-4 py-3 border border-slate-200 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 transition-all"
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 transition-all"
             />
           </section>
 
           {/* Items List */}
           <section>
             <div className="flex items-center justify-between mb-3">
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Lugares y Eventos ({editedItinerary.items?.length || 0})
               </label>
               <button
@@ -128,7 +128,7 @@ export default function ItineraryEditModal({
               </button>
             </div>
             
-            <div className="space-y-2 max-h-64 overflow-y-auto border border-slate-200 dark:border-slate-600 rounded-xl p-3 bg-slate-50 dark:bg-slate-900/50">
+            <div className="space-y-2 max-h-64 overflow-y-auto border border-gray-200 dark:border-gray-600 rounded-xl p-3 bg-gray-50 dark:bg-gray-900/50">
               {editedItinerary.items?.map((item, index) => {
                 const isPlace = item.place_id !== null;
                 const itemData = isPlace ? item.place : item.event;
@@ -137,16 +137,16 @@ export default function ItineraryEditModal({
                 return (
                   <div 
                     key={item.id}
-                    className="flex items-center justify-between bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm"
+                    className="flex items-center justify-between bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm"
                   >
                     <div className="flex items-center gap-3">
                       <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300 text-xs font-bold">
                         {index + 1}
                       </span>
-                      <MapPin className="h-4 w-4 text-slate-400 dark:text-slate-500" />
+                      <MapPin className="h-4 w-4 text-gray-400 dark:text-gray-500" />
                       <div>
-                        <p className="font-semibold text-sm text-slate-900 dark:text-white">{itemData.name}</p>
-                        <p className="text-xs text-slate-600 dark:text-slate-400">
+                        <p className="font-semibold text-sm text-gray-900 dark:text-white">{itemData.name}</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">
                           {item.start_time} - {item.end_time}
                         </p>
                       </div>
@@ -168,7 +168,7 @@ export default function ItineraryEditModal({
               })}
               
               {(!editedItinerary.items || editedItinerary.items.length === 0) && (
-                <p className="text-center text-slate-500 dark:text-slate-400 py-8 text-sm">
+                <p className="text-center text-gray-500 dark:text-gray-400 py-8 text-sm">
                   No hay items en este itinerario
                 </p>
               )}
@@ -180,7 +180,7 @@ export default function ItineraryEditModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-6 py-3.5 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors font-semibold"
+              className="flex-1 px-6 py-3.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-semibold"
             >
               Cancelar
             </button>

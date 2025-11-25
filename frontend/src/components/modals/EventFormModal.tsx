@@ -26,6 +26,7 @@ export default function EventFormModal({ event, isOpen, onClose, onSuccess }: Pr
     event_date: '',
     category: '',
     price: 0,
+    link_image: '',
   });
 
   useEffect(() => {
@@ -45,6 +46,7 @@ export default function EventFormModal({ event, isOpen, onClose, onSuccess }: Pr
         event_date: localDateTime,
         category: event.category,
         price: event.price,
+        link_image: event.link_image || '',
       });
     } else {
       setFormData({
@@ -56,6 +58,7 @@ export default function EventFormModal({ event, isOpen, onClose, onSuccess }: Pr
         event_date: '',
         category: '',
         price: 0,
+        link_image: '',
       });
     }
     setError(null);
@@ -96,6 +99,7 @@ export default function EventFormModal({ event, isOpen, onClose, onSuccess }: Pr
         ...formData,
         event_date: eventDate,
         user_id: user?.id || 0,
+        link_image: formData.link_image || null,
       };
 
       let result: Event;
@@ -118,7 +122,7 @@ export default function EventFormModal({ event, isOpen, onClose, onSuccess }: Pr
 
   return (
     <div 
-      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[80] p-4"
+      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[1100] p-4"
       onClick={onClose}
     >
       <section 

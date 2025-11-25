@@ -66,7 +66,7 @@ export default function ItineraryViewModal({
           if (e.target === e.currentTarget) onClose();
         }}
       >
-        <div className="bg-gray-50 dark:bg-slate-900 rounded-2xl w-full max-w-5xl max-h-[90vh] overflow-y-auto shadow-2xl">
+        <div className="bg-gray-50 dark:bg-gray-900 rounded-2xl w-full max-w-5xl max-h-[90vh] overflow-y-auto shadow-2xl animate-in slide-in-from-bottom duration-300 md:animate-in md:fade-in md:zoom-in-95">
           {/* Header */}
           <header className="bg-gradient-to-r from-primary-600 to-primary-800 text-white p-4 md:p-6 rounded-t-2xl relative overflow-hidden">
             <div className="absolute inset-0 bg-white/10 backdrop-blur-sm" />
@@ -114,13 +114,15 @@ export default function ItineraryViewModal({
           {/* Content */}
           <div className="p-4 md:p-6 space-y-4 md:space-y-6">
             {/* Summary */}
-            <ItinerarySummary itinerary={itinerary} />
+            <div className="text-gray-900 dark:text-white">
+              <ItinerarySummary itinerary={itinerary} />
+            </div>
 
             {/* Map Preview */}
             {itinerary.items && itinerary.items.length > 0 && (
-              <section className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm dark:shadow-slate-900/50 p-5 border border-slate-200 dark:border-slate-700">
+              <section className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm dark:shadow-gray-900/50 p-5 border border-gray-200 dark:border-gray-700">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
                     <MapPin className="h-5 w-5 text-primary-500" />
                     Ruta del Itinerario
                   </h3>
@@ -129,15 +131,15 @@ export default function ItineraryViewModal({
                     Ver en Mapa
                   </button>
                 </div>
-                <p className="text-sm text-slate-600 dark:text-slate-400">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
                   {itinerary.items.length} paradas en tu recorrido
                 </p>
               </section>
             )}
 
             {/* Timeline */}
-            <section className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm dark:shadow-slate-900/50 p-6 border border-slate-200 dark:border-slate-700">
-              <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-6">
+            <section className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm dark:shadow-gray-900/50 p-6 border border-gray-200 dark:border-gray-700">
+              <h3 className="font-bold text-lg text-gray-900 dark:text-white mb-6">
                 Itinerario Detallado
               </h3>
               {itinerary.items && itinerary.items.length > 0 ? (
@@ -147,7 +149,7 @@ export default function ItineraryViewModal({
                   onViewDetails={handleViewDetails}
                 />
               ) : (
-                <div className="text-center py-12 text-slate-500 dark:text-slate-400">
+                <div className="text-center py-12 text-gray-500 dark:text-gray-400">
                   <p>Este itinerario aún no tiene lugares o eventos</p>
                 </div>
               )}
@@ -157,7 +159,7 @@ export default function ItineraryViewModal({
             <section className="flex gap-3">
               <button
                 onClick={onClose}
-                className="flex-1 px-6 py-3.5 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors font-semibold"
+                className="flex-1 px-6 py-3.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors font-semibold"
               >
                 Cerrar
               </button>
@@ -169,6 +171,10 @@ export default function ItineraryViewModal({
                 <span>Exportar a Calendario</span>
               </button>
             </section>
+
+            <div className="text-center text-xs text-gray-500 dark:text-gray-400 mt-4">
+               Generado por el asistente
+            </div>
           </div>
         </div>
       </div>

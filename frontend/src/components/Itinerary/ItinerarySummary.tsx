@@ -26,19 +26,19 @@ export default function ItinerarySummary({ itinerary }: Props) {
   };
 
   return (
-    <section className="bg-gradient-to-br from-primary-600 to-primary-800 text-white rounded-2xl p-6 shadow-lg relative overflow-hidden">
+    <section className="bg-gradient-to-br from-blue-600 to-blue-800 text-white rounded-2xl p-6 shadow-lg relative overflow-hidden">
       <div className="absolute inset-0 bg-white/5 backdrop-blur-sm" />
-      <h3 className="text-xl font-bold mb-6 relative z-10">Resumen del Itinerario</h3>
+      <h3 className="text-xl font-bold mb-6 relative z-10 text-white">Resumen del Itinerario</h3>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 relative z-10">
         {/* Total Cost */}
         <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/10 hover:bg-white/20 transition-colors">
           <div className="flex items-center gap-2 mb-2">
             <DollarSign className="h-5 w-5 text-emerald-300" />
-            <span className="text-sm font-medium opacity-90">Costo Total</span>
+            <span className="text-sm font-medium opacity-90 text-white">Costo Total</span>
           </div>
-          <div className="text-2xl font-bold">Bs. {itinerary.total_cost.toFixed(2)}</div>
-          <div className="text-xs opacity-75 mt-1">
+          <div className="text-2xl font-bold text-white">Bs. {itinerary.total_cost.toFixed(2)}</div>
+          <div className="text-xs opacity-75 mt-1 text-white">
             de Bs. {itinerary.budget.toFixed(2)} presupuestado
           </div>
         </div>
@@ -51,7 +51,7 @@ export default function ItinerarySummary({ itinerary }: Props) {
             ) : (
               <TrendingUp className="h-5 w-5 text-emerald-300" />
             )}
-            <span className="text-sm font-medium opacity-90">
+            <span className="text-sm font-medium opacity-90 text-white">
               {isOverBudget ? 'Sobre Presupuesto' : 'Disponible'}
             </span>
           </div>
@@ -72,10 +72,10 @@ export default function ItinerarySummary({ itinerary }: Props) {
         <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/10 hover:bg-white/20 transition-colors">
           <div className="flex items-center gap-2 mb-2">
             <Clock className="h-5 w-5 text-blue-300" />
-            <span className="text-sm font-medium opacity-90">Duración</span>
+            <span className="text-sm font-medium opacity-90 text-white">Duración</span>
           </div>
-          <div className="text-2xl font-bold">{calculateDuration()}</div>
-          <div className="text-xs opacity-75 mt-1">
+          <div className="text-2xl font-bold text-white">{calculateDuration()}</div>
+          <div className="text-xs opacity-75 mt-1 text-white">
             {itinerary.start_time} - {itinerary.end_time}
           </div>
         </div>
@@ -84,10 +84,10 @@ export default function ItinerarySummary({ itinerary }: Props) {
         <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/10 hover:bg-white/20 transition-colors">
           <div className="flex items-center gap-2 mb-2">
             <MapPin className="h-5 w-5 text-purple-300" />
-            <span className="text-sm font-medium opacity-90">Paradas</span>
+            <span className="text-sm font-medium opacity-90 text-white">Paradas</span>
           </div>
-          <div className="text-2xl font-bold">{itemCount}</div>
-          <div className="text-xs opacity-75 mt-1">
+          <div className="text-2xl font-bold text-white">{itemCount}</div>
+          <div className="text-xs opacity-75 mt-1 text-white">
             {itemCount === 1 ? 'lugar/evento' : 'lugares/eventos'}
           </div>
         </div>

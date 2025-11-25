@@ -29,7 +29,7 @@ export default function Profile() {
           <div className="flex flex-col md:flex-row items-start md:items-end gap-6 -mt-20 mb-6">
             {/* Avatar */}
             <div className="relative">
-              <div className="h-40 w-40 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-br from-cyan-500 to-blue-600 shadow-2xl ring-4 ring-white dark:ring-gray-800 z-10">
+              <div className="h-40 w-40 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-br from-cyan-500 to-blue-600 shadow-2xl ring-4 ring-white dark:ring-gray-800 z-10">
                 {user.name.charAt(0).toUpperCase()}
               </div>
               {isAdmin && (

@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, memo } from 'react';
+import { Loader2 } from 'lucide-react';
 
 interface LazyImageProps {
   src: string;
@@ -77,8 +78,8 @@ const LazyImage = memo(function LazyImage({
 
       {/* Loading indicator */}
       {!isLoaded && !hasError && isInView && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
-          <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800">
+          <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
         </div>
       )}
     </div>

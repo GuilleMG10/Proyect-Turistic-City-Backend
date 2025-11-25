@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, X, Bot, Sparkles, User } from "lucide-react";
+import { Send, X, Bot, Sparkles, User, Paperclip, Zap, Brain, ChevronDown, Plus } from "lucide-react";
 import { useUserStore } from "../../store/userStore";
 import ReactMarkdown from 'react-markdown';
 
@@ -9,6 +9,8 @@ type Message = {
   content: string;
   timestamp: Date;
 };
+
+type ModelType = 'fast' | 'thinking';
 
 type Props = {
   isOpen: boolean;
@@ -21,8 +23,12 @@ export default function AIChat({ isOpen, onClose }: Props) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedModel, setSelectedModel] = useState<ModelType>('fast');
+  const [isModelMenuOpen, setIsModelMenuOpen] = useState(false);
   const { user } = useUserStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const modelMenuRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -31,6 +37,36 @@ export default function AIChat({ isOpen, onClose }: Props) {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Close model menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (modelMenuRef.current && !modelMenuRef.current.contains(event.target as Node)) {
+        setIsModelMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleFileSelect = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // TODO: Handle file attachment logic
+      console.log('File selected:', file.name);
+    }
+  };
+
+  const handleNewChat = () => {
+    setMessages([]);
+    setInput("");
+    setSelectedModel('fast');
+  };
 
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return;
@@ -86,6 +122,7 @@ export default function AIChat({ isOpen, onClose }: Props) {
         },
         body: JSON.stringify({
           prompt: userMessage.content,
+          model: selectedModel, // Pass selected model to backend
         }),
       });
 
@@ -118,32 +155,7 @@ export default function AIChat({ isOpen, onClose }: Props) {
                   prev.map(msg => {
                     if (msg.id === aiMessageId) {
                       // Add the new chunk
-                      let newContent = msg.content + data;
-                      // I think here I can do some better procesing instead of doing it later in the rendering
-                      // this would be good for performance, y zzz lo mejorare en el siguiente sprint asdasdadasd no me maten (?
-                      newContent = newContent
-                        // Fix malformed bold markers (****text -> **text)
-                        .replace(/\*{3,}/g, '**')
-                        // Headings
-                        .replace(/([.!?])\s*###/g, '$1\n\n###')
-                        .replace(/###\s*/g, '\n\n### ')
-                        .replace(/([.!?])\s*##/g, '$1\n\n##')
-                        .replace(/##\s*/g, '\n\n## ')
-                        .replace(/([.!?])\s*#/g, '$1\n\n#')
-                        // Lists with dashes
-                        .replace(/([.!?:])\s*-\s/g, '$1\n- ')
-                        .replace(/([a-záéíóúñ])\s*-\s\*\*/gi, '$1\n- **')
-                        // Numbered lists - handle both after punctuation and after bold/text
-                        .replace(/([.!?:])\s*(\d+)\.\s/g, '$1\n\n$2. ')
-                        .replace(/\*\*(\d+)\.\s/g, '**\n\n$1. ')
-                        .replace(/([a-záéíóúñ])(\d+)\.\s/gi, '$1\n\n$2. ')
-                        .replace(/\.(\d+)\.\s\*\*/g, '.\n\n$1. **')
-                        // Fix spacing after punctuation before capital letters or question marks
-                        .replace(/\.([A-ZÁÉÍÓÚÑ¿])/g, '. $1')
-                        .replace(/!([A-ZÁÉÍÓÚÑ¿])/g, '! $1')
-                        .replace(/\?([A-ZÁÉÍÓÚÑ¿])/g, '? $1')
-                        // Clean excessive line breaks
-                        .replace(/\n{3,}/g, '\n\n');
+                      const newContent = msg.content + data;
                       return { ...msg, content: newContent };
                     }
                     return msg;
@@ -190,7 +202,7 @@ export default function AIChat({ isOpen, onClose }: Props) {
                 <Bot className="h-6 w-6" />
               </div>
               <div>
-                <h3 className="font-bold text-lg leading-tight">Asistente IA</h3>
+                <h3 className="font-bold text-lg leading-tight">Asistente interactivo</h3>
                 <div className="flex items-center gap-1.5 opacity-90">
                   <span className="relative flex h-2 w-2">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
@@ -200,13 +212,23 @@ export default function AIChat({ isOpen, onClose }: Props) {
                 </div>
               </div>
             </div>
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-white/20 rounded-full transition-colors text-white/90 hover:text-white"
-              aria-label="Cerrar chat"
-            >
-              <X className="h-5 w-5" />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={handleNewChat}
+                className="p-2 hover:bg-white/20 rounded-full transition-colors text-white/90 hover:text-white"
+                aria-label="Nuevo chat"
+                title="Nuevo chat"
+              >
+                <Plus className="h-5 w-5" />
+              </button>
+              <button
+                onClick={onClose}
+                className="p-2 hover:bg-white/20 rounded-full transition-colors text-white/90 hover:text-white"
+                aria-label="Cerrar chat"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
           </div>
         </header>
 
@@ -227,13 +249,13 @@ export default function AIChat({ isOpen, onClose }: Props) {
                   onClick={() => setInput("¿Qué lugares turísticos me recomiendas?")}
                   className="text-sm text-left p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl hover:border-cyan-400 dark:hover:border-cyan-500 hover:shadow-md transition-all text-gray-600 dark:text-gray-300"
                 >
-                  🏛️ ¿Qué lugares turísticos me recomiendas?
+                  ¿Qué lugares turísticos me recomiendas?
                 </button>
                 <button 
                   onClick={() => setInput("Busco restaurantes de comida típica")}
                   className="text-sm text-left p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl hover:border-cyan-400 dark:hover:border-cyan-500 hover:shadow-md transition-all text-gray-600 dark:text-gray-300"
                 >
-                  🍽️ Busco restaurantes de comida típica
+                  Busco restaurantes de comida típica, ¿alguna sugerencia?
                 </button>
               </div>
             </div>
@@ -289,6 +311,92 @@ export default function AIChat({ isOpen, onClose }: Props) {
 
         {/* Input */}
         <footer className="p-4 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800">
+          {/* Model Selector & Attachments */}
+          <div className="flex items-center gap-2 mb-3 px-1">
+            <div className="relative" ref={modelMenuRef}>
+              <button
+                onClick={() => setIsModelMenuOpen(!isModelMenuOpen)}
+                className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg text-xs font-medium text-gray-700 dark:text-gray-200 transition-colors"
+              >
+                {selectedModel === 'fast' ? (
+                  <>
+                    <Zap className="h-3.5 w-3.5 text-cyan-600 dark:text-cyan-400" />
+                    <span>Rápido</span>
+                  </>
+                ) : (
+                  <>
+                    <Brain className="h-3.5 w-3.5 text-purple-600 dark:text-purple-400" />
+                    <span>Pensando</span>
+                  </>
+                )}
+                <ChevronDown className="h-3 w-3 opacity-50" />
+              </button>
+
+              {isModelMenuOpen && (
+                <div className="absolute bottom-full left-0 mb-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden z-10 animate-in fade-in slide-in-from-bottom-2 duration-200">
+                  <div className="p-1">
+                    <button
+                      onClick={() => {
+                        setSelectedModel('fast');
+                        setIsModelMenuOpen(false);
+                      }}
+                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors ${
+                        selectedModel === 'fast' 
+                          ? 'bg-cyan-50 dark:bg-cyan-900/20 text-cyan-700 dark:text-cyan-300' 
+                          : 'hover:bg-gray-50 dark:hover:bg-gray-700/50 text-gray-700 dark:text-gray-200'
+                      }`}
+                    >
+                      <div className={`p-1.5 rounded-md ${selectedModel === 'fast' ? 'bg-cyan-100 dark:bg-cyan-900/40' : 'bg-gray-100 dark:bg-gray-700'}`}>
+                        <Zap className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold">Modelo rápido</div>
+                        <div className="text-[10px] opacity-70">Respuestas más instantáneas</div>
+                      </div>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setSelectedModel('thinking');
+                        setIsModelMenuOpen(false);
+                      }}
+                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors ${
+                        selectedModel === 'thinking' 
+                          ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300' 
+                          : 'hover:bg-gray-50 dark:hover:bg-gray-700/50 text-gray-700 dark:text-gray-200'
+                      }`}
+                    >
+                      <div className={`p-1.5 rounded-md ${selectedModel === 'thinking' ? 'bg-purple-100 dark:bg-purple-900/40' : 'bg-gray-100 dark:bg-gray-700'}`}>
+                        <Brain className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold">Modelo razonador</div>
+                        <div className="text-[10px] opacity-70">Respuestas más elaboradas</div>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1" />
+            
+            <button
+              onClick={handleFileSelect}
+              className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+              title="Adjuntar imagen"
+            >
+              <Paperclip className="h-4 w-4" />
+            </button>
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              className="hidden"
+              accept="image/*"
+            />
+          </div>
+
           <form 
             className="relative flex items-center gap-2 bg-gray-50 dark:bg-gray-800 p-2 rounded-2xl border border-gray-200 dark:border-gray-700 focus-within:ring-2 focus-within:ring-cyan-500/20 focus-within:border-cyan-500 transition-all" 
             onSubmit={(e) => { e.preventDefault(); sendMessage(); }}
@@ -314,7 +422,7 @@ export default function AIChat({ isOpen, onClose }: Props) {
             </button>
           </form>
           <p className="text-[10px] text-center text-gray-400 dark:text-gray-500 mt-2">
-            La IA puede cometer errores. Verifica la información importante.
+            El asistente puede cometer errores. Verifica la información importante.
           </p>
         </footer>
       </div>

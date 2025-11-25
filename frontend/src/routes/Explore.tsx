@@ -174,15 +174,15 @@ export default function Explore() {
         {error && <ErrorBanner message={error} />}
 
         {/* Search & Filters Area */}
-        <div className="space-y-4 bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
-          <SearchBar
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            filters={filters}
-            onOpenFilters={modalState.openFilterModal}
-          />
+        {(activeTab === 'explorar' || activeTab === 'eventos') && (
+          <div className="space-y-4 bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
+            <SearchBar
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              filters={filters}
+              onOpenFilters={modalState.openFilterModal}
+            />
 
-          {(activeTab === 'explorar' || activeTab === 'eventos') && (
             <div className="pt-2 border-t border-gray-100 dark:border-gray-700">
               <CategoryChips
                 categories={availableCategories}
@@ -190,8 +190,8 @@ export default function Explore() {
                 onCategorySelect={setSelectedCategory}
               />
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         <section className="tab-content" role="tabpanel" aria-labelledby={`tab-${activeTab}`}>
           <Outlet context={contextValue} />
@@ -246,7 +246,7 @@ export default function Explore() {
       {isAdmin && (activeTab === 'explorar' || activeTab === 'eventos') && (
         <button
           onClick={() => activeTab === 'explorar' ? setIsPlaceFormOpen(true) : setIsEventFormOpen(true)}
-          className="fixed bottom-6 right-6 z-50 p-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+          className="fixed bottom-6 right-6 z-50 p-4 bg-green-600 text-white rounded-full shadow-lg hover:shadow-xl hover:scale-105 hover:bg-green-700 transition-all focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
           aria-label={`Crear nuevo ${activeTab === 'explorar' ? 'lugar' : 'evento'}`}
         >
           <Plus className="h-6 w-6" />

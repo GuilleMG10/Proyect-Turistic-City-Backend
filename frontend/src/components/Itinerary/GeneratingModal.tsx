@@ -2,10 +2,9 @@ import { Loader2, Sparkles } from "lucide-react";
 
 type Props = {
   isOpen: boolean;
-  progress: string;
 };
 
-export default function GeneratingModal({ isOpen, progress }: Props) {
+export default function GeneratingModal({ isOpen }: Props) {
   if (!isOpen) return null;
 
   return (
@@ -32,38 +31,14 @@ export default function GeneratingModal({ isOpen, progress }: Props) {
             <Loader2 className="h-16 w-16 text-primary-600 dark:text-primary-400 animate-spin" />
           </div>
 
-          {/* Progress Text */}
-          {progress && (
-            <div className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-4 max-h-48 overflow-y-auto border border-slate-100 dark:border-slate-700">
-              <p className="text-sm text-slate-700 dark:text-slate-200 whitespace-pre-wrap leading-relaxed font-mono">
-                {progress}
-              </p>
-            </div>
-          )}
-
-          {/* Loading Steps */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-3 text-sm">
-              <div className="w-2.5 h-2.5 bg-primary-600 dark:bg-primary-400 rounded-full animate-pulse"></div>
-              <span className="text-slate-600 dark:text-slate-300 font-medium">Analizando preferencias...</span>
-            </div>
-            <div className="flex items-center gap-3 text-sm">
-              <div className="w-2.5 h-2.5 bg-primary-600 dark:bg-primary-400 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-              <span className="text-slate-600 dark:text-slate-300 font-medium">Consultando lugares disponibles...</span>
-            </div>
-            <div className="flex items-center gap-3 text-sm">
-              <div className="w-2.5 h-2.5 bg-primary-600 dark:bg-primary-400 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
-              <span className="text-slate-600 dark:text-slate-300 font-medium">Optimizando ruta...</span>
-            </div>
-            <div className="flex items-center gap-3 text-sm">
-              <div className="w-2.5 h-2.5 bg-primary-600 dark:bg-primary-400 rounded-full animate-pulse" style={{ animationDelay: '0.6s' }}></div>
-              <span className="text-slate-600 dark:text-slate-300 font-medium">Calculando costos y tiempos...</span>
-            </div>
+          <div className="text-center space-y-2">
+            <p className="text-lg font-medium text-slate-700 dark:text-slate-200">
+              Estamos preparando tu itinerario, ¡estamos manos a la obra!
+            </p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Te avisaremos tan pronto lo tengamos listo.
+            </p>
           </div>
-
-          <p className="text-center text-xs text-slate-500 dark:text-slate-400">
-            Esto puede tomar unos segundos...
-          </p>
         </div>
       </div>
     </div>

@@ -39,7 +39,7 @@ export const getPlaceholderImage = (name?: string, type: 'place' | 'event' = 'pl
   const initials = name ? getInitials(name) : (type === 'place' ? 'PL' : 'EV');
   const colors = type === 'place' 
     ? { bg: '4F46E5', text: 'FFFFFF' }  // Indigo for places
-    : { bg: 'EC4899', text: 'FFFFFF' };  // Pink for events
+    : { bg: 'DCE546', text: 'FFFFFF' };  // Orange for events
   
   return `https://placehold.co/800x600/${colors.bg}/${colors.text}?text=${encodeURIComponent(initials)}`;
 };

@@ -4,6 +4,7 @@ import { MapPin, Star, Clock, Heart } from "lucide-react";
 import type { EventWithStatus, Review, UserInterest } from "../../types";
 import { useUserStore } from "../../store/userStore";
 import { getEventStatusColor } from "../../utils/eventStatus";
+import { getImageSrc, handleImageError } from "../../utils/imageUtils";
 
 type Props = {
   event: EventWithStatus;
@@ -71,11 +72,38 @@ const EventCard = memo(function EventCard({ event, onView, showTag = false }: Pr
       onClick={handleView}
       className="group relative flex flex-col h-full overflow-hidden rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer"
     >
-      {/* Top Decoration Bar */}
-      <div className={`h-1.5 w-full ${statusConfig.bg}`} />
+      {/* Image Area */}
+      <div className="aspect-video w-full bg-gray-100 dark:bg-gray-700 relative overflow-hidden">
+        <img
+          src={getImageSrc(event.link_image || null, event.name, 'event')}
+          alt={event.name}
+          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+          onError={(e) => handleImageError(e, event.name, 'event')}
+          loading="lazy"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        
+        {/* Status Badge */}
+        <div className="absolute top-3 left-3 z-10">
+           <span className={`px-2.5 py-1 rounded-full text-xs font-bold shadow-sm border border-white/20 backdrop-blur-md ${statusConfig.bg} ${statusConfig.text}`}>
+            {statusConfig.label}
+          </span>
+        </div>
+
+        {/* Favorite Button */}
+        {user && event.status !== 'finished' && (
+           <button
+             onClick={handleFavoriteToggle}
+             className="absolute top-3 right-3 p-2 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-full shadow-sm transition-all hover:scale-110 active:scale-95 z-10 border border-gray-100 dark:border-gray-700"
+             title={isEventInterested ? "Quitar de favoritos" : "Me interesa"}
+           >
+             <Heart className={`h-4 w-4 transition-colors ${isEventInterested ? 'fill-red-500 text-red-500' : 'text-gray-400 dark:text-gray-500'}`} />
+           </button>
+        )}
+      </div>
 
       <div className="p-5 flex flex-col h-full">
-        {/* Header: Date & Status */}
+        {/* Header: Date */}
         <div className="flex justify-between items-start mb-4">
           <div className="flex items-center gap-3">
             <div className="flex flex-col items-center justify-center w-12 h-12 rounded-xl bg-gray-50 dark:bg-gray-700/30 border border-gray-100 dark:border-gray-600/50 group-hover:scale-110 transition-transform">
@@ -96,10 +124,6 @@ const EventCard = memo(function EventCard({ event, onView, showTag = false }: Pr
               </span>
             </div>
           </div>
-          
-          <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${statusConfig.bg} ${statusConfig.text}`}>
-            {statusConfig.label}
-          </span>
         </div>
 
         {/* Title & Location */}
@@ -132,17 +156,6 @@ const EventCard = memo(function EventCard({ event, onView, showTag = false }: Pr
             </span>
            )}
         </div>
-
-        {/* Favorite Button (Absolute positioned like PlaceCard) */}
-        {user && event.status !== 'finished' && (
-           <button
-             onClick={handleFavoriteToggle}
-             className="absolute top-4 right-4 p-2 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-full shadow-sm transition-all hover:scale-110 active:scale-95 z-10 border border-gray-100 dark:border-gray-700"
-             title={isEventInterested ? "Quitar de favoritos" : "Me interesa"}
-           >
-             <Heart className={`h-4 w-4 transition-colors ${isEventInterested ? 'fill-red-500 text-red-500' : 'text-gray-400 dark:text-gray-500'}`} />
-           </button>
-        )}
       </div>
     </article>
   );

@@ -152,14 +152,14 @@ export default function MapView({
                     )}
                   </div>
 
-                  <h3 className="font-bold text-base leading-tight text-gray-900 dark:text-gray-900 mb-1">{place.name}</h3>
+                  <h3 className="font-bold text-base leading-tight text-gray-900 dark:text-gray-100 mb-1">{place.name}</h3>
                   
-                  <div className="flex items-center gap-1 text-gray-500 dark:text-gray-600 mb-2">
+                  <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400 mb-2">
                     <MapPin className="h-3 w-3 flex-shrink-0" />
                     <span className="text-xs truncate">{place.location}</span>
                   </div>
 
-                  <p className="text-xs text-gray-600 dark:text-gray-600 mb-3 line-clamp-2 leading-relaxed">
+                  <p className="text-xs text-gray-600 dark:text-gray-300 mb-3 line-clamp-2 leading-relaxed">
                     {place.description}
                   </p>
                   
@@ -252,8 +252,7 @@ export default function MapView({
               <div className="flex items-center justify-between group">
                 <div className="flex items-center gap-2.5">
                   <span className="relative flex h-3 w-3">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-600"></span>
                   </span>
                   <span className="text-xs font-medium text-gray-700 dark:text-gray-200">Lugares</span>
                 </div>
