@@ -49,7 +49,7 @@ func RegisterRoutes(router *gin.Engine, u UserHandler, p PlaceHandler, r ReviewH
 
 	// Public Routes
 	router.POST("/users/register", u.Register)
-	router.POST("/users/login", u.Login)
+	router.POST("/users/login",middleware.LoginRateLimiter(), u.Login)
 
 	// Public read-only routes (no authentication required)
 	router.GET("/places", p.GetPlaces)
@@ -92,3 +92,4 @@ func RegisterRoutes(router *gin.Engine, u UserHandler, p PlaceHandler, r ReviewH
 		adminGroup.DELETE("/events/:id", e.DeleteEvent)
 	}
 }
+

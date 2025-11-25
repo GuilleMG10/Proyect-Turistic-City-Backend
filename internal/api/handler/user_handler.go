@@ -7,6 +7,8 @@ import (
 	"github.com/GuilleMG10/Proyect-Turistic-City-Backend/internal/auth"
 	"github.com/GuilleMG10/Proyect-Turistic-City-Backend/internal/model"
 	"github.com/gin-gonic/gin"
+	"time" 
+    "math/rand"
 )
 
 type UserService interface {
@@ -100,6 +102,7 @@ func (h *UserHandler) Login(c *gin.Context) {
 
 	user, err := h.userService.Login(req.Username, req.Password)
 	if err != nil {
+		time.Sleep(time.Duration(100+rand.Intn(200)) * time.Millisecond)
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
 		return
 	}
