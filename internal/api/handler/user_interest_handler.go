@@ -33,6 +33,17 @@ func (h *UserInterestHandler) GetUserInterests(c *gin.Context) {
 		return
 	}
 
+	// --- SECURITY CHECK ---
+    tokenUserID, _ := c.Get("userID")
+    roleID, _ := c.Get("roleID")
+
+    // Comparamos uint con uint directamente
+    if tokenUserID.(uint) != uint(userID) && roleID.(uint) != 1 {
+        c.JSON(http.StatusForbidden, gin.H{"error": "access denied"})
+        return
+    }
+    // ----------------------
+
 	interests, err := h.userInterestService.GetUserInterests(uint(userID))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not fetch user interests"})
@@ -50,6 +61,14 @@ func (h *UserInterestHandler) AddUserInterest(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID"})
 		return
 	}
+
+	// --- SECURITY CHECK ---
+    tokenUserID, _ := c.Get("userID")
+    if tokenUserID.(uint) != uint(userID) {
+         c.JSON(http.StatusForbidden, gin.H{"error": "access denied"})
+         return
+    }
+    // ----------------------
 
 	var request struct {
 		EventID uint `json:"event_id"`
@@ -78,6 +97,14 @@ func (h *UserInterestHandler) RemoveUserInterest(c *gin.Context) {
 		return
 	}
 
+	// --- SECURITY CHECK ---
+    tokenUserID, _ := c.Get("userID")
+    if tokenUserID.(uint) != uint(userID) {
+         c.JSON(http.StatusForbidden, gin.H{"error": "access denied"})
+         return
+    }
+    // ----------------------
+	
 	eventIDStr := c.Param("event_id")
 	eventID, err := strconv.ParseUint(eventIDStr, 10, 32)
 	if err != nil {

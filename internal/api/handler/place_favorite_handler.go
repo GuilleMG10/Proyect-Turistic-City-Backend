@@ -31,6 +31,17 @@ func (h *PlaceFavoriteHandler) GetUserFavorites(c *gin.Context) {
 		return
 	}
 
+	// --- SECURITY CHECK ---
+    tokenUserID, _ := c.Get("userID") // Asumimos que el middleware Auth ya validó que existe
+    roleID, _ := c.Get("roleID")
+
+	// Si el ID del token NO coincide con el ID de la URL Y no es admin...
+    // Si el ID del token NO coincide con el ID de la URL Y no es admin...
+    if tokenUserID.(uint) != uint(userID) && roleID.(uint) != 1 {
+        c.JSON(http.StatusForbidden, gin.H{"error": "access denied"})
+        return
+    }
+
 	favorites, err := h.placeFavoriteService.GetUserFavorites(userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not fetch favorites"})
@@ -48,6 +59,13 @@ func (h *PlaceFavoriteHandler) AddFavorite(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user id"})
 		return
 	}
+
+	// --- SECURITY CHECK ---
+    tokenUserID, _ := c.Get("userID")
+    if tokenUserID.(uint) != uint(userID) {
+        c.JSON(http.StatusForbidden, gin.H{"error": "cannot add favorites for another user"})
+        return
+    }
 
 	var req struct {
 		PlaceID int `json:"place_id" binding:"required"`
@@ -75,6 +93,13 @@ func (h *PlaceFavoriteHandler) RemoveFavorite(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user id"})
 		return
 	}
+	// --- SECURITY CHECK ---
+    tokenUserID, _ := c.Get("userID")
+    if tokenUserID.(uint) != uint(userID) {
+        c.JSON(http.StatusForbidden, gin.H{"error": "cannot delete favorites of another user"})
+        return
+    }
+    // ----------------------
 
 	placeIDStr := c.Param("place_id")
 	placeID, err := strconv.Atoi(placeIDStr)

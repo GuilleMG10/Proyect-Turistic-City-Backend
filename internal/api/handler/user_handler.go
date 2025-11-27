@@ -11,6 +11,19 @@ import (
     "math/rand"
 )
 
+func isOwnerOrAdmin(c *gin.Context, resourceOwnerID uint) bool {
+    tokenUserID, exists := c.Get("userID")
+    if !exists {
+        return false
+    }
+    
+    roleID, _ := c.Get("roleID")
+    isAdmin := roleID == uint(1) // Asumiendo que 1 es Admin
+
+    // Si es el dueño O es admin, retorna true
+    return tokenUserID.(uint) == resourceOwnerID || isAdmin
+}
+
 type UserService interface {
 	GetUser(id int) (*model.User, error)
 	AddUser(user *model.User, rawPassword string) error
@@ -33,6 +46,14 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 		return
 	}
 
+	// --- SECURITY CHECK (IDOR FIX) ---
+    // Verificamos si el usuario del token es el mismo que el ID solicitado
+    if !isOwnerOrAdmin(c, uint(id)) {
+        c.JSON(http.StatusForbidden, gin.H{"error": "access denied: you can only view your own profile"})
+        return
+    }
+    // ---------------------------------
+	
 	user, err := h.userService.GetUser(id)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
