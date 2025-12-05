@@ -6,6 +6,7 @@ require (
 	github.com/gin-gonic/gin v1.11.0
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/stretchr/testify v1.11.1
+	golang.org/x/time v0.14.0
 	gorm.io/gorm v1.31.1
 )
 
@@ -19,8 +20,6 @@ require (
 	github.com/quic-go/quic-go v0.57.1 // indirect
 	github.com/stretchr/objx v0.5.3 // indirect
 	go.uber.org/mock v0.6.0 // indirect
-	golang.org/x/mod v0.30.0 // indirect
-	golang.org/x/tools v0.39.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 

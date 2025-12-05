@@ -1,9 +1,9 @@
 # Informe de Auditoría de Seguridad: Backend & API
 
-**Proyecto:** Turistic City Backend  
-**Fecha:** 27 de Noviembre, 2025  
+**Proyecto:** Culturistas - Plataforma Turística Cochabamba  
+**Fecha:** Diciembre 2025  
 **Estado de la Auditoría:** ✅ Mitigado / Seguro  
-**Versión del Documento:** 1.1 (Actualizado)
+**Versión del Documento:** 1.2 (Actualizado)
 
 ---
 
@@ -71,3 +71,36 @@ El backend ha superado satisfactoriamente las pruebas de seguridad ofensiva, ele
 * **Autorización:** Control de acceso granular que previene el robo de datos entre usuarios (Anti-IDOR).
 
 Se recomienda mantener esta lógica de validación de propiedad en cualquier nuevo endpoint que involucre datos sensibles de usuario.
+
+---
+
+## 5. Seguridad del Sistema de IA
+
+### 5.1. Validación de Entrada en el Asistente
+* **Implementación:** Todos los requests al sistema de IA (`/ia/prompt`, `/ia/vision`, `/ia/itinerary`) se validan con esquemas **Zod** antes de procesarse.
+* **Beneficio:** Previene inyección de payloads maliciosos y garantiza tipos de datos correctos.
+
+### 5.2. Aislamiento de Contexto por Usuario
+* **Diseño:** La memoria conversacional en ChromaDB está particionada por `userId`. Cada usuario solo accede a su propia historia.
+* **Filtrado:** Todas las búsquedas semánticas incluyen `where: { userId }` para garantizar aislamiento.
+
+### 5.3. Proxy de Autenticación
+* **Flujo:** El frontend nunca se comunica directamente con el servicio de IA. Todas las peticiones pasan por el backend Go que:
+  1. Valida el token JWT
+  2. Extrae el `userID` del token (no del request body)
+  3. Enriquece el contexto con datos del usuario desde la BD
+  4. Reenvía al servicio de IA con datos verificados
+
+### 5.4. Omisión Controlada de Memoria
+* **Implementación:** El parámetro `skipMemory` permite omitir operaciones de memoria para requests especiales (como generación de itinerarios).
+* **Uso Seguro:** Esto solo afecta el almacenamiento, no la autenticación ni autorización.
+
+---
+
+## 6. Recomendaciones Futuras
+
+1. **Rate Limiting en Endpoints de IA**: Implementar límites de requests por usuario para prevenir abuso del modelo.
+2. **Auditoría de Logs**: Mantener logging estructurado (Pino) para análisis forense.
+3. **Rotación de JWT Secret**: Implementar rotación periódica del secreto JWT.
+4. **Content Security Policy**: Configurar headers CSP en el proxy Caddy.
+5. **Sanitización de Prompts**: Revisar prompts del usuario para prevenir prompt injection en el LLM.

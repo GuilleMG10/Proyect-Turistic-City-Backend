@@ -1,34 +1,44 @@
+# Sistema de IA Legacy (JavaScript) - Documentación Técnica
+
+**Última actualización:** Diciembre 2025
+
+> Esta es la implementación **legacy** en JavaScript. 
+> Esta documentación se mantiene como referencia.
+
 ## Tecnologías Principales
 
-- **Node.js**: Runtime de JavaScript del lado del servidor (ES Modules)
-- **Express**: Framework web para APIs REST
-- **Ollama**: Motor de LLM local con modelo **qwen3**
-- **ChromaDB**: Base de datos vectorial para memoria a largo plazo (búsqueda semántica)
-- **Xenova Transformers**: Embeddings locales con modelo all-mpnet-base-v2
-- **CORS**: Middleware para peticiones cross-origin
-- **Hugging Face** (opcional): Proveedor alternativo de LLM con DeepSeek-R1
+- **Node.js**: Runtime de JavaScript (ES Modules)
+- **Express 5**: Framework web para APIs REST
+- **Ollama**: Motor de LLM local con modelos qwen3 y llava
+- **ChromaDB**: Base de datos vectorial para memoria semántica
+- **LangChain Community**: Integración con ChromaDB y embeddings
+- **HuggingFace Transformers**: Embeddings locales
+- **Multer**: Manejo de archivos subidos (imágenes)
+- **OpenAI SDK**: Cliente para proveedores compatibles (Groq, Modal)
 
 ## Estructura del Proyecto
 
 ```
 ai/
-├── app.js                   # Punto de entrada de la aplicación
-├── backend.js               # Script de prueba de streaming
-├── package.json             # Dependencias y scripts (type: module)
+├── app.js                   # Punto de entrada del servidor Express
+├── backend.js               # Script de pruebas de streaming
+├── package.json             # Dependencias (type: module)
+├── chromaInterface.js       # Interfaz alternativa de ChromaDB
 ├── controllers/
-│   └── iaController.js      # Controlador principal de IA
+│   └── iaController.js      # Controladores principales
 ├── services/
-│   └── ollamaService.js     # Servicios Ollama y Hugging Face
+│   ├── ollamaService.js     # Servicios de LLM (Ollama, Groq, Modal)
+│   └── visionService.js     # Servicios de análisis de imágenes
 ├── routes/
-│   └── iaRoutes.js          # Definición de rutas (solo /ia/prompt)
+│   └── iaRoutes.js          # Definición de rutas
 ├── utils/
-│   └── longmemory.js        # Sistema de memoria con ChromaDB y embeddings
-└── chromadb/                # Datos de ChromaDB
-    └── chroma/
-        └── chroma.sqlite3   # Base de datos vectorial local
+│   └── longmemory.js        # Sistema de memoria con ChromaDB
+├── models/
+│   └── promptModel.js       # Modelos de prompts
+├── modal/                   # Scripts para Modal (cloud GPU)
+└── tests/
+    └── memory.test.js       # Tests de memoria
 ```
-
-**Nota**: La aplicación usa ES Modules (`"type": "module"` en package.json), por lo que todos los imports usan sintaxis `import/export`.
 
 ## Arquitectura del Sistema
 
@@ -36,648 +46,436 @@ ai/
 
 ```
 Frontend (React)
+    ↓ (fetch con JWT)
+Backend Go (extrae userID, enriquece contexto)
+    ↓ (HTTP POST)
+Sistema IA Legacy (Node.js :3000)
     ↓
-Backend Go (JWT + Contexto + Intereses del Usuario)
-    ↓
-Sistema IA Node.js (construye prompt con contexto)
-    ↓
-ChromaDB (búsqueda de memoria semántica)
-    ↓
-Ollama LLM (qwen3)
+┌───────────────────────────────────────┐
+│  1. Validación básica                 │
+│  2. Contexto de intereses del usuario │
+│  3. Búsqueda en memoria (ChromaDB)    │
+│  4. Búsqueda de lugares (RAG)         │
+│  5. Envío a Ollama (streaming)        │
+│  6. Guardado en memoria               │
+└───────────────────────────────────────┘
+    ↓ (SSE streaming)
+Frontend
 ```
 
-### Componentes Principales
+## Punto de Entrada (app.js)
 
-#### 1. Express Server (app.js)
-- Puerto: 3000
-- CORS configurado para `http://localhost:5173` (frontend)
-- Middleware JSON
-- Ruta principal: `/ia/prompt`
+```javascript
+import express from "express";
+import cors from "cors";
+import iaRoutes from "./routes/iaRoutes.js";
 
-#### 2. Controlador de IA (iaController.js)
-- Recibe prompts del backend Go con:
-  - `prompt`: Pregunta del usuario
-  - `userId`: ID del usuario desde JWT
-  - `interests`: Array de eventos de interés del usuario
-- Construye contexto personalizado basado en intereses
-- Busca conversaciones previas en ChromaDB
-- Construye prompt final con contexto + memoria
-- Consulta a Ollama (modelo qwen3)
-- Devuelve respuesta en formato streaming (SSE)
-- Guarda interacción en ChromaDB para memoria futura
+const app = express();
+const PORT = process.env.AI_PORT;
 
-#### 3. Servicio Ollama (ollamaService.js)
-- **callOllamaStream**: Streaming con modelo qwen3
-  - Filtra tags `<think>` del modelo
-  - Envía solo la respuesta final
-- **callHuggingFace**: Alternativa con DeepSeek-R1
-- **generateAIResponse**: Selector de proveedor
+app.use(cors({
+  origin: process.env.FRONTEND_URL,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Accept", "Authorization"],
+  credentials: true
+}));
 
-#### 4. Sistema de Memoria (longmemory.js)
-- **Embeddings locales**: all-mpnet-base-v2 (768 dimensiones)
-- **ChromaDB**: Base de datos vectorial local (puerto 8000)
-- **Búsqueda semántica**: Top 10 conversaciones más relevantes
-- **Almacenamiento**: Cada mensaje con userId, role (usuario/IA), timestamp
+app.use(express.json());
+app.use("/ia", iaRoutes);
 
-## Endpoint Principal
+app.listen(PORT, () => {
+  console.log(`Servidor corriendo en http://localhost:${PORT}`);
+});
+```
+
+## Endpoints de la API
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| POST | `/ia/prompt` | Chat principal con el asistente |
+| POST | `/ia/places` | Registrar/actualizar lugares en RAG |
+| POST | `/ia/vision/profile` | Análisis de foto de perfil |
+| POST | `/ia/itinerary` | Generación de itinerarios |
 
 ### POST /ia/prompt
 
-Procesa prompts del usuario y devuelve respuestas del LLM.
-
-#### Request
+**Request:**
 ```json
 {
-  "prompt": "¿Qué lugares puedo visitar en La Paz?",
+  "prompt": "¿Qué lugares me recomiendas?",
   "userId": 8,
   "interests": [
-    { "event_id": 5, "event_name": "Festival de Música" },
-    { "event_id": 12, "event_name": "Tour Gastronómico" }
+    { "name": "Festival", "description": "...", "category": "Cultural" }
+  ],
+  "skipMemory": false,
+  "provider": "ollama"
+}
+```
+
+**Response:** Stream SSE
+```
+data: "Te recomiendo"
+data: " visitar..."
+data: [DONE]
+```
+
+### POST /ia/places
+
+Registra lugares en la colección de ChromaDB para búsqueda RAG.
+
+**Request:**
+```json
+{
+  "places": [
+    {
+      "name": "Plaza Principal",
+      "description": "Centro histórico de la ciudad",
+      "category": "Histórico",
+      "type": "lugar",
+      "atencion": "24 horas",
+      "tiempoEstimadoVisita": "1 hora",
+      "loMasIconicoDelLugar": "Fuente colonial",
+      "estimatedPrice": "Gratis"
+    }
   ]
 }
 ```
 
-#### Headers
-```
-Content-Type: application/json
-Authorization: Bearer <token> (validado por backend Go)
-```
+### POST /ia/vision/profile
 
-#### Response
-Streaming de texto (Server-Sent Events):
-```
-data: Basándome 
-data: en tus 
-data: intereses...
-```
+Analiza una imagen de perfil para determinar si es apropiada.
 
-## Construcción de Contexto
-
-### Construcción del Contexto del Usuario
-
-El sistema construye contexto desde dos fuentes:
-
-#### 1. Intereses del Usuario (desde Go backend)
-```javascript
-let userContextText = "";
-if (interests && interests.length > 0) {
-  const interestNames = interests.map(event => event.name).join(", ");
-  userContextText = `El usuario ha mostrado interés en los siguientes eventos: ${interestNames}.`;
-}
-```
-
-**Ejemplo:**
-```
-El usuario ha mostrado interés en los siguientes eventos: Festival de Música Andina, Tour Gastronómico por el Centro, Concierto de Rock en Vivo.
-```
-
-#### 2. Memoria de Conversaciones (desde ChromaDB)
-```javascript
-const longMemory = await searchMemory(userId, prompt, 10);
-const context = longMemory.map(m => `${m.role}: ${m.content}`).join("\n");
-```
-
-**Ejemplo:**
-```
-usuario: ¿Qué lugares puedo visitar?
-IA: Te recomiendo la Plaza Murillo y el Valle de la Luna...
-usuario: ¿Hay eventos musicales?
-IA: Sí, hay varios conciertos este fin de semana...
-```
-
-### Prompt Final Ensamblado
-
-Con intereses:
-```javascript
-`Información del usuario:
-${userContextText}
-
-Contexto de conversaciones previas:
-${context}
-
-Nueva pregunta del usuario:
-${prompt}
-
-IA (responde considerando las preferencias del usuario):`
-```
-
-Sin intereses:
-```javascript
-`Contexto previo:
-${context}
-
-Nueva pregunta del usuario:
-${prompt}
-
-IA:`
-```
-
-## Integración con Ollama
-
-### Configuración
-```javascript
-const OLLAMA_API = "http://127.0.0.1:11434/api/generate";
-const MODEL = "qwen3";
-```
-
-### Request a Ollama
-```javascript
-{
-  model: "qwen3",
-  prompt: fullPrompt
-  // stream es manejado por el endpoint de Ollama
-}
-```
-
-### Response Streaming y Filtrado
-Ollama (qwen3) devuelve chunks de JSON que pueden incluir razonamiento interno:
-
-**Respuesta cruda de Ollama:**
+**Request:** (multipart/form-data o JSON)
 ```json
-{"response":"<think>Analizando intereses del usuario...</think>","done":false}
-{"response":"Basándome","done":false}
-{"response":" en tus","done":false}
-{"response":" intereses...","done":false}
-{"response":"","done":true}
-```
-
-**Filtrado implementado:**
-```javascript
-let started = false;
-// Ignorar todo hasta encontrar </think>
-if (!started && text.includes("</think>")) {
-  started = true;
-  const after = text.split("</think>")[1];
-  if (after && after.trim()) onData(after);
-} else if (started) {
-  if (text.trim()) onData(text);
+{
+  "imageBase64": "iVBORw0KGgo...",
+  "context": "Perfil profesional",
+  "provider": "ollama"
 }
 ```
 
-**Resultado enviado al cliente:**
+### POST /ia/itinerary
+
+Genera un itinerario optimizado basado en preferencias.
+
+**Request:**
+```json
+{
+  "nearbyPlaces": [{ "name": "Plaza" }],
+  "interests": [{ "name": "Cultural" }],
+  "placesAlreadySelected": [],
+  "budget": 500,
+  "scheduleAvailability": "10:00-18:00",
+  "maximumItinerarySize": 5
+}
 ```
-data: Basándome
-data: en tus
-data: intereses...
-data: [DONE]
-```
 
-## Sistema de Memoria
+## Proveedores de IA (ollamaService.js)
 
-### Sistema de Embeddings Locales
-
-El sistema utiliza **Xenova Transformers** para generar embeddings sin necesidad de servicios externos:
+### Ollama (Local)
 
 ```javascript
-import { pipeline } from "@xenova/transformers";
-
-// Modelo: all-mpnet-base-v2 (768 dimensiones)
-const embedder = await pipeline("feature-extraction", "Xenova/all-mpnet-base-v2");
-```
-
-**Proceso de embedding:**
-1. **Tokenización**: Texto → tokens → IDs numéricos
-2. **Embedding**: Cada token → vector de 768 dimensiones
-3. **Pooling**: Promedio de vectores de todos los tokens
-4. **Normalización**: División por norma L2 para comparación eficiente
-
-**Ejemplo:**
-```
-"Los gatos corren" 
-→ Tokens: ["Los", "gatos", "cor", "ren"] 
-→ IDs: [1523, 2098, 4021, 1789]
-→ Embeddings individuales → Promedio → Normalización
-→ Vector final [0.13, -0.05, 0.28, ..., 0.41] (768 dims)
-```
-
-### Memoria con ChromaDB (longmemory.js)
-
-ChromaDB almacena conversaciones con búsqueda semántica:
-
-```javascript
-const embeddingFunction = {
-  generate: async (texts) => {
-    const extractor = await getEmbedder();
-    const vectors = [];
-    for (const text of texts) {
-      const output = await extractor(text, { 
-        pooling: "mean", 
-        normalize: true 
-      });
-      vectors.push(Array.from(output.data));
+export const callOllamaStream = async (prompt, onData) => {
+  const response = await fetch(`${ollamaUrl}/api/generate`, {
+    method: "POST",
+    body: JSON.stringify({
+      model: process.env.OLLAMA_MODEL,
+      prompt: prompt,
+    }),
+  });
+  
+  // Filtra tags <think> del modelo
+  let started = false;
+  for await (const chunk of response.body) {
+    const text = json.response;
+    if (!started && text.includes("</think>")) {
+      started = true;
+      onData(text.split("</think>")[1]);
+    } else if (started) {
+      onData(text);
     }
-    return vectors;
+  }
+};
+```
+
+### Groq (Cloud)
+
+```javascript
+export const callGroqStream = async (prompt, onData) => {
+  const client = new OpenAI({
+    apiKey: process.env.GROQ_API_KEY,
+    baseURL: process.env.GROQ_URL
+  });
+  
+  const stream = await client.chat.completions.create({
+    model: process.env.GROQ_MODEL,
+    messages: [{ role: "user", content: prompt }],
+    stream: true
+  });
+  
+  for await (const chunk of stream) {
+    onData(chunk.choices?.[0]?.delta?.content);
+  }
+};
+```
+
+### Modal (Cloud GPU)
+
+```javascript
+export const callModalStream = async (prompt, onData, modelType, imageBase64) => {
+  const baseURL = modelType === "thinking" 
+    ? process.env.MODAL_THINKING_URL 
+    : process.env.MODAL_FAST_URL;
+    
+  const client = new OpenAI({
+    apiKey: process.env.MODAL_API_KEY_AUTH,
+    baseURL: `${baseURL}/v1`
+  });
+  
+  // Soporta multimodal (texto + imagen)
+  let messageContent = imageBase64 
+    ? [
+        { type: "text", text: prompt },
+        { type: "image_url", image_url: { url: `data:image/jpeg;base64,${imageBase64}` }}
+      ]
+    : prompt;
+    
+  const stream = await client.chat.completions.create({
+    model: modelName,
+    messages: [{ role: "user", content: messageContent }],
+    stream: true
+  });
+  
+  // Maneja marcadores [THINKING_START]/[THINKING_END] para modo razonador
+};
+```
+
+### Selector de Proveedor
+
+```javascript
+export const generateAIResponse = async (prompt, provider, onData, imageBase64) => {
+  if (provider === "modal-thinking") return callModalStream(prompt, onData, "thinking", imageBase64);
+  if (provider === "modal") return callModalStream(prompt, onData, "instruct", imageBase64);
+  if (provider === "ollama") return callOllamaStream(prompt, onData);
+  if (provider === "huggingface") return callHuggingFace(prompt);
+  if (provider === "groq") return callGroqStream(prompt, onData);
+};
+```
+
+## Sistema de Memoria (longmemory.js)
+
+### Embeddings con HuggingFace Transformers
+
+```javascript
+import { HuggingFaceTransformersEmbeddings } from "@langchain/community/embeddings/huggingface_transformers";
+
+const embeddings = new HuggingFaceTransformersEmbeddings({
+  modelName: process.env.EMBEDDING_MODEL,  // Xenova/all-mpnet-base-v2
+});
+```
+
+### Colecciones en ChromaDB
+
+| Colección | Propósito |
+|-----------|-----------|
+| `chat_memory` | Historial de conversaciones |
+| `raw` | Favoritos e intereses del usuario |
+| `places_collection` | Lugares para búsqueda RAG |
+
+### Funciones de Memoria
+
+```javascript
+// Guardar mensaje de conversación
+export const saveMessage = async (userId, role, content) => {
+  const store = await getVectorStore();
+  await store.addDocuments([{
+    pageContent: content,
+    metadata: { userId, role },
+  }]);
+};
+
+// Búsqueda semántica de memoria
+export const searchMemory = async (userId, query, topK = 10) => {
+  const store = await getVectorStore();
+  const results = await store.similaritySearch(query, topK, { userId });
+  return results.map(r => ({
+    content: r.pageContent,
+    role: r.metadata.role,
+  }));
+};
+
+// Guardar favoritos del usuario
+export const saveUserFavorites = async (userId, favoritesList) => {
+  const store = await getRawStore();
+  // Elimina favoritos anteriores
+  await store.delete({ filter: { userId: { $eq: userId } } });
+  // Guarda nuevo documento
+  await store.addDocuments([{
+    pageContent: textData,
+    metadata: { userId, type: "favorites" },
+  }]);
+};
+
+// Upsert de lugares (para RAG)
+export const upsertPlaces = async (places) => {
+  const store = await getPlacesStore();
+  for (const place of places) {
+    // Elimina versión anterior
+    await store.delete({ filter: { name: { $eq: place.name } } });
+    // Inserta nuevo documento
+    await store.addDocuments([{
+      pageContent: content,
+      metadata: { name, category, type, atencion, ... },
+    }]);
   }
 };
 
-const collection = await client.getOrCreateCollection({
-  name: "chat_memory",
-  embeddingFunction: embeddingFunction
-});
+// Búsqueda de lugares
+export const searchPlacesMemory = async (query, topK = 10) => {
+  const store = await getPlacesStore();
+  return await store.similaritySearch(query, topK);
+};
 ```
 
-### Funciones Principales
+## Servicio de Visión (visionService.js)
 
-#### saveMessage(userId, role, content)
-Guarda un mensaje en ChromaDB:
+### LLaVA (Ollama Local)
+
 ```javascript
-await collection.add({
-  ids: [`${userId}-${Date.now()}`],
-  metadatas: [{ userId, role }], // role: "usuario" o "IA"
-  documents: [content]
-});
-```
-
-#### searchMemory(userId, query, topK = 10)
-Busca conversaciones relevantes por similitud semántica:
-```javascript
-const results = await collection.query({
-  queryTexts: [query],    // Convertido a embedding automáticamente
-  nResults: topK,         // Top 10 más similares
-  where: { userId }       // Solo del usuario actual
-});
-
-// Retorna: [{ content: "...", role: "usuario" }, ...]
-```
-
-**Resultado de ChromaDB:**
-```javascript
-{
-  ids: [["userId-timestamp1", "userId-timestamp2"]],
-  documents: [["¿Qué lugares visitar?", "Te recomiendo..."]],
-  metadatas: [[
-    { userId: 8, role: "usuario" },
-    { userId: 8, role: "IA" }
-  ]],
-  distances: [[0.08, 0.25]] // Distancia euclidiana (menor = más similar)
-}
-```
-
-## ChromaDB - Base de Datos Vectorial
-
-### Configuración
-```javascript
-import { ChromaClient } from "chromadb";
-
-const client = new ChromaClient({ 
-  host: "localhost",
-  port: 8000
-});
-
-const collection = await client.getOrCreateCollection({
-  name: "chat_memory",
-  embeddingFunction: embeddingFunction // all-mpnet-base-v2
-});
-```
-
-### Estructura de Datos Almacenados
-```javascript
-{
-  ids: ["8-1728912345678"], // userId-timestamp
-  documents: ["¿Qué lugares puedo visitar en La Paz?"],
-  metadatas: [{
-    userId: 8,
-    role: "usuario" // o "IA"
-  }]
-}
-```
-
-**Nota:** No se almacenan timestamps explícitos, el timestamp está en el ID.
-
-### Búsqueda Semántica
-
-**Query de ejemplo:**
-```javascript
-const results = await collection.query({
-  queryTexts: ["eventos musicales"], // Convertido a embedding
-  nResults: 10,
-  where: { userId: 8 } // Filtra por usuario
-});
-```
-
-**Resultado:**
-```javascript
-{
-  ids: [["8-1728912345", "8-1728912456"]],
-  documents: [["¿Hay conciertos?", "Sí, hay varios..."]],
-  metadatas: [[
-    { userId: 8, role: "usuario" },
-    { userId: 8, role: "IA" }
-  ]],
-  distances: [[0.08, 0.25]] // Similitud semántica (menor = más similar)
-}
-```
-
-### Casos de Uso
-1. **Memoria conversacional** - Recupera contexto de conversaciones previas
-2. **Continuidad entre sesiones** - Usuario puede retomar temas días después
-3. **Búsqueda por similitud** - "eventos musicales" encuentra "conciertos", "festivales", etc.
-4. **Personalización** - Cada usuario tiene su propia historia aislada
-
-## Flujo Completo de una Petición
-
-### 1. Frontend envía prompt
-```javascript
-fetch('/ia/prompt', {
-  method: 'POST',
-  headers: {
-    'Authorization': `Bearer ${token}`,
-    'Content-Type': 'application/json'
-  },
-  body: JSON.stringify({ prompt: "¿Qué lugares visitar?" })
-})
-```
-
-### 2. Backend Go intercepta
-```go
-// Extrae userID del JWT
-userID := c.GetUint("userID")
-
-// Busca intereses del usuario
-interests := repository.FindUserInterests(userID)
-
-// Reenvía a sistema IA
-response := http.Post("http://localhost:3000/ia/prompt", payload)
-```
-
-### 3. Sistema IA procesa
-```javascript
-// Recibe payload del backend Go
-const { prompt, userId, interests } = req.body;
-
-// Construye contexto de intereses
-const interestNames = interests.map(e => e.name).join(", ");
-const userContext = `El usuario ha mostrado interés en: ${interestNames}.`;
-
-// Busca memoria semántica
-const memory = await searchMemory(userId, prompt, 10);
-const memoryContext = memory.map(m => `${m.role}: ${m.content}`).join("\n");
-
-// Construye prompt final
-const finalPrompt = `${userContext}\n\n${memoryContext}\n\n${prompt}`;
-
-// Guarda pregunta en memoria
-await saveMessage(userId, "usuario", prompt);
-
-// Consulta Ollama con streaming
-let responseBuffer = "";
-await callOllamaStream(finalPrompt, (chunk) => {
-  responseBuffer += chunk;
-  res.write(`data: ${chunk}\n\n`); // SSE
-});
-
-// Guarda respuesta en memoria
-await saveMessage(userId, "IA", responseBuffer);
-
-res.write("data: [DONE]\n\n");
-res.end();
-```
-
-### 4. Frontend recibe stream
-```javascript
-const reader = response.body.getReader();
-const decoder = new TextDecoder();
-
-while (true) {
-  const { value, done } = await reader.read();
-  if (done) break;
-  
-  const chunk = decoder.decode(value);
-  // Actualiza UI con chunk
-}
-```
-
-## Manejo de Errores
-
-### Errores de Conexión con Ollama
-```javascript
-try {
-  const response = await fetch(OLLAMA_API, ...);
-  if (!response.ok) {
-    throw new Error('Ollama no disponible');
-  }
-} catch (error) {
-  res.status(500).json({ 
-    error: 'Error conectando con el modelo de IA' 
+export const analyzeWithLLaVAStream = async (prompt, base64Image, onData) => {
+  const response = await fetch(`${ollamaUrl}/api/chat`, {
+    method: "POST",
+    body: JSON.stringify({
+      model: process.env.OLLAMA_VISION_MODEL,  // llava
+      messages: [{
+        role: "user",
+        content: prompt,
+        images: [base64Image],
+      }],
+      stream: true,
+    }),
   });
-}
-```
-
-### Errores de Parsing
-```javascript
-try {
-  const data = JSON.parse(chunk);
-  res.write(`data: ${data.response}\n\n`);
-} catch (error) {
-  console.error('Error parsing chunk:', error);
-  // Continúa con siguiente chunk
-}
-```
-
-### Timeout
-```javascript
-const timeout = setTimeout(() => {
-  res.status(504).json({ error: 'Timeout esperando respuesta' });
-}, 30000); // 30 segundos
-```
-
-## Configuración del Modelo
-
-### Modelo Actual
-- **Nombre**: qwen3
-- **Proveedor**: Ollama (local)
-- **Características**: 
-  - Incluye razonamiento interno con tags `<think>`
-  - Filtrado automático de pensamientos
-  - Solo retorna respuesta final al usuario
-- **Capacidad**: Conversaciones y recomendaciones turísticas personalizadas
-
-### Configuración de Ollama
-```javascript
-{
-  model: "qwen3",
-  prompt: fullPrompt,
-  // Sin parámetros adicionales en la implementación actual
-}
-```
-
-### Proveedores Alternativos
-El sistema soporta dos proveedores:
-
-1. **Ollama** (default): qwen3 local
-2. **Hugging Face**: DeepSeek-R1 vía fireworks-ai
-   - Requiere `HF_TOKEN` en variables de entorno
-   - Modelo: `deepseek-ai/DeepSeek-R1:fireworks-ai`
-
-## Optimizaciones
-
-### 1. Cache de Respuestas
-```javascript
-const responseCache = new Map();
-
-function getCachedResponse(prompt) {
-  const key = hash(prompt);
-  return responseCache.get(key);
-}
-```
-
-### 2. Batch Processing
-```javascript
-// Procesar múltiples prompts en paralelo
-await Promise.all(
-  prompts.map(p => ollama.generate(p))
-);
-```
-
-### 3. Compresión de Contexto
-```javascript
-function compressContext(interests) {
-  // Solo incluir top 5 intereses más recientes
-  return interests.slice(-5);
-}
-```
-
-### 4. Streaming Optimizado
-```javascript
-// Enviar chunks más grandes
-let buffer = '';
-response.on('data', chunk => {
-  buffer += chunk;
-  if (buffer.length > 100) {
-    res.write(`data: ${buffer}\n\n`);
-    buffer = '';
+  
+  for await (const chunk of response.body) {
+    const text = json.message?.content;
+    if (text) onData(text);
   }
-});
+};
 ```
 
-## Logging y Debugging
+### Modal Multimodal (Cloud)
 
-### Logs del Sistema
 ```javascript
-console.log('Received prompt from user:', userId);
-console.log('User interests:', interests.length);
-console.log('Sending to Ollama:', fullPrompt.substring(0, 100));
-console.log('Response complete');
+export const analyzeWithModalStream = async (prompt, base64Image, onData, useThinking) => {
+  const modelType = useThinking ? "thinking" : "instruct";
+  return await callModalVision(prompt, base64Image, onData, modelType);
+};
 ```
 
-### Monitoreo de Performance
+### Prompt de Evaluación de Perfil
+
 ```javascript
-const startTime = Date.now();
-// ... proceso ...
-const duration = Date.now() - startTime;
-console.log(`⏱Request completed in ${duration}ms`);
+export const buildProfilePrompt = (context = "") => `
+Eres un evaluador estricto de fotografías de perfil.
+Tu tarea es analizar la imagen y responder:
+- "Sí es adecuada como foto de perfil"
+- "No es adecuada como foto de perfil"
+
+Criterios:
+- Buena iluminación, nitidez, rostro visible
+- Fondo neutro o apropiado
+- Vestimenta adecuada
+- Sin gestos ofensivos ni contenido inapropiado
+`;
+```
+
+## Controlador de Itinerarios
+
+```javascript
+export const generateItinerary = async (req, res) => {
+  const { nearbyPlaces, interests, placesAlreadySelected, 
+          budget, scheduleAvailability, maximumItinerarySize } = req.body;
+  
+  // 1. Recopilar lugares sin duplicados
+  let collected = [];
+  
+  for (const place of nearbyPlaces) {
+    const results = await searchPlacesMemory(place.name, 1);
+    // Agregar si no existe...
+  }
+  
+  // 2. Construir prompt estructurado
+  const finalPrompt = `
+    Eres un generador de itinerarios. Responde SOLO en JSON.
+    
+    LUGARES DISPONIBLES (RAG):
+    ${placesDetails}
+    
+    DATOS DEL USUARIO:
+    - Presupuesto: ${budget} Bs
+    - Horario: ${scheduleAvailability}
+    - Máximo lugares: ${maximumItinerarySize}
+    
+    Devuelve SOLO JSON con estructura:
+    {
+      "itinerario": [...],
+      "resumen": {...}
+    }
+  `;
+  
+  // 3. Stream respuesta
+  await generateAIResponse(finalPrompt, provider, handleChunk);
+};
 ```
 
 ## Variables de Entorno
 
-### Requeridas
 ```env
-# No hay variables de entorno obligatorias para Ollama
-# El sistema funciona con configuración por defecto
+# Servidor
+AI_PORT=3000
+FRONTEND_URL=http://localhost:5173
+
+# Ollama
+OLLAMA_URL=http://127.0.0.1:11434
+OLLAMA_MODEL=qwen3
+OLLAMA_VISION_MODEL=llava
+
+# ChromaDB
+CHROMA_URL=http://localhost:8000
+
+# Embeddings
+EMBEDDING_MODEL=Xenova/all-mpnet-base-v2
+
+# Proveedores opcionales
+AI_PROVIDER=ollama
+
+# Groq (opcional)
+GROQ_API_KEY=
+GROQ_URL=https://api.groq.com/openai/v1
+GROQ_MODEL=llama3-8b-8192
+
+# Modal (opcional)
+MODAL_API_KEY_AUTH=
+MODAL_FAST_URL=
+MODAL_THINKING_URL=
+MODAL_FAST_MODEL=
+MODAL_THINKING_MODEL=
+
+# HuggingFace (opcional)
+HF_TOKEN=
+HF_URL=
+HF_MODEL=
 ```
 
-### Opcionales
-```env
-HF_TOKEN=tu_token_aqui       # Solo si usas Hugging Face como proveedor
-```
+## Comandos de Ejecución
 
-### Configuración por Defecto
-- **Puerto**: 3000 (hardcoded en app.js)
-- **Ollama**: http://127.0.0.1:11434
-- **ChromaDB**: localhost:8000
-- **Modelo Ollama**: qwen3
-- **Modelo Embeddings**: Xenova/all-mpnet-base-v2
-- **Memoria ChromaDB**: 10 conversaciones más relevantes
-
-## Despliegue
-
-### Requisitos
-1. **Node.js 18+** instalado (para ES Modules nativos)
-2. **Ollama** instalado y corriendo en localhost:11434
-3. **Modelo qwen3** descargado: `ollama pull qwen3`
-4. **ChromaDB** corriendo en puerto 8000
-5. Dependencias instaladas: `npm install`
-
-### Instalación
 ```bash
-cd ai
+# Instalar dependencias
 npm install
-```
-
-### Ejecución
-```bash
-# Desarrollo
-npm run dev
 
 # Producción
 npm start
-```
 
-### Verificación
-
-**1. Verificar Ollama:**
-```bash
-# Ver modelos instalados
-ollama list
-
-# Debe mostrar qwen3
-```
-
-**2. Verificar ChromaDB:**
-```bash
-# ChromaDB debe estar corriendo en puerto 8000
-curl http://localhost:8000/api/v1/heartbeat
-```
-
-**3. Test del endpoint:**
-```bash
-curl -X POST http://localhost:3000/ia/prompt \
-  -H "Content-Type: application/json" \
-  -d '{"prompt":"Hola","userId":1,"interests":[]}'
-```
-
-**Respuesta esperada:**
-```
-data: Hola
-data: ,
-data: ¿cómo
-data: puedo
-data: ayudarte
-data: ?
-data: [DONE]
-```
-
-## Seguridad
-
-### Validación de Input
-```javascript
-if (!prompt || typeof prompt !== 'string') {
-  return res.status(400).json({ error: 'Prompt inválido' });
-}
-
-if (prompt.length > 1000) {
-  return res.status(400).json({ error: 'Prompt muy largo' });
-}
-```
-
-### Sanitización
-```javascript
-const sanitizePrompt = (text) => {
-  return text
-    .replace(/[<>]/g, '') // Remover HTML
-    .trim()
-    .substring(0, 1000);  // Límite de caracteres
-};
-```
-
-### Rate Limiting
-```javascript
-const rateLimit = require('express-rate-limit');
-
-const limiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 minuto
-  max: 10 // 10 requests por minuto
-});
-
-app.use('/ia', limiter);
+# Tests
+npm test
 ```

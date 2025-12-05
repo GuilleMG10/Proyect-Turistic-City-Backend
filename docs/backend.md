@@ -1,3 +1,7 @@
+# Backend Go - Documentación Técnica
+
+**Última actualización:** Diciembre 2025
+
 ## Tecnologías Principales
 
 - **Go 1.x**: Lenguaje de programación principal
@@ -5,7 +9,7 @@
 - **GORM**: ORM para interacción con base de datos PostgreSQL
 - **JWT**: Autenticación basada en tokens
 - **PostgreSQL (Supabase)**: Base de datos relacional en la nube
-- **CORS**: Middleware para permitir peticiones cross-origin
+- **CORS**: Middleware para peticiones cross-origin
 
 ## Estructura del Proyecto
 
@@ -24,40 +28,34 @@ internal/
 │       ├── review_handler.go
 │       ├── user_interest_handler.go
 │       ├── place_favorite_handler.go
+│       ├── user_preference_handler.go
+│       ├── itinerary_handler.go
 │       └── ia_handler.go
 ├── auth/
 │   └── jwt.go               # Generación y validación de JWT
 ├── middleware/
 │   ├── auth.go              # Middleware de autenticación
+│   ├── admin.go             # Middleware de autorización admin
+│   ├── login_limiter.go     # Rate limiting para login
 │   └── cors.go              # Middleware de CORS
 ├── model/
 │   ├── event.go             # Modelo de eventos
 │   ├── place.go             # Modelo de lugares
 │   ├── user.go              # Modelo de usuarios
 │   ├── review.go            # Modelo de reseñas
-│   ├── user_interest.go     # Modelo de intereses
-│   └── place_favorite.go    # Modelo de favoritos
+│   ├── user_interest.go     # Modelo de intereses en eventos
+│   ├── place_favorite.go    # Modelo de favoritos de lugares
+│   ├── user_preference.go   # Modelo de preferencias de categoría
+│   └── itinerary.go         # Modelo de itinerarios
 ├── repository/
-│   ├── event_repository.go
-│   ├── place_repository.go
-│   ├── user_repository.go
-│   ├── review_repository.go
-│   ├── user_interest_repository.go
-│   └── place_favorite_repository.go
+│   └── ...                  # Repositorios para cada modelo
 └── service/
-    ├── event_service.go
-    ├── place_service.go
-    ├── user_service.go
-    ├── review_service.go
-    ├── user_interest_service.go
-    └── place_favorite_service.go
-
-go.mod                       # Dependencias de Go
+    └── ...                  # Servicios de lógica de negocio
 ```
 
 ## Arquitectura en Capas
 
-El backend sigue una arquitectura en capas limpia:
+El backend sigue una arquitectura limpia con separación de responsabilidades:
 
 ### 1. Handler (Controlador)
 - Recibe peticiones HTTP
@@ -69,32 +67,30 @@ El backend sigue una arquitectura en capas limpia:
 - Lógica de negocio
 - Validaciones complejas
 - Orquestación entre múltiples repositorios
-- Transformación de datos
 
 ### 3. Repository (Repositorio)
 - Acceso directo a la base de datos
-- Operaciones CRUD
-- Consultas con GORM
+- Operaciones CRUD con GORM
 - Gestión de relaciones
 
 ### 4. Model (Modelo)
 - Estructuras de datos
 - Mapeo ORM con tags de GORM
-- Validaciones básicas
 
-## Modelos de Datos
+## Modelos de Datos Principales
 
 ### User (Usuario)
 ```go
 type User struct {
     ID        uint      `json:"id" gorm:"primaryKey"`
-    RoleID    uint      `json:"role_id"`
+    RoleID    uint      `json:"role_id"`    // 1 = Admin, 2 = Usuario normal
     Name      string    `json:"name"`
     Username  string    `json:"username" gorm:"unique"`
-    Password  string    `json:"-"`
+    Password  string    `json:"-"`          // Nunca se expone en JSON
     Email     string    `json:"email"`
     Age       int       `json:"age"`
     CreatedAt time.Time `json:"created_at"`
+    Active    bool      `json:"active" gorm:"default:true"`
 }
 ```
 
@@ -109,11 +105,11 @@ type Place struct {
     Latitude    float64   `json:"latitude"`
     Longitude   float64   `json:"longitude"`
     Category    string    `json:"category"`
+    Price       float64   `json:"price"`
     CreatedAt   time.Time `json:"created_at"`
     LinkImage   string    `json:"link_image"`
     Active      bool      `json:"active" gorm:"default:true"`
     Reviews     []Review  `json:"reviews,omitempty" gorm:"foreignKey:PlaceID"`
-    User        User      `json:"user,omitempty" gorm:"foreignKey:UserID"`
 }
 ```
 
@@ -126,51 +122,38 @@ type Event struct {
     Description string    `json:"description"`
     EventDate   time.Time `json:"event_date"`
     Location    string    `json:"location"`
+    Latitude    float64   `json:"latitude"`
+    Longitude   float64   `json:"longitude"`
     Price       float64   `json:"price"`
-    MinAge      int       `json:"min_age"`
     Category    string    `json:"category"`
     CreatedAt   time.Time `json:"created_at"`
-    Status      string    `json:"status"`
-    Zone        string    `json:"zone"`
-    LinkImage   string    `json:"link_image"`
     Reviews     []Review  `json:"reviews,omitempty" gorm:"foreignKey:EventID"`
-    User        User      `json:"user,omitempty" gorm:"foreignKey:UserID"`
 }
 ```
 
-### Review (Reseña)
+### Itinerary (Itinerario)
 ```go
-type Review struct {
-    ID        uint      `json:"id" gorm:"primaryKey"`
-    UserID    uint      `json:"user_id"`
-    PlaceID   *uint     `json:"place_id,omitempty"`
-    EventID   *uint     `json:"event_id,omitempty"`
-    Rating    int       `json:"rating"`
-    Comment   string    `json:"comment"`
-    CreatedAt time.Time `json:"created_at"`
-    User      User      `json:"user,omitempty" gorm:"foreignKey:UserID"`
+type Itinerary struct {
+    ID          uint            `json:"id" gorm:"primaryKey"`
+    UserID      uint            `json:"user_id"`
+    Name        string          `json:"name"`
+    Description string          `json:"description"`
+    Date        time.Time       `json:"date"`
+    StartTime   string          `json:"start_time"`
+    EndTime     string          `json:"end_time"`
+    CreatedAt   time.Time       `json:"created_at"`
+    Items       []ItineraryItem `json:"items,omitempty" gorm:"foreignKey:ItineraryID"`
 }
-```
 
-### UserInterest (Interés en Evento)
-```go
-type UserInterest struct {
-    ID        uint      `json:"id" gorm:"primaryKey"`
-    UserID    uint      `json:"user_id"`
-    EventID   uint      `json:"event_id"`
-    Active    bool      `json:"active" gorm:"default:true"`
-    CreatedAt time.Time `json:"created_at"`
-}
-```
-
-### PlaceFavorite (Lugar Favorito)
-```go
-type PlaceFavorite struct {
-    ID        uint      `json:"id" gorm:"primaryKey"`
-    UserID    uint      `json:"user_id"`
-    PlaceID   uint      `json:"place_id"`
-    Active    bool      `json:"active" gorm:"default:true"`
-    CreatedAt time.Time `json:"created_at"`
+type ItineraryItem struct {
+    ID          uint   `json:"id" gorm:"primaryKey"`
+    ItineraryID uint   `json:"itinerary_id"`
+    Type        string `json:"type"`       // "place" o "event"
+    ItemID      uint   `json:"item_id"`    // ID del lugar o evento
+    StartTime   string `json:"start_time"`
+    EndTime     string `json:"end_time"`
+    Order       int    `json:"order"`
+    Notes       string `json:"notes"`
 }
 ```
 
@@ -181,319 +164,155 @@ type PlaceFavorite struct {
 func GenerateToken(userID uint, roleID uint) (string, error)
 ```
 - Crea un JWT con claims personalizados
-- Incluye userID y roleID en el payload
+- Incluye `userID` y `roleID` en el payload
 - Tiempo de expiración: 24 horas
-- Firma con secreto desde variable de entorno
-
-### Validación de Token
-```go
-func ValidateToken(tokenString string) (*Claims, error)
-```
-- Verifica la firma del token
-- Extrae los claims (userID, roleID)
-- Valida la expiración
+- Firma con secreto desde variable de entorno `JWT_SECRET`
 
 ### Middleware de Autenticación
 ```go
 func AuthMiddleware() gin.HandlerFunc
 ```
 - Extrae el token del header `Authorization: Bearer <token>`
-- Valida el token
+- Valida la firma y expiración
 - Inyecta `userID` en el contexto de Gin
-- Protege rutas que requieren autenticación
+
+### Middleware de Administrador
+```go
+func AdminMiddleware() gin.HandlerFunc
+```
+- Verifica que `roleID == 1`
+- Protege rutas de gestión (crear/editar/eliminar lugares y eventos)
 
 ## Endpoints de la API
 
-### Autenticación
+### Rutas Públicas (sin autenticación)
 
-#### POST /users/register
-Registra un nuevo usuario
-```json
-Request:
-{
-  "name": "Juan Pérez",
-  "username": "juanp",
-  "password": "password123",
-  "email": "juan@example.com",
-  "age": 25
-}
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| POST | `/users/register` | Registro de usuario |
+| POST | `/users/login` | Inicio de sesión (con rate limiting) |
+| GET | `/places` | Lista de lugares activos |
+| GET | `/places/:id/reviews` | Reseñas de un lugar |
+| GET | `/events` | Lista de eventos |
+| GET | `/ia/capabilities` | Capacidades del sistema IA |
 
-Response:
-{
-  "message": "Usuario registrado exitosamente",
-  "user": { ... },
-  "token": "eyJhbGciOiJIUzI1NiIs..."
-}
+### Rutas Autenticadas
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | `/users/:id` | Obtener información de usuario |
+| POST | `/ia/prompt` | Chat con asistente IA |
+| POST | `/ia/itinerary` | Generar itinerario con IA |
+| POST | `/ia/vision` | Análisis de imagen con IA |
+| GET/POST/DELETE | `/users/:id/interests` | Gestión de intereses en eventos |
+| GET/POST/DELETE | `/users/:id/favorites` | Gestión de lugares favoritos |
+| GET/POST/DELETE | `/users/:id/preferences` | Preferencias de categorías |
+| GET/POST/PUT/DELETE | `/itineraries` | Gestión de itinerarios |
+
+### Rutas de Administrador
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| POST | `/places` | Crear lugar |
+| PUT | `/places/:id` | Actualizar lugar |
+| DELETE | `/places/:id` | Eliminar lugar (soft delete) |
+| POST | `/events` | Crear evento |
+| PUT | `/events/:id` | Actualizar evento |
+| DELETE | `/events/:id` | Eliminar evento |
+
+## Integración con Sistema de IA (Node.js)
+
+El backend Go actúa como proxy entre el frontend y el asistente de IA en Node.js:
+
+### Flujo de Comunicación
+```
+Frontend (React) 
+    → Backend Go (JWT + Contexto) 
+    → Asistente IA (Node.js :3500)
+    → Ollama LLM
 ```
 
-#### POST /users/login
-Inicia sesión
-```json
-Request:
-{
-  "username": "juanp",
-  "password": "password123"
-}
-
-Response:
-{
-  "message": "Login exitoso",
-  "user": { ... },
-  "token": "eyJhbGciOiJIUzI1NiIs..."
-}
-```
-
-### Lugares (Places)
-
-#### GET /places
-Obtiene todos los lugares activos
-- Query params: `q` (búsqueda por nombre)
-- Precarga: Reviews
-
-#### POST /places (requiere auth)
-Crea un nuevo lugar
-```json
-{
-  "name": "Plaza Murillo",
-  "description": "Plaza histórica",
-  "location": "Centro, La Paz",
-  "latitude": -16.5,
-  "longitude": -68.15,
-  "category": "Histórico",
-  "link_image": "https://..."
-}
-```
-
-#### PUT /places/:id (requiere auth)
-Actualiza un lugar existente
-
-#### DELETE /places/:id (requiere auth)
-Elimina un lugar (soft delete - marca `active = false`)
-
-### Eventos (Events)
-
-#### GET /events
-Obtiene todos los eventos
-- Precarga: Reviews
-
-#### POST /events (requiere auth)
-Crea un nuevo evento
-
-#### PUT /events/:id (requiere auth)
-Actualiza un evento existente
-
-#### DELETE /events/:id (requiere auth)
-Elimina un evento
-
-### Intereses de Usuario
-
-#### GET /users/:id/interests (requiere auth)
-Obtiene los intereses del usuario (eventos marcados)
-
-#### POST /users/:id/interests (requiere auth)
-Marca interés en un evento
-```json
-{
-  "event_id": 5
-}
-```
-
-#### DELETE /users/:id/interests/:eventId (requiere auth)
-Quita interés de un evento (soft delete)
-
-### Favoritos de Lugares
-
-#### GET /users/:id/favorites (requiere auth)
-Obtiene los lugares favoritos del usuario
-
-#### POST /users/:id/favorites (requiere auth)
-Marca un lugar como favorito
-```json
-{
-  "place_id": 12
-}
-```
-
-#### DELETE /users/:id/favorites/:placeId (requiere auth)
-Quita un lugar de favoritos (soft delete)
-
-### IA (Integración con sistema de IA)
-
-#### POST /ia/prompt (requiere auth)
-Envía un prompt al sistema de IA
-```json
-{
-  "prompt": "¿Qué lugares puedo visitar?"
-}
-```
-
-Response: Stream de texto (Server-Sent Events)
-
-## Middleware
-
-### CORS Middleware
+### POST /ia/prompt
 ```go
-func CORSMiddleware() gin.HandlerFunc
-```
-- Permite peticiones desde cualquier origen (`*`)
-- Headers permitidos: `Content-Type`, `Authorization`
-- Métodos permitidos: GET, POST, PUT, DELETE, OPTIONS
-- Maneja peticiones OPTIONS (preflight)
+// Estructura del request
+type PromptRequest struct {
+    Prompt     string `json:"prompt"`
+    Model      string `json:"model"`      // "fast" o "thinking"
+    SkipMemory bool   `json:"skipMemory"` // Saltar memoria (para itinerarios)
+}
 
-### Auth Middleware
+// El handler:
+// 1. Extrae userID del JWT
+// 2. Obtiene intereses del usuario de la BD
+// 3. Reenvía al servicio IA con contexto enriquecido
+// 4. Transmite respuesta en streaming (SSE)
+```
+
+### POST /ia/vision
+- Recibe imagen en base64
+- Reenvía al modelo de visión (si está disponible)
+- Retorna análisis de la imagen
+
+### GET /ia/capabilities
+- Consulta capacidades del proveedor de IA actual
+- Retorna: `{ provider, model, capabilities: { vision, thinking } }`
+- El frontend usa esto para mostrar/ocultar funciones
+
+## Seguridad
+
+### Protecciones Implementadas
+
+1. **Rate Limiting**: Límite de intentos de login por IP
+2. **Timing Attack Prevention**: Retardos aleatorios en errores de login
+3. **SQL Injection Prevention**: Consultas parametrizadas con GORM
+4. **IDOR Prevention**: Validación de propiedad en recursos de usuario
+5. **Soft Delete**: Lugares usan `active = false` en lugar de eliminación física
+6. **Password Hashing**: Contraseñas hasheadas con bcrypt
+
+### Configuración CORS
 ```go
-func AuthMiddleware() gin.HandlerFunc
-```
-- Verifica presencia del token JWT
-- Valida el token
-- Extrae userID y lo inyecta en el contexto
-- Devuelve 401 si el token es inválido
-
-## Configuración de la Base de Datos
-
-### Conexión
-```go
-dsn := os.Getenv("DATABASE_URL")
-db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
-    Logger: logger.Default.LogMode(logger.Info),
-})
+AllowOrigins: "*"
+AllowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+AllowHeaders: ["Content-Type", "Authorization"]
 ```
 
-### Variables de Entorno Requeridas
-- `DATABASE_URL`: String de conexión a PostgreSQL
-- `JWT_SECRET`: Secreto para firma de JWT
-- `PORT`: Puerto del servidor (default: 8081)
+## Variables de Entorno
 
-### Logging de SQL
-- Nivel: INFO
-- Muestra consultas SQL ejecutadas
-- Útil para debugging y optimización
+```env
+# Base de datos (Supabase)
+DB_USER=postgres.instancia
+DB_PASSWORD=contraseña
+DB_HOST=host.supabase.co
+DB_PORT=5432
+DB_NAME=postgres
 
-### Slow Query Detection
-GORM está configurado para detectar consultas lentas (>200ms):
+# Autenticación
+JWT_SECRET=secreto_seguro
+
+# Servidor
+PORT=8081
+```
+
+## Comandos de Ejecución
+
+```bash
+# Desarrollo
+go run cmd/backend/main.go
+
+# Producción (compilado)
+go build -o server cmd/backend/main.go
+./server
+```
+
+## Logging y Monitoreo
+
+GORM detecta consultas lentas automáticamente:
 ```
 SLOW SQL >= 200ms
-[562.069ms] [rows:1] INSERT INTO "places" ...
+[362.820ms] [rows:4] SELECT * FROM "user_event_favorites" ...
 ```
 
-## Características de Seguridad
-
-### Protección de Contraseñas
-- Las contraseñas se hashean antes de almacenar
-- Tag JSON `json:"-"` previene exposición en respuestas
-
-### Validación de Tokens
-- Verificación de firma
-- Verificación de expiración
-- Manejo de tokens malformados
-
-### Control de Acceso
-- Middleware de autenticación en rutas protegidas
-- Validación de `userID` en operaciones sensibles
-- Verificación de rol para operaciones administrativas
-
-### Soft Delete
-- Los lugares usan soft delete (`active = false`)
-- Los intereses y favoritos usan soft delete
-- Permite recuperación de datos si es necesario
-
-## Integración con Sistema de IA
-
-El backend actúa como proxy entre el frontend y el sistema de IA:
-
-### Flujo
-1. Frontend envía prompt con token JWT
-2. Backend extrae userID del token
-3. Backend consulta intereses del usuario en DB
-4. Backend envía prompt + contexto al sistema de IA (Node.js)
-5. Sistema de IA responde con stream
-6. Backend reenvía el stream al frontend
-
-### Endpoint
-```go
-POST /ia/prompt
-Headers: Authorization: Bearer <token>
-Body: { "prompt": "..." }
+Gin registra cada petición HTTP:
 ```
-
-## Optimizaciones y Buenas Prácticas
-
-### Precarga de Relaciones
-```go
-db.Preload("Reviews").Find(&places)
+[GIN] 2025/12/05 - 17:00:06 | 200 | 4m56s | 127.0.0.1 | POST "/ia/prompt"
 ```
-- Reduce consultas N+1
-- Mejora rendimiento en endpoints con relaciones
-
-### Paginación
-Actualmente no implementada, pero recomendada para:
-- Lista de eventos (actualmente 50 items)
-- Lista de lugares (actualmente ~52 items)
-
-### Índices Recomendados
-Para mejorar rendimiento de consultas:
-```sql
-CREATE INDEX idx_places_active ON places(active);
-CREATE INDEX idx_places_name ON places(name);
-CREATE INDEX idx_events_event_date ON events(event_date);
-CREATE INDEX idx_user_interests_user_id ON user_event_favorites(user_id);
-```
-
-### Cacheo
-- Frontend implementa cache de 5 minutos
-- Backend podría implementar cache con Redis para mejor rendimiento
-
-## Manejo de Errores
-
-### Respuestas de Error Estándar
-```json
-{
-  "error": "Mensaje de error descriptivo"
-}
-```
-
-### Códigos HTTP
-- `200 OK`: Operación exitosa
-- `201 Created`: Recurso creado
-- `400 Bad Request`: Datos inválidos
-- `401 Unauthorized`: Token inválido o ausente
-- `404 Not Found`: Recurso no encontrado
-- `500 Internal Server Error`: Error del servidor
-
-## Deployment
-
-### Puerto
-- Default: 8081
-- Configurable vía variable de entorno `PORT`
-
-### Proxy Reverso
-- Caddy configurado como proxy reverso
-- Dominio: culturistas.stuns.org
-- HTTPS automático con Let's Encrypt
-
-### Health Check
-Endpoint para verificar estado del servidor:
-```
-GET /
-Response: "Hello, World!"
-```
-
-## Logging y Debugging
-
-### GORM Logging
-```
-[1618.580ms] [rows:50] SELECT * FROM "events"
-```
-- Tiempo de ejecución
-- Número de filas
-- Query SQL completa
-
-### Request Logging
-```
-[GIN] 2025/10/14 - 03:01:04 | 201 | 562.5805ms | 181.114.68.66 | POST /places
-```
-- Timestamp
-- Código de respuesta
-- Tiempo de respuesta
-- IP del cliente
-- Método y ruta
