@@ -55,13 +55,4 @@ export function assignPlaceNumbers(places: Place[]): Place[] {
   }));
 }
 
-// Get display number for a specific place
-export function getPlaceDisplayNumber(placeId: number): number | null {
-  const numberMap = getPlaceNumbers();
-  return numberMap[placeId] || null;
-}
 
-// Clear all place numbers (admin function)
-export function clearPlaceNumbers(): void {
-  localStorage.removeItem(PLACE_NUMBERS_KEY);
-}

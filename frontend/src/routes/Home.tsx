@@ -6,7 +6,7 @@ import { useUserStore } from "../store/userStore";
 import { getEventStatus } from "../services/api";
 import PlaceCard from "../components/cards/PlaceCard";
 import EventCard from "../components/cards/EventCard";
-import { useFavorites } from "../hooks/useFavorites";
+import { useFavorites } from "../store/favoritesStore";
 import LoadingSpinner from "../components/ui/LoadingSpinner";
 
 export default function Home() {
@@ -64,16 +64,66 @@ export default function Home() {
   return (
     <div className="space-y-12">
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-blue-600 via-blue-700 to-purple-800 text-white rounded-2xl p-8 md:p-12 overflow-hidden shadow-xl">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yLjIxIDEuNzktNCA0LTRzNCAxLjc5IDQgNC0xLjc5IDQtNCA0LTQtMS43OS00LTR6bTAtMjBjMC0yLjIxIDEuNzktNCA0LTRzNCAxLjc5IDQgNC0xLjc5IDQtNCA0LTQtMS43OS00LTR6TTIwIDM0YzAtMi4yMSAxLjc5LTQgNC00czQgMS43OSA0IDQtMS43OSA0LTQgNC00LTEuNzktNC00em0wLTIwYzAtMi4yMSAxLjc5LTQgNC00czQgMS43OSA0IDQtMS43OSA0LTQgNC00LTEuNzktNC00eiIvPjwvZz48L2c+PC9zdmc+')] opacity-20"></div>
+      <section className="relative bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 text-white rounded-3xl p-8 md:p-12 overflow-hidden shadow-2xl">
+        {/* Animated background elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-24 -right-24 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute -bottom-32 -left-32 w-80 h-80 bg-purple-400/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+          <div className="absolute top-1/2 right-1/4 w-64 h-64 bg-blue-300/10 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '2s' }} />
+        </div>
+        
+        {/* Decorative pattern */}
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDM0YzAtMi4yMSAxLjc5LTQgNC00czQgMS43OSA0IDQtMS43OSA0LTQgNC00LTEuNzktNC00em0wLTIwYzAtMi4yMSAxLjc5LTQgNC00czQgMS43OSA0IDQtMS43OSA0LTQgNC00LTEuNzktNC00ek0yMCAzNGMwLTIuMjEgMS43OS00IDQtNHM0IDEuNzkgNCA0LTEuNzkgNC00IDQtNC0xLjc5LTQtNHptMC0yMGMwLTIuMjEgMS43OS00IDQtNHM0IDEuNzkgNCA0LTEuNzkgNC00IDQtNC0xLjc5LTQtNHoiLz48L2c+PC9nPjwvc3ZnPg==')]"></div>
+        
+        {/* Floating decorative icons */}
+        <div className="absolute top-6 right-8 md:right-16 opacity-20">
+          <MapPin className="h-16 w-16 md:h-24 md:w-24" />
+        </div>
+        <div className="absolute bottom-8 right-1/4 opacity-15 hidden md:block">
+          <CalendarIcon className="h-12 w-12" />
+        </div>
         
         <div className="relative z-10 max-w-3xl">
-          <h1 className="text-3xl md:text-5xl font-bold mb-4 tracking-tight">
-            {user ? `¡Hola ${user.name}!` : '¡Bienvenido a Culturistas!'}
+          {/* Greeting badge */}
+          {user && (
+            <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium mb-4 border border-white/20">
+              <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+              Bienvenido de nuevo
+            </div>
+          )}
+          
+          <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-4 tracking-tight leading-tight">
+            {user ? (
+              <>
+                ¡Hola <span className="bg-gradient-to-r from-cyan-200 to-orange-200 bg-clip-text text-transparent">{user.name}</span>!
+              </>
+            ) : (
+              <>
+                ¡Bienvenido a <span className="bg-gradient-to-r from-cyan-200 to-orange-200 bg-clip-text text-transparent">Culturistas</span>!
+              </>
+            )}
           </h1>
-          <p className="text-lg md:text-xl text-blue-100 leading-relaxed">
+          <p className="text-lg md:text-xl text-blue-100 leading-relaxed max-w-2xl">
             Descubre los mejores lugares y eventos de Cochabamba. Tu próxima aventura comienza aquí.
           </p>
+          
+          {/* CTA Buttons */}
+          <div className="flex flex-wrap gap-4 mt-8">
+            <Link
+              to="/explore"
+              className="inline-flex items-center gap-2 bg-white text-blue-700 px-6 py-3 rounded-xl font-semibold hover:bg-blue-50 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+            >
+              <MapPin className="h-5 w-5" />
+              Explorar lugares
+            </Link>
+            <Link
+              to="/explore/events"
+              className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white px-6 py-3 rounded-xl font-semibold hover:bg-white/30 transition-all border border-white/30"
+            >
+              <CalendarIcon className="h-5 w-5" />
+              Ver eventos
+            </Link>
+          </div>
         </div>
       </section>
 

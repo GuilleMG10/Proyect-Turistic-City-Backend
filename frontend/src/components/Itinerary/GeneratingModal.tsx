@@ -28,14 +28,10 @@ export default function GeneratingModal({ isOpen }: Props) {
         <div className="p-6 space-y-6">
           {/* Spinner */}
           <div className="flex justify-center">
-            <Loader2 className="h-16 w-16 text-primary-600 dark:text-primary-400 animate-spin" />
+            <Loader2 className="h-16 w-16 text-blue-600 dark:text-blue-400 animate-spin" />
           </div>
-
           <div className="text-center space-y-2">
-            <p className="text-lg font-medium text-slate-700 dark:text-slate-200">
-              Estamos preparando tu itinerario, ¡estamos manos a la obra!
-            </p>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-slate-600 dark:text-slate-400">
               Te avisaremos tan pronto lo tengamos listo.
             </p>
           </div>

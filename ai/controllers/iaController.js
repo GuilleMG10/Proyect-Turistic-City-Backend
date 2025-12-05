@@ -1,22 +1,22 @@
 import { saveMessage, searchMemory,saveUserFavorites, getUserFavorites, upsertPlaces, searchPlacesMemory } from "../utils/longmemory.js";
 import { generateAIResponse } from "../services/ollamaService.js";
 
-
 export const generateResponse = async (req, res) => {
   try {
-    const { prompt, userId, interests } = req.body;
+    const { prompt, userId, interests, skipMemory } = req.body;
     if (!prompt) return res.status(400).json({ error: "El campo 'prompt' es obligatorio" });
 
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
 
-    console.log("🧠 Nueva petición recibida");
-    console.log("Prompt:", prompt);
+    console.log("[AI] Nueva peticion recibida");
+    console.log("Prompt:", prompt.substring(0, 100) + (prompt.length > 100 ? '...' : '')); // Truncate for logging
     console.log("UserID:", userId);
+    console.log("Skip Memory:", skipMemory ? 'Yes' : 'No');
 
     // ============================================================
-    // 🔹 1. Recuperar o construir contexto de intereses del usuario
+    // 1. Recuperar o construir contexto de intereses del usuario
     // ============================================================
     let userContextText = "";
 
@@ -28,29 +28,39 @@ export const generateResponse = async (req, res) => {
 
       userContextText = `El usuario ha mostrado interés en los siguientes lugares o eventos:\n${formatted}`;
       await saveUserFavorites(userId, interests);
-      console.log("💾 Intereses recibidos y guardados en memoria.");
+      console.log("[SAVE] Intereses recibidos y guardados en memoria.");
     } else {
       const storedFavorites = await getUserFavorites(userId);
       if (storedFavorites) {
         userContextText = `El usuario tiene los siguientes intereses guardados:\n${storedFavorites}`;
-        console.log("📚 Intereses recuperados desde memoria persistente.");
+        console.log("[LOAD] Intereses recuperados desde memoria persistente.");
       } else {
-        console.log("⚠️ No se encontraron intereses guardados para este usuario.");
+        console.log("[WARN] No se encontraron intereses guardados para este usuario.");
       }
     }
 
     // ==============================================
-    // 🔹 2. Recuperar memoria larga del usuario
+    // 2. Recuperar memoria larga del usuario (skip for JSON generation)
     // ==============================================
-    const longMemory = await searchMemory(userId, prompt);
-    console.log("📖 Memoria recuperada desde Chroma:", longMemory.length);
-    const context = longMemory.map(m => `${m.role}: ${m.content}`).join("\n");
+    let context = "";
+    if (!skipMemory) {
+      const longMemory = await searchMemory(userId, prompt);
+      console.log("[MEMORY] Memoria recuperada desde Chroma:", longMemory.length);
+      context = longMemory.map(m => `${m.role}: ${m.content}`).join("\n");
+    } else {
+      console.log("[SKIP] Omitiendo recuperación de memoria (skipMemory=true)");
+    }
 
     // ==============================================
-    // 🔹 3. Recuperar lugares disponibles desde Chroma
+    // 3. Recuperar lugares disponibles desde Chroma (skip for JSON generation)
     // ==============================================
-    const placesMemory = await searchPlacesMemory(prompt);
-    console.log("📍 Lugares relevantes recuperados desde Chroma:", placesMemory.length);
+    let placesMemory = [];
+    if (!skipMemory) {
+      placesMemory = await searchPlacesMemory(prompt);
+      console.log("[PLACES] Lugares relevantes recuperados desde Chroma:", placesMemory.length);
+    } else {
+      console.log("[SKIP] Omitiendo búsqueda de lugares (skipMemory=true)");
+    }
 
     let placesContext = "";
     if (placesMemory.length > 0) {
@@ -62,11 +72,15 @@ export const generateResponse = async (req, res) => {
     }
 
     // ==============================================
-    // 🔹 4. Construir el prompt final enriquecido
+    // 4. Construir el prompt final enriquecido
     // ==============================================
     let finalPrompt = "";
 
-    if (userContextText || placesContext) {
+    if (skipMemory) {
+      // For JSON generation (itineraries), send prompt as-is without context
+      finalPrompt = prompt;
+      console.log("[PROMPT] Usando prompt sin contexto adicional (skipMemory=true)");
+    } else if (userContextText || placesContext) {
       finalPrompt = `Información de lugares favoritos del usuario:\n${userContextText || "(sin datos)"}\n\n` +
                     `Lugares disponibles en memoria usando RAG:\n${placesContext || "(no hay lugares registrados)"}\n\n` +
                     `Contexto de conversaciones previas:\n${context || "(sin historial previo)"}\n\n` +
@@ -76,45 +90,57 @@ export const generateResponse = async (req, res) => {
                     `Nueva pregunta del usuario:\n${prompt}\n\nIA:`;
     }
 
-    console.log("🧩 FINAL PROMPT enviado a Ollama:\n", finalPrompt);
+    console.log("[PROMPT] FINAL PROMPT enviado a Ollama:\n", finalPrompt.substring(0, 200) + '...');
 
     // ==============================================
-    // 🔹 5. Guardar mensaje del usuario
+    // 5. Guardar mensaje del usuario (skip for itinerary/JSON generation)
     // ==============================================
-    await saveMessage(userId, "usuario", prompt);
-    console.log("💾 Guardado en memoria (usuario)");
+    if (!skipMemory) {
+      await saveMessage(userId, "usuario", prompt);
+      console.log("[SAVE] Guardado en memoria (usuario)");
+    } else {
+      console.log("[SKIP] No se guarda en memoria (skipMemory=true)");
+    };
 
     // ==============================================
-    // 🔹 6. Generar respuesta desde Ollama y transmitir en tiempo real
+    // 6. Generar respuesta desde Ollama y transmitir en tiempo real
     // ==============================================
     let responseBuffer = "";
     const onData = (chunk) => {
       responseBuffer += chunk;
-      res.write(`data: ${chunk}\n\n`);
+      // For markers, send as plain text; for content, JSON encode to preserve newlines
+      if (chunk === '[THINKING_START]' || chunk === '[THINKING_END]' || chunk === '[DONE]') {
+        res.write(`data: ${chunk}\n\n`);
+      } else {
+        // JSON encode content to preserve newlines safely in SSE
+        const safeChunk = JSON.stringify(chunk);
+        res.write(`data: ${safeChunk}\n\n`);
+      }
     };
 
-    await generateAIResponse(finalPrompt, "ollama", onData);
+    // Determine provider: request body > env var > default 'ollama'
+    const provider = req.body.provider || process.env.AI_PROVIDER;
+    console.log(`[AI] Usando proveedor IA: ${provider}`);
+
+    await generateAIResponse(finalPrompt, provider, onData);
 
     // ==============================================
-    // 🔹 7. Guardar respuesta de la IA
+    // 7. Guardar respuesta de la IA (skip for itinerary/JSON generation)
     // ==============================================
-    await saveMessage(userId, "IA", responseBuffer);
-    console.log("💾 Guardado en memoria (IA)");
+    if (!skipMemory) {
+      await saveMessage(userId, "IA", responseBuffer);
+      console.log("[SAVE] Guardado en memoria (IA)");
+    }
 
     res.write("data: [DONE]\n\n");
     res.end();
-    console.log("✅ Respuesta final enviada al cliente.");
+    console.log("[OK] Respuesta final enviada al cliente.");
 
   } catch (error) {
-    console.error("❌ Error en controlador IA:", error);
+    console.error("[ERROR] Error en controlador IA:", error);
     res.status(500).json({ error: "Error en controlador IA" });
   }
 };
-
-
-
-
-
 
 export const registerPlaces = async (req, res) => {
   try {
@@ -125,38 +151,34 @@ export const registerPlaces = async (req, res) => {
     }
 
     res.setHeader("Content-Type", "application/json");
-    console.log("📍 Nueva solicitud de registro/actualización de lugares recibida");
+    console.log("[PLACES] Nueva solicitud de registro/actualizacion de lugares recibida");
     console.log("Total lugares:", places.length);
 
     // Guardar o actualizar lugares en Chroma
     const result = await upsertPlaces(places);
 
-    console.log("💾 Lugares procesados correctamente:", result.length);
+    console.log("[SAVE] Lugares procesados correctamente:", result.length);
 
     return res.status(200).json({
       message: "Lugares registrados o actualizados correctamente",
       processed: result,
     });
   } catch (error) {
-    console.error("❌ Error en registerPlaces:", error);
+    console.error("[ERROR] Error en registerPlaces:", error);
     return res.status(500).json({ error: "Error registrando o actualizando lugares" });
   }
 };
 
-
-
-import fs from "fs";
-import path from "path";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
-import { analyzeWithLLaVAStream, getBase64Image, buildProfilePrompt } from "../services/visionService.js";
+import { analyzeWithLLaVAStream, analyzeWithModalStream, getBase64Image, buildProfilePrompt } from "../services/visionService.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 export const evaluateProfilePhoto = async (req, res) => {
   try {
-    const { context } = req.body;
+    const { context, provider } = req.body;
     let imageBase64;
 
     res.setHeader("Content-Type", "text/event-stream");
@@ -196,19 +218,34 @@ export const evaluateProfilePhoto = async (req, res) => {
     const prompt = buildProfilePrompt(context);
     let fullResponse = "";
 
-    console.log("📷 Streaming desde LLaVA...");
-    await analyzeWithLLaVAStream(prompt, imageBase64, (chunk) => {
-      fullResponse += chunk;
-      res.write(`data: ${chunk}\n\n`);
-    });
+    // Determine vision provider: request body > env var > default 'ollama'
+    const visionProvider = provider || process.env.AI_PROVIDER || "ollama";
+    const useModal = visionProvider === "modal" || visionProvider === "modal-thinking";
+    
+    if (useModal) {
+      // Use Modal multimodal models (Qwen3-VL)
+      const useThinking = visionProvider === "modal-thinking";
+      console.log(`[VISION] Streaming desde Modal (${useThinking ? 'thinking' : 'instruct'})...`);
+      await analyzeWithModalStream(prompt, imageBase64, (chunk) => {
+        fullResponse += chunk;
+        res.write(`data: ${chunk}\n\n`);
+      }, useThinking);
+    } else {
+      // Use local Ollama LLaVA
+      console.log("[VISION] Streaming desde LLaVA (Ollama local)...");
+      await analyzeWithLLaVAStream(prompt, imageBase64, (chunk) => {
+        fullResponse += chunk;
+        res.write(`data: ${chunk}\n\n`);
+      });
+    }
 
     res.write("data: [DONE]\n\n");
     res.end();
 
-    console.log("✅ Respuesta completa:", fullResponse);
+    console.log("[OK] Respuesta completa:", fullResponse);
 
   } catch (error) {
-    console.error("❌ Error evaluando imagen:", error);
+    console.error("[ERROR] Error evaluando imagen:", error);
     res.status(500).json({ error: "Error procesando la imagen" });
   }
 };
@@ -230,7 +267,7 @@ export const generateItinerary = async (req, res) => {
     res.setHeader("Connection", "keep-alive");
 
     console.log("\n==============================");
-    console.log("🧭 NUEVA SOLICITUD DE ITINERARIO");
+    console.log("[ITINERARY] NUEVA SOLICITUD DE ITINERARIO");
     console.log("==============================\n");
 
     // ==========================================================
@@ -241,73 +278,73 @@ export const generateItinerary = async (req, res) => {
     // ==========================================================
     // 2. Buscar lugares según nearbyPlaces (topK = 1)
     // ==========================================================
-    console.log("\n🔎 Buscando lugares (nearbyPlaces)...");
+    console.log("\n[SEARCH] Buscando lugares (nearbyPlaces)...");
 
     for (const place of nearbyPlaces) {
-      console.log(`➡️ Buscando nearby: "${place.name}"`);
+      console.log(`[->] Buscando nearby: "${place.name}"`);
 
       const results = await searchPlacesMemory(place.name, 1);
 
       if (results.length === 0) {
-        console.log(`   ❌ No se encontró información en Chroma para "${place.name}"`);
+        console.log(`   [NOT FOUND] No se encontro informacion en Chroma para "${place.name}"`);
       }
 
       results.forEach(r => {
         if (!collected.some(c => c.name === r.name)) {
-          console.log(`   ✅ Añadido desde nearbyPlaces: ${r.name}`);
+          console.log(`   [ADDED] Anadido desde nearbyPlaces: ${r.name}`);
           collected.push(r);
         } else {
-          console.log(`   ⚠️ Saltado (duplicado): ${r.name}`);
+          console.log(`   [SKIP] Saltado (duplicado): ${r.name}`);
         }
       });
     }
 
     // ==========================================================
-    // 3. Buscar lugares según placesAlreadySelected (topK = 1)
+    // 3. Buscar lugares segun placesAlreadySelected (topK = 1)
     // ==========================================================
-    console.log("\n🔎 Buscando lugares (placesAlreadySelected)...");
+    console.log("\n[SEARCH] Buscando lugares (placesAlreadySelected)...");
 
     for (const place of placesAlreadySelected) {
-      console.log(`➡️ Buscando seleccionado por usuario: "${place.name}"`);
+      console.log(`[->] Buscando seleccionado por usuario: "${place.name}"`);
 
       const results = await searchPlacesMemory(place.name, 1);
 
       if (results.length === 0) {
-        console.log(`   ❌ No se encontró información en Chroma para "${place.name}"`);
+        console.log(`   [NOT FOUND] No se encontro informacion en Chroma para "${place.name}"`);
       }
 
       results.forEach(r => {
         if (!collected.some(c => c.name === r.name)) {
-          console.log(`   ✅ Añadido desde placesAlreadySelected: ${r.name}`);
+          console.log(`   [ADDED] Anadido desde placesAlreadySelected: ${r.name}`);
           collected.push(r);
         } else {
-          console.log(`   ⚠️ Saltado (duplicado): ${r.name}`);
+          console.log(`   [SKIP] Saltado (duplicado): ${r.name}`);
         }
       });
     }
 
     // ==========================================================
-    // 4. Buscar lugares según interests (topK flexible)
+    // 4. Buscar lugares segun interests (topK flexible)
     // ==========================================================
     const interestTopK = 2;
 
-    console.log(`\n🔎 Buscando lugares (interests) con topK = ${interestTopK}...`);
+    console.log(`\n[SEARCH] Buscando lugares (interests) con topK = ${interestTopK}...`);
 
     for (const place of interests) {
-      console.log(`➡️ Buscando interés del usuario: "${place.name}"`);
+      console.log(`[->] Buscando interes del usuario: "${place.name}"`);
 
       const results = await searchPlacesMemory(place.name, interestTopK);
 
       if (results.length === 0) {
-        console.log(`   ❌ No se encontró información en Chroma para "${place.name}"`);
+        console.log(`   [NOT FOUND] No se encontro informacion en Chroma para "${place.name}"`);
       }
 
       results.forEach(r => {
         if (!collected.some(c => c.name === r.name)) {
-          console.log(`   ✅ Añadido desde interests: ${r.name}`);
+          console.log(`   [ADDED] Anadido desde interests: ${r.name}`);
           collected.push(r);
         } else {
-          console.log(`   ⚠️ Saltado (duplicado): ${r.name}`);
+          console.log(`   [SKIP] Saltado (duplicado): ${r.name}`);
         }
       });
     }
@@ -316,20 +353,20 @@ export const generateItinerary = async (req, res) => {
 
 
     if (scheduleResults.length === 0) {
-      console.log(`   ❌ No se encontró nada relevante a "${scheduleAvailability}" en memoria`);
+      console.log(`   [NOT FOUND] No se encontro nada relevante a "${scheduleAvailability}" en memoria`);
     }
 
     scheduleResults.forEach(r => {
       if (!collected.some(c => c.name === r.name)) {
-        console.log(`   ⏰ Añadido desde scheduleAvailability (embedding): ${r.name}`);
+        console.log(`   [SCHEDULE] Anadido desde scheduleAvailability (embedding): ${r.name}`);
         collected.push(r);
       } else {
-        console.log(`   ⚠️ Saltado (duplicado): ${r.name}`);
+        console.log(`   [SKIP] Saltado (duplicado): ${r.name}`);
       }
     });
 
-    console.log("\n📌 TOTAL de lugares únicos recopilados:", collected.length);
-    console.log("📍 Lugares finales:", collected.map(x => x.name));
+    console.log("\n[TOTAL] TOTAL de lugares unicos recopilados:", collected.length);
+    console.log("[PLACES] Lugares finales:", collected.map(x => x.name));
     console.log("\n------------------------------------------------------\n");
 
     // ==========================================================
@@ -417,7 +454,7 @@ Devuelve SOLO el JSON. Nada más.
 
 
 
-    console.log("📝 PROMPT FINAL PARA ITINERARIO CREADO:\n");
+    console.log("[PROMPT] PROMPT FINAL PARA ITINERARIO CREADO:\n");
     console.log(finalPrompt)
 
     // ==========================================================
@@ -429,24 +466,41 @@ Devuelve SOLO el JSON. Nada más.
       res.write(`data: ${chunk}\n\n`);
     };
 
-    await generateAIResponse(finalPrompt, "groq", handleChunk);
+    // Determine provider: request body > env var > default 'groq' (keeping groq as default for itinerary if not specified, or maybe ollama?)
+    // The user wants to use Modal, so let's allow override.
+    // For itineraries, "thinking" models are usually better.
+    const defaultProvider = process.env.AI_PROVIDER;
+    const provider = req.body.provider || (defaultProvider === "modal" ? "modal-thinking" : defaultProvider);
+    
+    console.log(`[AI] Generando itinerario con proveedor: ${provider}`);
+
+    await generateAIResponse(finalPrompt, provider, handleChunk);
 
     res.write("data: [DONE]\n\n");
     res.end();
 
-    console.log("🎉 BUFFER SIN MODIFICAR.\n");
+    console.log("[DEBUG] BUFFER SIN MODIFICAR.\n");
     console.log(buffer)
 
+    // Clean buffer before parsing JSON
+    let cleanBuffer = buffer;
+    // Remove <think> tags if they leaked through
+    if (cleanBuffer.includes("</think>")) {
+      cleanBuffer = cleanBuffer.split("</think>")[1];
+    }
+    // Remove markdown code blocks
+    cleanBuffer = cleanBuffer.replace(/```json/g, "").replace(/```/g, "").trim();
+
     try {
-      const jsonResponse = JSON.parse(buffer);
+      const jsonResponse = JSON.parse(cleanBuffer);
       console.log("BUFFER MODIFICADO:", jsonResponse);
     } catch (err) {
-      console.log("⚠️ El JSON está incompleto o mal formado:", err.message);
+      console.log("[WARN] El JSON esta incompleto o mal formado:", err.message);
       console.log("Respuesta cruda:", buffer);
     }
 
   } catch (err) {
-    console.error("❌ Error generando itinerario:", err);
+    console.error("[ERROR] Error generando itinerario:", err);
     res.status(500).json({ error: "Error generando itinerario" });
   }
 };

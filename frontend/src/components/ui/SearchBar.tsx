@@ -65,10 +65,10 @@ export default function SearchBar({
       </div>
       <button
         onClick={onOpenFilters}
-        className={`flex items-center gap-2 rounded-2xl border px-5 py-3 font-medium transition-all focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 relative ${
+        className={`flex items-center gap-2 rounded-2xl border px-5 py-3 font-medium transition-all focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 relative ${
           hasActiveFilters
-            ? 'bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-800 text-primary-700 dark:text-primary-300'
-            : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:shadow-md'
+            ? 'bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-700 text-primary-700 dark:text-primary-300'
+            : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:shadow-md'
         }`}
         aria-label={hasActiveFilters ? `Filtros (activos)` : 'Filtros'}
         aria-expanded="false"

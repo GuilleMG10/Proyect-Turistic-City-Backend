@@ -3,7 +3,7 @@ import type { MouseEvent } from "react";
 import { MapPin, Star, Clock, Heart } from "lucide-react";
 import type { Place, PlaceFavorite, Review } from "../../types";
 import { useUserStore } from "../../store/userStore";
-import { useFavorites, type FavoritesState } from "../../hooks/useFavorites";
+import { useFavorites, type FavoritesState } from "../../store/favoritesStore";
 import { getImageSrc, handleImageError } from "../../utils/imageUtils";
 
 type Props = {

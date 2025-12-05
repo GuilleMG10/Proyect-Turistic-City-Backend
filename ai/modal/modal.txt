@@ -1,0 +1,2 @@
+modal secret create llm-secret VLLM_API_KEY=X
+modal deploy modal_server.py

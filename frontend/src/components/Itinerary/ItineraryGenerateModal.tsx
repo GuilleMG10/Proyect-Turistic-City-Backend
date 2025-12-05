@@ -1,32 +1,22 @@
-import React, { useState, useEffect } from "react";
-import { X, Sparkles, Calendar, Clock, DollarSign, Tag } from "lucide-react";
-import type { ItineraryGenerateRequest } from "../../types";
+import React, { useState, useMemo } from "react";
+import { X, Sparkles, DollarSign, Tag } from "lucide-react";
+import { useModalEscape } from "../../hooks/useModalEscape";
+import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
+import { useDraggableModal } from "../../hooks/useDraggableModal";
+import { PACE_OPTIONS } from "../../constants/categories";
+import type { ItineraryGenerateRequest, Place } from "../../types";
 import ErrorModal from "../modals/ErrorModal";
+import DatePicker from "../ui/DatePicker";
+import TimePicker from "../ui/TimePicker";
 
 type Props = {
   isOpen: boolean;
   onClose: () => void;
   onGenerate: (data: ItineraryGenerateRequest) => void;
+  places?: Place[]; // Optional - used to derive categories dynamically
 };
 
-const AVAILABLE_CATEGORIES = [
-  'Lugares turísticos',
-  'Cultural',
-  'Gastronomía',
-  'Entretenimiento',
-  'Naturaleza',
-  'Historia',
-  'Compras',
-  'Deportes'
-];
-
-const PACE_OPTIONS = [
-  { value: 'relaxed' as const, label: 'Relajado', description: 'Más tiempo en cada lugar' },
-  { value: 'moderate' as const, label: 'Moderado', description: 'Balance entre visitas y descanso' },
-  { value: 'intense' as const, label: 'Intenso', description: 'Máximo de lugares posible' }
-];
-
-export default function ItineraryGenerateModal({ isOpen, onClose, onGenerate }: Props) {
+export default function ItineraryGenerateModal({ isOpen, onClose, onGenerate, places = [] }: Props) {
   const [formData, setFormData] = useState<ItineraryGenerateRequest>({
     date: '',
     start_time: '09:00',
@@ -37,18 +27,24 @@ export default function ItineraryGenerateModal({ isOpen, onClose, onGenerate }: 
   });
   const [error, setError] = useState<string | null>(null);
 
+  // Derive unique categories from places
+  const availableCategories = useMemo(() => {
+    const categories = new Set(places.map(p => p.category).filter(Boolean));
+    return Array.from(categories).sort();
+  }, [places]);
+
   // Handle Escape key to close modal
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    
-    if (isOpen) {
-      document.addEventListener('keydown', handleEscape);
-    }
-    
-    return () => document.removeEventListener('keydown', handleEscape);
-  }, [isOpen, onClose]);
+  useModalEscape(isOpen, onClose);
+
+  // Lock body scroll when modal is open
+  useBodyScrollLock(isOpen);
+
+  // Draggable modal for mobile
+  const { dragHandleProps, modalStyle, isDragging } = useDraggableModal({
+    isOpen,
+    onClose,
+    threshold: 25,
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,12 +85,24 @@ export default function ItineraryGenerateModal({ isOpen, onClose, onGenerate }: 
       }}
     >
       {/* Mobile: Slide from bottom | Desktop: Center modal */}
-      <div className="w-full md:w-auto md:max-w-2xl max-h-[90vh] md:max-h-[90vh] overflow-y-auto bg-white dark:bg-slate-800 rounded-t-3xl md:rounded-2xl shadow-2xl animate-in slide-in-from-bottom md:slide-in-from-bottom-0 duration-300">
+      <div 
+        className="w-full md:w-auto md:max-w-2xl h-[95vh] md:h-auto max-h-[95vh] md:max-h-[90vh] overflow-y-auto bg-white dark:bg-slate-800 rounded-t-3xl md:rounded-2xl shadow-2xl animate-in slide-in-from-bottom duration-300"
+        data-modal-content
+        style={modalStyle}
+      >
+        {/* Mobile drag handle */}
+        <div 
+          className="sticky top-0 z-30 md:hidden bg-gradient-to-r from-blue-600 to-blue-800 rounded-t-3xl cursor-grab active:cursor-grabbing"
+          {...dragHandleProps}
+        >
+          <div className="flex justify-center py-3">
+            <div className={`w-12 h-1.5 rounded-full transition-colors ${isDragging ? 'bg-white/60' : 'bg-white/30'}`} />
+          </div>
+        </div>
+
         {/* Header */}
-        <header className="bg-gradient-to-r from-blue-600 to-blue-800 text-white p-6 rounded-t-3xl md:rounded-t-2xl flex items-center justify-between relative overflow-hidden">
+        <header className="bg-gradient-to-r from-blue-600 to-blue-800 text-white p-6 md:rounded-t-2xl flex items-center justify-between relative overflow-hidden -mt-2 md:mt-0">
           <div className="absolute inset-0 bg-white/10 backdrop-blur-sm" />
-          {/* Mobile: Drag indicator */}
-          <div className="absolute top-2 left-1/2 -translate-x-1/2 w-12 h-1 bg-white/30 rounded-full md:hidden z-10" />
           <div className="flex items-center gap-3 relative z-10">
             <div className="p-2 bg-white/20 rounded-xl backdrop-blur-md">
               <Sparkles className="h-6 w-6" />
@@ -103,7 +111,7 @@ export default function ItineraryGenerateModal({ isOpen, onClose, onGenerate }: 
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-white/20 rounded-xl transition-colors relative z-10"
+            className="hidden md:block p-2 hover:bg-white/20 rounded-xl transition-colors relative z-10"
             aria-label="Cerrar modal"
           >
             <X className="h-6 w-6" />
@@ -114,44 +122,32 @@ export default function ItineraryGenerateModal({ isOpen, onClose, onGenerate }: 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Date Selection */}
           <section>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              <Calendar className="h-4 w-4 inline mr-2 text-blue-500" />
-              Fecha del Itinerario
-            </label>
-            <input
-              type="date"
+            <DatePicker
               value={formData.date}
-              onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
-              min={new Date().toISOString().split('T')[0]}
-              className="w-full px-4 py-3 border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all"
+              onChange={(date) => setFormData(prev => ({ ...prev, date }))}
+              minDate={new Date().toISOString().split('T')[0]}
+              label="Fecha del Itinerario"
+              placeholder="Selecciona una fecha"
               required
             />
           </section>
 
           {/* Time Range */}
           <section className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                <Clock className="h-4 w-4 inline mr-2 text-blue-500" />
-                Hora de Inicio
-              </label>
-              <input
-                type="time"
-                value={formData.start_time}
-                onChange={(e) => setFormData(prev => ({ ...prev, start_time: e.target.value }))}
-                className="w-full px-4 py-3 border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all"
-                required
-              />
-            </div>
+            <TimePicker
+              value={formData.start_time}
+              onChange={(time) => setFormData(prev => ({ ...prev, start_time: time }))}
+              label="Hora de Inicio"
+              required
+            />
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                 Hora de Fin
               </label>
-              <input
-                type="time"
+              <TimePicker
                 value={formData.end_time}
-                onChange={(e) => setFormData(prev => ({ ...prev, end_time: e.target.value }))}
-                className="w-full px-4 py-3 border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all"
+                onChange={(time) => setFormData(prev => ({ ...prev, end_time: time }))}
+                placeholder="Seleccionar hora"
                 required
               />
             </div>
@@ -206,25 +202,41 @@ export default function ItineraryGenerateModal({ isOpen, onClose, onGenerate }: 
 
           {/* Preferences */}
           <section>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
-              <Tag className="h-4 w-4 inline mr-2 text-blue-500" />
-              Preferencias de Itinerario
-            </label>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {AVAILABLE_CATEGORIES.map((category) => (
-                <button
-                  key={category}
-                  type="button"
-                  onClick={() => togglePreference(category)}
-                  className={`px-4 py-2.5 rounded-xl border text-sm font-medium transition-all ${
-                    formData.preferences.includes(category)
-                      ? 'border-blue-500 bg-blue-500 text-white shadow-md shadow-blue-500/20'
-                      : 'border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:border-blue-300 dark:hover:border-blue-500 hover:bg-slate-50 dark:hover:bg-slate-700'
-                  }`}
-                >
-                  {category}
-                </button>
-              ))}
+            <div className="flex items-center justify-between mb-3">
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                <Tag className="h-4 w-4 inline mr-2 text-blue-500" />
+                Preferencias de Itinerario
+              </label>
+              {formData.preferences.length > 0 && (
+                <span className="text-xs font-medium px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full">
+                  {formData.preferences.length} seleccionadas
+                </span>
+              )}
+            </div>
+            <div className="max-h-48 overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-600 p-3 bg-slate-50/50 dark:bg-slate-700/30">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {availableCategories.length > 0 ? (
+                  availableCategories.map((category) => (
+                    <button
+                      key={category}
+                      type="button"
+                      onClick={() => togglePreference(category)}
+                      className={`px-3 py-2 rounded-lg border text-sm font-medium transition-all text-left truncate ${
+                        formData.preferences.includes(category)
+                          ? 'border-blue-500 bg-blue-500 text-white shadow-md shadow-blue-500/20'
+                          : 'border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:border-blue-300 dark:hover:border-blue-500 hover:bg-white dark:hover:bg-slate-700 bg-white dark:bg-slate-800'
+                      }`}
+                      title={category}
+                    >
+                      {category}
+                    </button>
+                  ))
+                ) : (
+                  <p className="col-span-full text-sm text-slate-500 dark:text-slate-400 italic py-4 text-center">
+                    Cargando categorías...
+                  </p>
+                )}
+              </div>
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 ml-1">
               Selecciona las categorías que te interesan

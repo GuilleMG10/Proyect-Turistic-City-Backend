@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { X, MapPin, Calendar, Save, Loader2, DollarSign } from 'lucide-react';
+import { MapPin, Save, Loader2, DollarSign } from 'lucide-react';
+import BaseModal from '../ui/BaseModal';
+import { TextInput, TextArea, NumberInput, FormError } from '../ui/FormFields';
+import DateTimePicker from '../ui/DateTimePicker';
 import type { Event } from '../../types';
 import { ApiService } from '../../services/api';
 import { useUserStore } from '../../store/userStore';
@@ -64,19 +67,6 @@ export default function EventFormModal({ event, isOpen, onClose, onSuccess }: Pr
     setError(null);
   }, [event, isOpen]);
 
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
-        onClose();
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener('keydown', handleEscape);
-      return () => document.removeEventListener('keydown', handleEscape);
-    }
-  }, [isOpen, onClose]);
-
   const handleLocationChange = (lat: number, lng: number, address?: string) => {
     setFormData({ 
       ...formData, 
@@ -121,106 +111,55 @@ export default function EventFormModal({ event, isOpen, onClose, onSuccess }: Pr
   if (!isOpen) return null;
 
   return (
-    <div 
-      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[1100] p-4"
-      onClick={onClose}
+    <BaseModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={event ? 'Editar Evento' : 'Crear Nuevo Evento'}
+      titleId="event-form-title"
+      maxWidth="2xl"
+      headerGradient
+      zIndex={1100}
     >
-      <section 
-        className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100 dark:border-gray-800" 
-        role="dialog" 
-        aria-modal="true" 
-        aria-labelledby="event-form-title"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <header className="relative bg-gradient-to-r from-cyan-500 to-blue-600 p-6 overflow-hidden">
-          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
-          <div className="relative flex items-center justify-between text-white">
-            <h2 id="event-form-title" className="text-2xl font-bold flex items-center gap-2">
-              {event ? 'Editar Evento' : 'Crear Nuevo Evento'}
-            </h2>
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-white/20 rounded-full transition-colors text-white/90 hover:text-white"
-              aria-label="Cerrar formulario"
-            >
-              <X className="h-6 w-6" aria-hidden="true" />
-            </button>
-          </div>
-        </header>
+      {/* Content */}
+      <form onSubmit={handleSubmit} className="p-6 space-y-5">
+        <FormError error={error} />
 
-        {/* Content */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
-          {error && (
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-xl" role="alert">
-              <strong className="font-medium">Error:</strong> {error}
-            </div>
-          )}
+          <TextInput
+            id="event-name"
+            label="Nombre del Evento"
+            value={formData.name}
+            onChange={(value) => setFormData({ ...formData, name: value })}
+            placeholder="Ej: Festival de la Candelaria"
+            required
+          />
 
-          {/* Name */}
-          <div>
-            <label htmlFor="event-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-              Nombre del Evento *
-            </label>
-            <input
-              id="event-name"
-              type="text"
-              required
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 transition-all"
-              placeholder="Ej: Festival de la Candelaria"
-            />
-          </div>
+          <TextArea
+            id="event-description"
+            label="Descripción"
+            value={formData.description}
+            onChange={(value) => setFormData({ ...formData, description: value })}
+            placeholder="Describe el evento..."
+            required
+          />
 
-          {/* Description */}
-          <div>
-            <label htmlFor="event-description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-              Descripción *
-            </label>
-            <textarea
-              id="event-description"
-              required
-              rows={3}
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 transition-all resize-none"
-              placeholder="Describe el evento..."
-            />
-          </div>
+          <DateTimePicker
+            value={formData.event_date}
+            onChange={(value) => setFormData({ ...formData, event_date: value })}
+            label="Fecha y Hora del Evento"
+            placeholder="Seleccionar fecha y hora"
+            required
+          />
 
-          {/* Event Date */}
-          <div>
-            <label htmlFor="event-date" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-cyan-500" />
-              Fecha y Hora del Evento *
-            </label>
-            <input
-              id="event-date"
-              type="datetime-local"
-              required
-              value={formData.event_date}
-              onChange={(e) => setFormData({ ...formData, event_date: e.target.value })}
-              className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 transition-all"
-            />
-          </div>
-
-          {/* Location with Map Picker */}
-          <div>
-            <label htmlFor="event-location" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-cyan-500" />
-              Ubicación *
-            </label>
-            <input
-              id="event-location"
-              type="text"
-              required
-              value={formData.location}
-              onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-              className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 transition-all"
-              placeholder="Ej: Plaza San Francisco, La Paz"
-            />
-          </div>
+          <TextInput
+            id="event-location"
+            label="Ubicación"
+            value={formData.location}
+            onChange={(value) => setFormData({ ...formData, location: value })}
+            placeholder="Ej: Plaza San Francisco, La Paz"
+            icon={MapPin}
+            iconColor="text-cyan-500"
+            required
+          />
 
           {/* Map Location Picker */}
           <div className="rounded-xl overflow-hidden">
@@ -233,37 +172,24 @@ export default function EventFormModal({ event, isOpen, onClose, onSuccess }: Pr
 
           {/* Category and Price */}
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="event-category" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                Categoría *
-              </label>
-              <input
-                id="event-category"
-                type="text"
-                required
-                value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 transition-all"
-                placeholder="Ej: Cultural, Deportivo"
-              />
-            </div>
-            <div>
-              <label htmlFor="event-price" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 flex items-center gap-2">
-                <DollarSign className="h-4 w-4 text-green-500" />
-                Precio (Bs) *
-              </label>
-              <input
-                id="event-price"
-                type="number"
-                step="0.01"
-                min="0"
-                required
-                value={formData.price}
-                onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) })}
-                className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 transition-all"
-                placeholder="0.00"
-              />
-            </div>
+            <TextInput
+              id="event-category"
+              label="Categoría"
+              value={formData.category}
+              onChange={(value) => setFormData({ ...formData, category: value })}
+              placeholder="Ej: Cultural, Deportivo"
+              required
+            />
+            <NumberInput
+              id="event-price"
+              label="Precio (Bs)"
+              value={formData.price}
+              onChange={(value) => setFormData({ ...formData, price: value })}
+              placeholder="0.00"
+              icon={DollarSign}
+              iconColor="text-green-500"
+              required
+            />
           </div>
 
           {/* Action Buttons */}
@@ -295,7 +221,6 @@ export default function EventFormModal({ event, isOpen, onClose, onSuccess }: Pr
             </button>
           </footer>
         </form>
-      </section>
-    </div>
+    </BaseModal>
   );
 }

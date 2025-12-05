@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { User, UserInterest } from '../types';
 import { ApiService } from '../services/api';
-import { useFavorites } from '../hooks/useFavorites';
+import { useFavorites } from './favoritesStore';
 
 interface UserState {
   user: User | null;

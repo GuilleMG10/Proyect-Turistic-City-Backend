@@ -2,27 +2,42 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { dirname } from "path";
+import { dirname, join } from "path";
 import fetch from "node-fetch";
+import dotenv from 'dotenv';
+import { callModalVision } from "./ollamaService.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+dotenv.config({ path: join(__dirname, '../.env') });
 
 /**
- * 🔹 Convierte una imagen (archivo) a base64
+ * Convierte una imagen (archivo) a base64
  */
 export const getBase64Image = (filePath) => {
   const imageBuffer = fs.readFileSync(filePath);
   return imageBuffer.toString("base64");
 };
 
+/**
+ * Analyze image with Modal multimodal models (Qwen3-VL)
+ * Uses cloud GPU for better performance
+ */
+export const analyzeWithModalStream = async (prompt, base64Image, onData, useThinking = false) => {
+  const modelType = useThinking ? "thinking" : "instruct";
+  console.log(`[VISION] Analizando imagen con Modal (${modelType})...`);
+  
+  return await callModalVision(prompt, base64Image, onData, modelType);
+};
+
 
 export const analyzeWithLLaVAStream = async (prompt, base64Image, onData) => {
-  const response = await fetch("http://127.0.0.1:11434/api/chat", {
+  const ollamaUrl = process.env.OLLAMA_URL;
+  const response = await fetch(`${ollamaUrl}/api/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "llava:7b", // o llava:13b / llava:34b según tu instalación
+      model: process.env.OLLAMA_VISION_MODEL, // o llava:13b / llava:34b según tu instalación
       messages: [
         {
           role: "user",
@@ -57,7 +72,7 @@ export const analyzeWithLLaVAStream = async (prompt, base64Image, onData) => {
           onData(text); // envía cada fragmento al cliente
         }
       } catch (err) {
-        console.warn("⚠️ Error parseando línea:", line);
+        console.warn("[WARN] Error parseando linea:", line);
       }
     }
   }
@@ -69,7 +84,7 @@ export const analyzeWithLLaVAStream = async (prompt, base64Image, onData) => {
       const text = json.message?.content;
       if (text && text.trim()) onData(text);
     } catch (err) {
-      console.warn("⚠️ Error parseando buffer final:", buffer);
+      console.warn("[WARN] Error parseando buffer final:", buffer);
     }
   }
 };

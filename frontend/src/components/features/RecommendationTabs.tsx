@@ -9,8 +9,8 @@ type Props = {
 
 export default function RecommendationTabs({ activeType, onTypeChange }: Props) {
   return (
-    <nav className="p-1 bg-gray-100 dark:bg-gray-800 rounded-xl overflow-x-auto" role="tablist">
-      <div className="flex min-w-full sm:min-w-0">
+    <nav className="p-1.5 bg-gray-100 dark:bg-gray-800 rounded-xl overflow-x-auto" role="tablist">
+      <div className="flex min-w-full sm:min-w-0 gap-1">
         {[
           { key: 'favorites' as const, label: 'Mis Favoritos', icon: Heart },
           { key: 'ai-suggested' as const, label: 'Recomendados para ti', icon: Sparkles },

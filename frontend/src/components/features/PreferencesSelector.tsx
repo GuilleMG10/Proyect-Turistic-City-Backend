@@ -1,35 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Heart, Save, Loader2 } from 'lucide-react';
 import { ApiService } from '../../services/api';
+import { USER_PREFERENCE_CATEGORIES } from '../../constants/categories';
 import type { UserPreference } from '../../types';
 
 type Props = {
   userId: number;
 };
-
-// All available categories
-const AVAILABLE_CATEGORIES = [
-  'Restaurante',
-  'Museo',
-  'Parque',
-  'Teatro',
-  'Café',
-  'Bar',
-  'Monumento',
-  'Galería',
-  'Mercado',
-  'Deportes',
-  'Música',
-  'Arte',
-  'Cultura',
-  'Naturaleza',
-  'Historia',
-  'Compras',
-  'Vida Nocturna',
-  'Familiar',
-  'Aventura',
-  'Relajación',
-];
 
 export default function PreferencesSelector({ userId }: Props) {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -130,7 +107,7 @@ export default function PreferencesSelector({ userId }: Props) {
 
       {/* Categories Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-        {AVAILABLE_CATEGORIES.map((category) => {
+        {USER_PREFERENCE_CATEGORIES.map((category) => {
           const isSelected = selectedCategories.includes(category);
           return (
             <button

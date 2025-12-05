@@ -11,7 +11,8 @@ import { useDataLoading } from "../hooks/useDataLoading";
 import { useFiltering } from "../hooks/useFiltering";
 import { useModalState } from "../hooks/useModalState";
 import { useEventInterest } from "../hooks/useEventInterest";
-import { useFavorites } from "../hooks/useFavorites";
+import { useBodyScrollLock } from "../hooks/useBodyScrollLock";
+import { useFavorites } from "../store/favoritesStore";
 import PlaceFormModal from "../components/modals/PlaceFormModal";
 import EventFormModal from "../components/modals/EventFormModal";
 import type { ExploreContextType } from "./explore/types";
@@ -136,24 +137,14 @@ export default function Explore() {
     setIsEventFormOpen(false);
   };
 
-  useEffect(() => {
-    const isAnyModalOpen = 
-      modalState.isEventModalOpen || 
-      modalState.isPlaceModalOpen || 
-      isPlaceFormOpen || 
-      isEventFormOpen || 
-      modalState.isFilterModalOpen;
-    
-    if (isAnyModalOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-    
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [modalState.isEventModalOpen, modalState.isPlaceModalOpen, isPlaceFormOpen, isEventFormOpen, modalState.isFilterModalOpen]);
+  // Lock body scroll when any modal is open
+  const isAnyModalOpen = 
+    modalState.isEventModalOpen || 
+    modalState.isPlaceModalOpen || 
+    isPlaceFormOpen || 
+    isEventFormOpen || 
+    modalState.isFilterModalOpen;
+  useBodyScrollLock(isAnyModalOpen);
 
   const contextValue: ExploreContextType = {
     places,

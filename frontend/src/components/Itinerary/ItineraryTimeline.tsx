@@ -29,27 +29,23 @@ export default function ItineraryTimeline({ items, onRemoveItem, onViewDetails }
         return (
           <div key={item.id} className="relative flex gap-4 pb-8 last:pb-0 group">
             {/* Timeline Line and Dot */}
-            <div className="relative flex flex-col items-center">
+            <div className="relative flex flex-col items-center flex-shrink-0">
               {/* Time Badge */}
-              <div className="bg-gradient-to-br from-primary-600 to-primary-800 text-white p-3 rounded-xl shadow-lg shadow-primary-900/20 flex flex-col items-center justify-center min-w-[100px] z-10 relative overflow-hidden">
-                <div className="absolute inset-0 bg-white/10 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                <span className="text-xs font-medium opacity-90 relative z-10">Paso {index + 1}</span>
-                <span className="text-base font-bold mt-1 relative z-10">{item.start_time}</span>
-                <span className="text-xs opacity-75 relative z-10">a</span>
-                <span className="text-base font-bold relative z-10">{item.end_time}</span>
+              <div className="bg-gradient-to-br from-blue-600 to-blue-800 text-white p-3 rounded-xl shadow-lg flex flex-col items-center justify-center min-w-[90px] w-[90px] z-10 relative overflow-hidden">
+                <span className="text-xs font-medium text-white/90">Paso {index + 1}</span>
+                <span className="text-base font-bold mt-1 text-white">{item.start_time}</span>
+                <span className="text-xs text-white/75">a</span>
+                <span className="text-base font-bold text-white">{item.end_time}</span>
               </div>
               
               {/* Timeline Connector */}
               {!isLast && (
-                <div className="absolute top-[120px] left-1/2 -translate-x-1/2 flex flex-col items-center h-[calc(100%-100px)]">
-                  {/* Vertical Line */}
-                  <div className="w-0.5 h-full bg-gradient-to-b from-primary-400 to-primary-200 dark:from-primary-600 dark:to-gray-700"></div>
-                </div>
+                <div className="w-0.5 flex-1 mt-2 bg-gradient-to-b from-blue-400 to-blue-200 dark:from-blue-600 dark:to-gray-700 min-h-[20px]"></div>
               )}
             </div>
 
             {/* Content Card */}
-            <article className="flex-1 bg-white dark:bg-gray-800 rounded-2xl shadow-sm dark:shadow-gray-900/50 border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md transition-all duration-300">
+            <article className="flex-1 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md transition-all duration-300">
               <div className="p-5">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -76,14 +72,14 @@ export default function ItineraryTimeline({ items, onRemoveItem, onViewDetails }
                     </div>
 
                     {isPlace && item.place && (
-                      <div className="text-sm text-gray-700 dark:text-gray-300 font-medium bg-gray-50 dark:bg-gray-700/50 inline-block px-3 py-1 rounded-lg">
-                        Costo: Bs. {item.place.price.toFixed(2)}
+                      <div className="text-sm text-gray-700 dark:text-gray-300 font-medium bg-gray-100 dark:bg-gray-700/50 inline-block px-3 py-1 rounded-lg">
+                        Costo: Bs. {(item.place.price ?? 0).toFixed(2)}
                       </div>
                     )}
 
                     {!isPlace && item.event && (
-                      <div className="text-sm text-gray-700 dark:text-gray-300 font-medium bg-gray-50 dark:bg-gray-700/50 inline-block px-3 py-1 rounded-lg">
-                        Costo: Bs. {item.event.price.toFixed(2)}
+                      <div className="text-sm text-gray-700 dark:text-gray-300 font-medium bg-gray-100 dark:bg-gray-700/50 inline-block px-3 py-1 rounded-lg">
+                        Costo: Bs. {(item.event.price ?? 0).toFixed(2)}
                       </div>
                     )}
 

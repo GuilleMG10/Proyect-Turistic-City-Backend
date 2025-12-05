@@ -1,5 +1,5 @@
 import { X, AlertCircle } from "lucide-react";
-import { useEffect } from "react";
+import { useModalEscape } from '../../hooks/useModalEscape';
 
 type Props = {
   isOpen: boolean;
@@ -10,17 +10,7 @@ type Props = {
 
 export default function ErrorModal({ isOpen, onClose, title = "Error", message }: Props) {
   // Handle Escape key to close modal
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    
-    if (isOpen) {
-      document.addEventListener('keydown', handleEscape);
-    }
-    
-    return () => document.removeEventListener('keydown', handleEscape);
-  }, [isOpen, onClose]);
+  useModalEscape(isOpen, onClose);
 
   if (!isOpen) return null;
 

@@ -31,6 +31,9 @@ type EventHandler interface {
 
 type IAHandler interface {
 	GenerateAIResponse(c *gin.Context)
+	GenerateItinerary(c *gin.Context)
+	GenerateVision(c *gin.Context)
+	GetCapabilities(c *gin.Context)
 }
 
 type UserInterestHandler interface {
@@ -45,7 +48,22 @@ type PlaceFavoriteHandler interface {
 	RemoveFavorite(c *gin.Context)
 }
 
-func RegisterRoutes(router *gin.Engine, u UserHandler, p PlaceHandler, r ReviewHandler, e EventHandler, ia IAHandler, ui UserInterestHandler, pf PlaceFavoriteHandler) {
+type UserPreferenceHandler interface {
+	GetUserPreferences(c *gin.Context)
+	SaveUserPreferences(c *gin.Context)
+	DeleteUserPreference(c *gin.Context)
+}
+
+type ItineraryHandler interface {
+	GetItineraries(c *gin.Context)
+	GetItinerary(c *gin.Context)
+	CreateItinerary(c *gin.Context)
+	UpdateItinerary(c *gin.Context)
+	DeleteItinerary(c *gin.Context)
+	DeleteItem(c *gin.Context)
+}
+
+func RegisterRoutes(router *gin.Engine, u UserHandler, p PlaceHandler, r ReviewHandler, e EventHandler, ia IAHandler, ui UserInterestHandler, pf PlaceFavoriteHandler, up UserPreferenceHandler, it ItineraryHandler) {
 
 	// Public Routes
 	router.POST("/users/register", u.Register)
@@ -55,6 +73,7 @@ func RegisterRoutes(router *gin.Engine, u UserHandler, p PlaceHandler, r ReviewH
 	router.GET("/places", p.GetPlaces)
 	router.GET("/places/:id/reviews", r.GetReviewsByPlace)
 	router.GET("/events", e.GetEvents)
+	router.GET("/ia/capabilities", ia.GetCapabilities)
 
 	// --- Authenticated Routes (for any logged-in user) ---
 	authGroup := router.Group("/")
@@ -62,6 +81,8 @@ func RegisterRoutes(router *gin.Engine, u UserHandler, p PlaceHandler, r ReviewH
 	{
 		// AI Assistant
 		authGroup.POST("/ia/prompt", ia.GenerateAIResponse)
+		authGroup.POST("/ia/itinerary", ia.GenerateItinerary)
+		authGroup.POST("/ia/vision", ia.GenerateVision)
 
 		// User info
 		authGroup.GET("/users/:id", u.GetUser)
@@ -75,6 +96,19 @@ func RegisterRoutes(router *gin.Engine, u UserHandler, p PlaceHandler, r ReviewH
 		authGroup.GET("/users/:id/favorites", pf.GetUserFavorites)
 		authGroup.POST("/users/:id/favorites", pf.AddFavorite)
 		authGroup.DELETE("/users/:id/favorites/:place_id", pf.RemoveFavorite)
+
+		// User preferences (category interests for recommendations)
+		authGroup.GET("/users/:id/preferences", up.GetUserPreferences)
+		authGroup.POST("/users/:id/preferences", up.SaveUserPreferences)
+		authGroup.DELETE("/users/:id/preferences/:category", up.DeleteUserPreference)
+
+		// Itineraries
+		authGroup.GET("/itineraries", it.GetItineraries)
+		authGroup.GET("/itineraries/:id", it.GetItinerary)
+		authGroup.POST("/itineraries", it.CreateItinerary)
+		authGroup.PUT("/itineraries/:id", it.UpdateItinerary)
+		authGroup.DELETE("/itineraries/:id", it.DeleteItinerary)
+		authGroup.DELETE("/itineraries/:id/items/:item_id", it.DeleteItem)
 	}
 
 	// --- Admin Routes (requires admin role) ---

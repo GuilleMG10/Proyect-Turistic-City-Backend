@@ -20,11 +20,6 @@ export default function LoadingSpinner({ size = "lg", className = "", text }: Pr
         
         {/* Spinning ring */}
         <div className={`absolute inset-0 ${sizes[size]} rounded-full border-4 border-cyan-500 border-t-transparent animate-spin`} />
-        
-        {/* Inner glow/pulse (optional decoration) */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="h-2 w-2 bg-cyan-500 rounded-full animate-pulse opacity-50" />
-        </div>
       </div>
       
       {text && (

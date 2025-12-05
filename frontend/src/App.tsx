@@ -9,6 +9,7 @@ import MobileMenu from "./components/layout/MobileMenu";
 import { checkAndGenerateNotifications, getUnreadCount, clearOldNotifications } from "./utils/eventNotifications";
 import { ApiService } from "./services/api";
 import { useTheme } from "./hooks/useTheme";
+import { useBodyScrollLock } from "./hooks/useBodyScrollLock";
 import ToastContainer from "./components/ui/ToastContainer";
 
 // Lazy load AIChat component
@@ -56,19 +57,8 @@ export default function App() {
   };
 
   // Lock body scroll when any modal is open
-  useEffect(() => {
-    const isAnyModalOpen = isAIOpen || isNotificationsOpen || isLoginOpen || isMobileMenuOpen;
-    
-    if (isAnyModalOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-    
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [isAIOpen, isNotificationsOpen, isLoginOpen, isMobileMenuOpen]);
+  const isAnyModalOpen = isAIOpen || isNotificationsOpen || isLoginOpen || isMobileMenuOpen;
+  useBodyScrollLock(isAnyModalOpen);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-sans selection:bg-primary-100 selection:text-primary-900">
@@ -136,7 +126,7 @@ export default function App() {
               <Bot className="h-5 w-5" />
             </button>
             
-            <div className="pl-2 border-l border-gray-200 dark:border-gray-700 ml-2">
+            <div className="border-l border-gray-200 dark:border-gray-700 pl-2 ml-1">
               <UserMenu onLoginClick={() => setIsLoginOpen(true)} />
             </div>
           </div>

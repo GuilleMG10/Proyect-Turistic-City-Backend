@@ -1,12 +1,18 @@
 
 import { useEffect, useState } from 'react';
-import { X, MapPin, Star, Calendar, DollarSign, Edit, Trash2 } from 'lucide-react';
+import { X, MapPin, Calendar, DollarSign, Edit, Trash2 } from 'lucide-react';
+import { useModalEscape } from '../../hooks/useModalEscape';
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
+import { useDraggableModal } from '../../hooks/useDraggableModal';
 import type { EventWithStatus } from '../../types';
 import { getEventStatusColor } from '../../utils/eventStatus';
 import { useUserStore } from '../../store/userStore';
 import EventFormModal from './EventFormModal';
 import ConfirmModal from './ConfirmModal';
+import ReviewsList from '../ui/ReviewsList';
+import GoogleMapsLink from '../ui/GoogleMapsLink';
 import { ApiService } from '../../services/api';
+import { useToastStore } from '../../store/toastStore';
 
 type Props = {
   event: EventWithStatus;
@@ -18,9 +24,23 @@ type Props = {
 export default function EventDetailsModal({ event, isOpen, onClose, onUpdate }: Props) {
   const user = useUserStore((state) => state.user);
   const isAdmin = useUserStore((state) => state.isAdmin());
+  const addToast = useToastStore((state) => state.addToast);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  // Handle escape key
+  useModalEscape(isOpen, onClose);
+
+  // Lock body scroll when modal is open
+  useBodyScrollLock(isOpen);
+
+  // Draggable modal for mobile
+  const { dragHandleProps, modalStyle, isDragging } = useDraggableModal({
+    isOpen,
+    onClose,
+    threshold: 25,
+  });
 
   // Focus management
   useEffect(() => {
@@ -33,20 +53,6 @@ export default function EventDetailsModal({ event, isOpen, onClose, onUpdate }: 
     }
   }, [isOpen]);
 
-  // Handle escape key
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
-        onClose();
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener('keydown', handleEscape);
-      return () => document.removeEventListener('keydown', handleEscape);
-    }
-  }, [isOpen, onClose]);
-
   const handleDelete = async () => {
     setShowDeleteConfirm(false);
     setIsDeleting(true);
@@ -55,7 +61,7 @@ export default function EventDetailsModal({ event, isOpen, onClose, onUpdate }: 
       onClose();
       onUpdate?.(); // Refetch immediately - backend query time provides natural delay
     } catch {
-      alert('Error al eliminar el evento');
+      addToast('Error al eliminar el evento', 'error');
       setIsDeleting(false);
     }
   };
@@ -92,29 +98,41 @@ export default function EventDetailsModal({ event, isOpen, onClose, onUpdate }: 
         onSuccess={handleEditSuccess}
       />
       <div 
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[1000] p-4"
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end md:items-center justify-center z-[1000] md:p-4"
         onClick={onClose}
       >
       <section 
-        className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl animate-in slide-in-from-bottom duration-300 md:animate-in md:fade-in md:zoom-in-95" 
+        className="bg-white dark:bg-gray-800 w-full md:rounded-2xl md:max-w-4xl h-[95vh] md:h-auto md:max-h-[90vh] overflow-y-auto shadow-2xl animate-in slide-in-from-bottom duration-300 relative rounded-t-3xl md:rounded-2xl" 
         role="dialog" 
         aria-modal="true" 
         aria-labelledby="event-details-title"
+        data-modal-content
+        style={modalStyle}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Mobile drag handle */}
+        <div 
+          className="sticky top-0 z-30 md:hidden bg-gradient-to-r from-cyan-600 to-blue-600 rounded-t-3xl cursor-grab active:cursor-grabbing"
+          {...dragHandleProps}
+        >
+          <div className="flex justify-center py-3">
+            <div className={`w-12 h-1.5 rounded-full transition-colors ${isDragging ? 'bg-white/60' : 'bg-white/30'}`} />
+          </div>
+        </div>
+
         {/* Hero Header */}
-        <div className="relative h-48 md:h-64 w-full bg-gradient-to-r from-cyan-600 to-blue-600 overflow-hidden">
-          {/* Abstract Pattern Overlay */}
-          <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
-          
-          {/* Close Button */}
+        <div className="relative h-40 md:h-64 w-full bg-gradient-to-r from-cyan-600 to-blue-600 overflow-hidden md:rounded-t-2xl -mt-3 md:mt-0">
+          {/* Close Button - desktop only */}
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 p-2 bg-black/20 hover:bg-black/40 backdrop-blur-md rounded-full text-white transition-all focus:outline-none focus:ring-2 focus:ring-white/50"
+            className="hidden md:flex absolute top-4 right-4 p-2 bg-black/40 hover:bg-black/60 backdrop-blur-md rounded-full text-white transition-all focus:outline-none focus:ring-2 focus:ring-white/50 z-20"
             aria-label="Cerrar detalles"
           >
             <X className="h-6 w-6" />
           </button>
+
+          {/* Abstract Pattern Overlay */}
+          <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
 
           {/* Title & Date Overlay */}
           <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8 text-white">
@@ -168,39 +186,7 @@ export default function EventDetailsModal({ event, isOpen, onClose, onUpdate }: 
             </section>
 
             {/* Reviews */}
-            {event.reviews && event.reviews.length > 0 && (
-              <section>
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                  <Star className="h-5 w-5 text-yellow-400 fill-current" />
-                  Reseñas
-                  <span className="text-sm font-normal text-gray-500 dark:text-gray-400 ml-1">
-                    ({event.reviews.length})
-                  </span>
-                </h3>
-                <div className="grid gap-4">
-                  {event.reviews.map((review) => (
-                    <article key={review.id} className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-xl border border-gray-100 dark:border-gray-700">
-                      <div className="flex justify-between items-start mb-2">
-                        <div className="flex items-center gap-1">
-                          {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                              className={`h-3.5 w-3.5 ${
-                                i < review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300 dark:text-gray-600'
-                              }`}
-                            />
-                          ))}
-                        </div>
-                        <time className="text-xs text-gray-500 dark:text-gray-400" dateTime={review.created_at}>
-                          {new Date(review.created_at).toLocaleDateString('es-ES')}
-                        </time>
-                      </div>
-                      <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">"{review.comment}"</p>
-                    </article>
-                  ))}
-                </div>
-              </section>
-            )}
+            <ReviewsList reviews={event.reviews || []} />
           </div>
 
           {/* Sidebar (Right Column) */}
@@ -235,26 +221,12 @@ export default function EventDetailsModal({ event, isOpen, onClose, onUpdate }: 
               </div>
 
               {event.latitude && event.longitude && (
-                <div className="bg-gray-50 dark:bg-gray-700/30 p-1 rounded-2xl border border-gray-100 dark:border-gray-700 mt-4">
-                  <div className="relative aspect-[4/3] rounded-xl overflow-hidden bg-gray-200 group cursor-pointer"
-                    onClick={() => {
-                      const url = `https://www.google.com/maps?q=${event.latitude},${event.longitude}`;
-                      window.open(url, '_blank');
-                    }}
-                  >
-                    <div className="absolute inset-0 bg-[url('https://upload.wikimedia.org/wikipedia/commons/e/ec/World_map_blank_without_borders.svg')] bg-cover opacity-10 dark:opacity-20" />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="h-12 w-12 bg-red-500/20 rounded-full flex items-center justify-center animate-pulse">
-                        <MapPin className="h-6 w-6 text-red-600 dark:text-red-400 drop-shadow-md" />
-                      </div>
-                    </div>
-                    <div className="absolute bottom-0 inset-x-0 p-3 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border-t border-gray-200 dark:border-gray-600">
-                      <p className="text-xs font-medium text-center text-blue-600 dark:text-blue-400 group-hover:underline">
-                        Ver ubicación en mapa
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                <GoogleMapsLink 
+                  latitude={event.latitude} 
+                  longitude={event.longitude}
+                  label="Ver ubicación en mapa"
+                  markerColor="red"
+                />
               )}
             </div>
 
@@ -272,7 +244,7 @@ export default function EventDetailsModal({ event, isOpen, onClose, onUpdate }: 
                   <button 
                     onClick={() => setShowDeleteConfirm(true)}
                     disabled={isDeleting}
-                    className="w-full flex items-center justify-center gap-2 bg-white dark:bg-gray-800 text-red-600 border border-red-200 dark:border-red-900/50 px-4 py-3 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors font-medium"
+                    className="w-full flex items-center justify-center gap-2 bg-red-600 text-white px-4 py-3 rounded-xl hover:bg-red-700 transition-colors font-medium shadow-sm shadow-red-200 dark:shadow-none"
                   >
                     <Trash2 className="h-4 w-4" />
                     {isDeleting ? 'Eliminando...' : 'Eliminar Evento'}

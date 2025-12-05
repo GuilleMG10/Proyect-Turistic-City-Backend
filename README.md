@@ -31,7 +31,7 @@ if you didnt install Ollama you should install that first, then:
 
 ## Running AI (memory)
 - https://github.com/chroma-core/chroma -> download for your OS
-- $env:CHROMA_SERVER_CORS_ALLOW_ORIGINS='["http://localhost:3000"]'; ./chroma run --host localhost --port 8000 (PowerShell)
+- $env:CHROMA_SERVER_CORS_ALLOW_ORIGINS='["http://localhost:3500"]'; ./chroma run --host localhost --port 8000 (PowerShell)
 
 ## Running frontend
 - **npm install**
@@ -42,3 +42,26 @@ Falta que documente esto, TODO podman
 El comando sigue siendo igual si se usa el binario y/o los argumentos
 - **caddy run --config "configs/Caddyfile" --adapter caddyfile**
 - **caddy fmt --overwrite --config "configs/Caddyfile"** <-- esto solo en caso de formateo, aveces caddy se puede quejar si hay encoding raro
+
+-----
+
+importante tener ollama ejecutandose por los embedings
+## Running caddy
+cd ../../Programs/Caddy
+./caddy run --config "configs/Caddyfile" --adapter caddyfile
+
+## Running backend
+go run cmd/backend/main.go
+
+## Running backend assistant
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
+chcp 65001 > $null
+cd assistant; npm run dev
+
+## Running chromadb
+cd assistant/deps/chromadb
+$env:CHROMA_SERVER_CORS_ALLOW_ORIGINS='["http://localhost:3500"]'; ./chroma run --host localhost --port 8000
+
+## Running frontend
+cd frontend; npm run dev

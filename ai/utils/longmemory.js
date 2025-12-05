@@ -1,9 +1,16 @@
 import { Chroma } from "@langchain/community/vectorstores/chroma";
-import { HuggingFaceTransformersEmbeddings } from "@langchain/community/embeddings/hf_transformers";
+import { HuggingFaceTransformersEmbeddings } from "@langchain/community/embeddings/huggingface_transformers";
+import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+dotenv.config({ path: join(__dirname, '../.env') });
 
 // Inicializar embeddings
 const embeddings = new HuggingFaceTransformersEmbeddings({
-  modelName: "Xenova/all-mpnet-base-v2",
+  modelName: process.env.EMBEDDING_MODEL,
 });
 
 // Inicializar Chroma
@@ -12,7 +19,7 @@ async function getVectorStore() {
   if (!vectorStore) {
     vectorStore = await Chroma.fromExistingCollection(embeddings, {
       collectionName: "chat_memory",
-      url: "http://localhost:8000", // tu servidor Chroma
+      url: process.env.CHROMA_URL, // tu servidor Chroma
     });
     //fromExistingCollection obtiene una coleccion ya existente asi como tambien la crea si no existe
     //la primera vez que la crea te advierte algo como:
@@ -39,7 +46,7 @@ export const saveMessage = async (userId, role, content) => {
     },
   ]);
 
-  console.log(`💾 Guardado en Chroma (${role}):`, content);
+  console.log(`[SAVE] Guardado en Chroma (${role}):`, content);
 };
 
 // Buscar memoria
@@ -82,7 +89,7 @@ async function getRawStore() {
   if (!raw) {
     raw = await Chroma.fromExistingCollection(embeddings, {
       collectionName: "raw",
-      url: "http://localhost:8000",
+      url: process.env.CHROMA_URL,
     });
     console.log("Colección 'raw' inicializada en Chroma");
   }
@@ -140,9 +147,9 @@ async function getPlacesStore() {
   if (!placesStore) {
     placesStore = await Chroma.fromExistingCollection(embeddings, {
       collectionName: "places_collection",
-      url: "http://localhost:8000",
+      url: process.env.CHROMA_URL,
     });
-    console.log("✅ Colección 'places_collection' inicializada en Chroma");
+    console.log("[OK] Coleccion 'places_collection' inicializada en Chroma");
   }
   return placesStore;
 }
@@ -181,16 +188,16 @@ export const upsertPlaces = async (places) => {
 
     
 
-    // 🧹 Eliminar cualquier registro previo que tenga el mismo nombre
+    // Eliminar cualquier registro previo que tenga el mismo nombre
     try {
       await store.delete({ filter: { name: { $eq: name } } });
 
-      console.log(`🧹 Eliminado documento previo de '${name}' (si existía)`);
+      console.log(`[DELETE] Eliminado documento previo de '${name}' (si existia)`);
     } catch (err) {
-      console.warn(`⚠️ No se pudo eliminar '${name}' (puede que no existiera):`, err.message);
+      console.warn(`[WARN] No se pudo eliminar '${name}' (puede que no existiera):`, err.message);
     }
 
-    // 💾 Insertar nuevo documento (ID automático)
+    // Insertar nuevo documento (ID automatico)
     await store.addDocuments([
       {
         pageContent: content,
@@ -214,7 +221,7 @@ export const searchPlacesMemory = async (query, topK = 10) => {
 
   const results = await store.similaritySearch(query, topK);
 
-  console.log("📍 Resultados encontrados en places_collection:");
+  console.log("[SEARCH] Resultados encontrados en places_collection:");
   if (results.length === 0) {
     console.log("(sin resultados relevantes)");
   } else {

@@ -1,4 +1,5 @@
 import { AlertTriangle } from "lucide-react";
+import { useModalEscape } from '../../hooks/useModalEscape';
 
 type Props = {
   isOpen: boolean;
@@ -21,6 +22,9 @@ export default function ConfirmModal({
   onCancel,
   variant = 'danger'
 }: Props) {
+  // Handle escape key to cancel
+  useModalEscape(isOpen, onCancel);
+
   if (!isOpen) return null;
 
   const variantStyles = {

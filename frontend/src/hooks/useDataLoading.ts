@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import type { Place, EventWithStatus } from "../types";
 import { ApiService } from "../services/api";
 import { useUserStore } from "../store/userStore";
-import { useFavorites } from "./useFavorites";
+import { useFavorites } from "../store/favoritesStore";
 import { assignPlaceNumbers } from "../utils/placeNumbering";
 import { useToastStore } from "../store/toastStore";
 
@@ -49,7 +49,7 @@ export function useDataLoading() {
       } catch (err) {
         console.error('Error loading data:', err);
         if (!cancelled) {
-          const msg = 'Error al cargar los datos. Intentando de nuevo...';
+          const msg = 'Hubo un problema al mostrar los datos. Por favor, intenta de nuevo más tarde.';
           // setError(msg); // Disable setting error state to avoid banner
           addToast(msg, 'error');
         }

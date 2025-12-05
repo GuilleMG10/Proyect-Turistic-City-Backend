@@ -4,7 +4,7 @@ import type React from 'react';
 /**
  * Gets initials from a name (e.g., "Dani Torrez" -> "DT")
  */
-export const getInitials = (name: string): string => {
+const getInitials = (name: string): string => {
   if (!name) return 'PL';
   
   const words = name.trim().split(/\s+/);

@@ -1,20 +1,18 @@
 import { useState } from "react";
-import { Heart, Sparkles, MapPin } from "lucide-react";
+import { Heart, MapPin, Sparkles, TrendingUp } from "lucide-react";
 import type { EventWithStatus, Place, UserInterest, PlaceFavorite } from "../../types";
 import { useUserStore } from "../../store/userStore";
 import EventCard from "../cards/EventCard";
 import PlaceCard from "../cards/PlaceCard";
-import ErrorBanner from "../ui/ErrorBanner";
 import RecommendationTabs from "./RecommendationTabs";
 import EmptyState from "../ui/EmptyState";
 import { useRecommendations } from "../../hooks/useRecommendations";
-import { useFavorites, type FavoritesState } from "../../hooks/useFavorites";
+import { useFavorites, type FavoritesState } from "../../store/favoritesStore";
 
 type Props = {
   events: EventWithStatus[];
   places: Place[];
   onEventView?: (event: EventWithStatus) => void;
-  onEventInterest?: (event: EventWithStatus) => void;
   onPlaceView?: (place: Place) => void;
   onPlaceInterest?: (place: Place) => void;
 };
@@ -30,8 +28,6 @@ export default function Favorites({
 }: Props) {
   const { user, interests } = useUserStore();
   const [activeType, setActiveType] = useState<RecommendationType>('favorites');
-  const loading = false;
-  const error = null;
 
   // Get user's interested events (from user_interests table)
   const favoriteEvents = events.filter(event => 
@@ -86,7 +82,7 @@ export default function Favorites({
             
             {favoritePlaces.length > 0 && (
               <section>
-                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-900 dark:text-white">
                   <MapPin className="h-5 w-5 text-blue-500" />
                   Lugares Favoritos ({favoritePlaces.length})
                 </h3>
@@ -106,19 +102,17 @@ export default function Favorites({
         );
 
       case 'ai-suggested':
+        if (suggestedEvents.length === 0 && suggestedPlaces.length === 0) {
+          return <EmptyState type="no-ai-suggestions" />;
+        }
+        
         return (
           <section className="space-y-6">
-            <aside className="text-center py-4">
-              <Sparkles className="h-8 w-8 mx-auto text-purple-500 mb-2" />
-              <p className="text-sm text-gray-600">
-                Basado en tus intereses y favoritos
-              </p>
-            </aside>
-            
             {suggestedEvents.length > 0 && (
               <section>
-                <h3 className="text-lg font-semibold mb-4">
-                  Eventos recomendados para ti
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-900 dark:text-white">
+                  <Sparkles className="h-5 w-5 text-purple-500" />
+                  Eventos recomendados para ti ({suggestedEvents.length})
                 </h3>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {suggestedEvents.map((event: EventWithStatus) => (
@@ -134,8 +128,9 @@ export default function Favorites({
             
             {suggestedPlaces.length > 0 && (
               <section>
-                <h3 className="text-lg font-semibold mb-4">
-                  Lugares que podrían gustarte
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-900 dark:text-white">
+                  <MapPin className="h-5 w-5 text-purple-500" />
+                  Lugares que podrían gustarte ({suggestedPlaces.length})
                 </h3>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {suggestedPlaces.map((place: Place) => (
@@ -153,12 +148,17 @@ export default function Favorites({
         );
 
       case 'popular':
+        if (popularEvents.length === 0 && popularPlaces.length === 0) {
+          return <EmptyState type="no-popular" />;
+        }
+        
         return (
           <section className="space-y-6">
             {popularEvents.length > 0 && (
               <section>
-                <h3 className="text-lg font-semibold mb-4">
-                  Eventos Populares
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-900 dark:text-white">
+                  <TrendingUp className="h-5 w-5 text-orange-500" />
+                  Eventos Populares ({popularEvents.length})
                 </h3>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {popularEvents.map((event: EventWithStatus) => (
@@ -174,8 +174,9 @@ export default function Favorites({
             
             {popularPlaces.length > 0 && (
               <section>
-                <h3 className="text-lg font-semibold mb-4">
-                  Lugares Mejor Valorados
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-900 dark:text-white">
+                  <MapPin className="h-5 w-5 text-orange-500" />
+                  Lugares Mejor Valorados ({popularPlaces.length})
                 </h3>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {popularPlaces.map((place: Place) => (
@@ -199,20 +200,8 @@ export default function Favorites({
 
   return (
     <main className="space-y-6">
-      {error && <ErrorBanner message={error} />}
-
       <RecommendationTabs activeType={activeType} onTypeChange={setActiveType} />
-
-      {/* Content */}
-      {loading ? (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-80 animate-pulse rounded-xl bg-gray-200/70" />
-          ))}
-        </div>
-      ) : (
-        renderContent()
-      )}
+      {renderContent()}
     </main>
   );
 }

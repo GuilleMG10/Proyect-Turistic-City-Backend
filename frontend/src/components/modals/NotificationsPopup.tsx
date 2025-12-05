@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { X, Bell, BellOff, Trash2, Calendar, Clock } from 'lucide-react';
+import { useModalEscape } from '../../hooks/useModalEscape';
 import {
   getStoredNotifications,
   markNotificationRead,
@@ -28,18 +29,7 @@ export default function NotificationsPopup({ isOpen, onClose }: Props) {
   };
 
   // Handle escape key
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
-        onClose();
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener('keydown', handleEscape);
-      return () => document.removeEventListener('keydown', handleEscape);
-    }
-  }, [isOpen, onClose]);
+  useModalEscape(isOpen, onClose);
 
   const handleMarkRead = (notificationId: string) => {
     markNotificationRead(notificationId);
@@ -78,13 +68,13 @@ export default function NotificationsPopup({ isOpen, onClose }: Props) {
 
   const getNotificationTypeColor = (type: string): string => {
     switch (type) {
-      case '24h': return 'bg-blue-100 text-blue-800';
-      case '5h': return 'bg-yellow-100 text-yellow-800';
-      case '1h': return 'bg-orange-100 text-orange-800';
-      case '10min': return 'bg-red-100 text-red-800';
-      case 'start': return 'bg-green-100 text-green-800';
-      case '1h_after': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case '24h': return 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300';
+      case '5h': return 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300';
+      case '1h': return 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300';
+      case '10min': return 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300';
+      case 'start': return 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300';
+      case '1h_after': return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300';
+      default: return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300';
     }
   };
 

@@ -13,6 +13,15 @@ ai/package-lock.json
 ai/.env
 ai/chromadb/*
 
+assistant/node_modules/
+assistant/dist/
+assistant/package-lock.json
+assistant/.env
+assistant/deps/chromadb/*
+assistant/coverage/
+assistant/assistant.log
+assistant/README.md
+
 # Build files
 frontend/dist/
 frontend/build/

@@ -131,9 +131,15 @@ export class ApiService {
       
       if (!response.ok) {
         // Handle 401 Unauthorized (expired token)
+        // Only trigger logout if we actually had a token that was rejected
         if (response.status === 401) {
-          this.handleExpiredToken();
-          throw new Error('Session expired. Please login again.');
+          if (token) {
+            // We had a token but it was rejected - session expired
+            this.handleExpiredToken();
+            throw new Error('Session expired. Please login again.');
+          }
+          // No token was sent - just throw error without logging out
+          throw new Error('Authentication required');
         }
         throw new Error(`HTTP error! status: ${response.status}`);
       }

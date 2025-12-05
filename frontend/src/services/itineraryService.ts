@@ -58,7 +58,10 @@ export class ItineraryService {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ prompt }),
+        body: JSON.stringify({ 
+          prompt,
+          skipMemory: true, // Don't save itinerary prompts to chat memory
+        }),
       });
 
       if (!response.ok) {
@@ -79,9 +82,19 @@ export class ItineraryService {
 
           for (const line of lines) {
             if (line.startsWith('data: ')) {
-              const data = line.slice(6);
+              let data = line.slice(6);
               if (data === '[DONE]') break;
-              if (data.trim()) {
+              
+              // Parse JSON-encoded data
+              if (data.startsWith('"')) {
+                try {
+                  data = JSON.parse(data);
+                } catch {
+                  // Use as-is if parsing fails
+                }
+              }
+              
+              if (data && data.trim()) {
                 fullResponse += data;
                 if (onProgress) {
                   onProgress(data);
@@ -111,62 +124,66 @@ export class ItineraryService {
     const preferences = request.preferences.join(', ');
     const pace = request.pace || 'moderate';
     
-    // Format places information
-    const placesInfo = places
+    // Filter places by user preferences to reduce prompt size
+    const preferenceSet = new Set(request.preferences.map(p => p.toLowerCase()));
+    const filteredPlaces = places
       .filter(p => p.active)
-      .map(p => `- ${p.name} (${p.category}, Precio: Bs.${p.price}, Ubicación: ${p.location}, Lat: ${p.latitude}, Lng: ${p.longitude})`)
+      .filter(p => {
+        // Include if category matches any preference, or if it's a general interest (Gastronómico, Recreativo)
+        const category = (p.category || '').toLowerCase();
+        return preferenceSet.has(category) || 
+               preferenceSet.size === 0 || 
+               ['gastronómico', 'recreativo'].includes(category);
+      })
+      .slice(0, 20); // Limit to 20 places max to keep prompt size manageable
+    
+    // Format places information - include ID and handle undefined prices
+    const placesInfo = filteredPlaces
+      .map(p => {
+        const price = p.price != null && !isNaN(p.price) ? `Bs.${p.price}` : 'Gratis';
+        return `- ID:${p.id} | ${p.name} (${p.category}, Precio: ${price}, Ubicación: ${p.location})`;
+      })
       .join('\n');
 
-    // Format events information
+    // Format events information - include ID and handle undefined prices
     const eventsInfo = events.length > 0
-      ? events.map(e => `- ${e.name} (${e.category}, Precio: Bs.${e.price}, Ubicación: ${e.location}, Fecha: ${e.event_date})`)
-          .join('\n')
+      ? events.map(e => {
+          const price = e.price != null && !isNaN(e.price) ? `Bs.${e.price}` : 'Gratis';
+          return `- ID:${e.id} | ${e.name} (${e.category}, Precio: ${price}, Ubicación: ${e.location})`;
+        }).join('\n')
       : 'No hay eventos disponibles para esta fecha.';
 
-    return `Eres un asistente turístico experto en Cochabamba, Bolivia. Tu tarea es crear un itinerario optimizado para un turista.
+    return `Eres un asistente turístico experto en Cochabamba, Bolivia. Debes crear un itinerario para un turista.
 
-**DATOS DEL TURISTA:**
+DATOS DEL TURISTA:
 - Fecha: ${request.date}
 - Horario: de ${request.start_time} a ${request.end_time}
 - Presupuesto: Bs.${request.budget}
 - Preferencias: ${preferences}
-- Ritmo del tour: ${pace} (${pace === 'relaxed' ? 'más tiempo en cada lugar' : pace === 'moderate' ? 'balance entre visitas y descanso' : 'máximo de lugares posible'})
-${request.starting_point ? `- Punto de inicio: Lat ${request.starting_point.latitude}, Lng ${request.starting_point.longitude}` : ''}
+- Ritmo: ${pace === 'relaxed' ? 'Relajado (más tiempo en cada lugar)' : pace === 'moderate' ? 'Moderado (balance entre visitas y descanso)' : 'Intenso (máximo de lugares posible)'}
 
-**LUGARES DISPONIBLES:**
+LUGARES DISPONIBLES (usa el número ID para referenciar):
 ${placesInfo}
 
-**EVENTOS DISPONIBLES:**
+EVENTOS DISPONIBLES:
 ${eventsInfo}
 
-**INSTRUCCIONES:**
-1. Selecciona lugares y/o eventos que se ajusten a las preferencias del turista
-2. Optimiza la ruta geográficamente para minimizar desplazamientos
-3. Respeta el presupuesto total (suma de todos los costos debe ser ≤ Bs.${request.budget})
-4. Distribuye el tiempo según el ritmo seleccionado
-5. Incluye tiempo de desplazamiento entre ubicaciones
-6. Proporciona una breve nota explicativa para cada parada
+INSTRUCCIONES:
+1. Selecciona 4-6 lugares que coincidan con las preferencias
+2. Usa el ID numérico de cada lugar en "item_id"
+3. Los lugares con precio "Gratis" tienen costo 0
+4. Incluye tiempos realistas (1-2 horas por lugar)
+5. Empieza desde ${request.start_time}
 
-**FORMATO DE RESPUESTA (JSON):**
-Debes responder ÚNICAMENTE con un objeto JSON válido, sin texto adicional antes o después. El formato debe ser exactamente así:
-
+RESPONDE SOLO CON ESTE JSON (sin texto adicional):
 {
   "items": [
-    {
-      "type": "place" o "event",
-      "item_id": ID_del_lugar_o_evento,
-      "start_time": "HH:MM",
-      "end_time": "HH:MM",
-      "estimated_cost": costo_en_bolivianos,
-      "notes": "Breve descripción de por qué incluir esta parada"
-    }
+    {"type": "place", "item_id": 1, "start_time": "09:00", "end_time": "10:30", "estimated_cost": 0, "notes": "Descripción breve"}
   ],
-  "total_cost": suma_total_de_costos,
-  "total_duration": "X horas Y minutos",
-  "route_optimization": "Explicación breve de cómo optimizaste la ruta"
-}
-
-IMPORTANTE: Responde SOLO con el JSON, sin texto adicional.`;
+  "total_cost": 0,
+  "total_duration": "6 horas",
+  "route_optimization": "Ruta optimizada por cercanía"
+}`;
   }
 
   /**
@@ -181,22 +198,39 @@ IMPORTANTE: Responde SOLO con el JSON, sin texto adicional.`;
       // Try to find JSON in the response
       const jsonMatch = response.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
-        throw new Error('No JSON found in AI response');
+        throw new Error('No se encontró JSON en la respuesta del asistente');
       }
 
       const parsed = JSON.parse(jsonMatch[0]);
       
-      // Validate and enrich the response
-      const enrichedItems = parsed.items.map((item: { type: string; item_id: number; [key: string]: unknown }) => {
-        if (item.type === 'place') {
-          const place = places.find(p => p.id === item.item_id);
-          if (!place) throw new Error(`Place with ID ${item.item_id} not found`);
-        } else if (item.type === 'event') {
-          const event = events.find(e => e.id === item.item_id);
-          if (!event) throw new Error(`Event with ID ${item.item_id} not found`);
-        }
-        return item;
-      });
+      // Check if items array is empty
+      if (!parsed.items || parsed.items.length === 0) {
+        throw new Error('El asistente no pudo generar un itinerario con los criterios especificados. Intenta con diferentes preferencias o un presupuesto mayor.');
+      }
+      
+      // Validate and enrich the response - filter out invalid items instead of throwing
+      const enrichedItems = parsed.items
+        .filter((item: { type: string; item_id: number; [key: string]: unknown }) => {
+          if (item.type === 'place') {
+            const place = places.find(p => p.id === item.item_id);
+            if (!place) {
+              console.warn(`Place with ID ${item.item_id} not found, skipping`);
+              return false;
+            }
+          } else if (item.type === 'event') {
+            const event = events.find(e => e.id === item.item_id);
+            if (!event) {
+              console.warn(`Event with ID ${item.item_id} not found, skipping`);
+              return false;
+            }
+          }
+          return true;
+        });
+      
+      // If all items were filtered out, throw an error
+      if (enrichedItems.length === 0) {
+        throw new Error('No se pudieron encontrar los lugares sugeridos por el asistente. Intenta generar de nuevo.');
+      }
 
       return {
         items: enrichedItems,
@@ -207,7 +241,10 @@ IMPORTANTE: Responde SOLO con el JSON, sin texto adicional.`;
     } catch (error) {
       console.error('Error parsing AI response:', error);
       console.log('Raw response:', response);
-      throw new Error('Failed to parse AI response. The AI might have returned an invalid format.');
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error('Hubo un problema al mostrarte las respuestas del asistente. Por favor intenta de nuevo.');
     }
   }
 

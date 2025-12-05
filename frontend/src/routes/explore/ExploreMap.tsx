@@ -38,7 +38,7 @@ export default function ExploreMap() {
       <h2 id="mapa-heading" className="sr-only">Mapa de Lugares y Eventos</h2>
       
       {/* Floating Controls */}
-      <div className="absolute top-4 left-4 z-[400] flex flex-col gap-2 w-full max-w-xs pointer-events-none">
+      <div className="absolute top-4 left-4 z-[40] flex flex-col gap-2 w-full max-w-xs pointer-events-none">
         <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-md p-1.5 rounded-xl shadow-lg border border-gray-200/50 dark:border-gray-700/50 flex items-center gap-1 pointer-events-auto w-fit">
           <button
             onClick={() => setShowPlacesOnMap(!showPlacesOnMap)}

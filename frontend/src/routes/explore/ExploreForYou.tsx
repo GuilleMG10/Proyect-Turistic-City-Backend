@@ -7,7 +7,6 @@ export default function ExploreForYou() {
     events, 
     places, 
     openEventModal, 
-    toggleEventInterest, 
     openPlaceModal, 
     toggleFavorite, 
     user 
@@ -20,7 +19,6 @@ export default function ExploreForYou() {
         events={events}
         places={places}
         onEventView={openEventModal}
-        onEventInterest={toggleEventInterest}
         onPlaceView={openPlaceModal}
         onPlaceInterest={(p) => user && toggleFavorite(user.id, p.id)}
       />

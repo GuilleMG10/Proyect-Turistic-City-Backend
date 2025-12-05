@@ -15,7 +15,7 @@ export default function Profile() {
   const isAdmin = user.role_id === 1;
 
   return (
-    <div className="space-y-8 max-w-5xl mx-auto pb-10">
+    <div className="space-y-8 max-w-5xl mx-auto pb-10 pt-2">
       {/* Profile Header Card */}
       <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl dark:shadow-gray-900/50 overflow-hidden border border-gray-100 dark:border-gray-700 relative group">
         {/* Background Banner */}
@@ -29,7 +29,7 @@ export default function Profile() {
           <div className="flex flex-col md:flex-row items-start md:items-end gap-6 -mt-20 mb-6">
             {/* Avatar */}
             <div className="relative">
-              <div className="h-40 w-40 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-br from-cyan-500 to-blue-600 shadow-2xl ring-4 ring-white dark:ring-gray-800 z-10">
+              <div className="h-40 w-40 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-full flex items-center justify-center text-6xl font-bold text-white shadow-2xl ring-4 ring-white dark:ring-gray-800 z-10">
                 {user.name.charAt(0).toUpperCase()}
               </div>
               {isAdmin && (
@@ -91,11 +91,13 @@ export default function Profile() {
                 <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Miembro desde</span>
               </div>
               <p className="text-gray-900 dark:text-white font-semibold">
-                {new Date(user.created_at).toLocaleDateString('es-ES', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                })}
+                {user.created_at && !isNaN(new Date(user.created_at).getTime())
+                  ? new Date(user.created_at).toLocaleDateString('es-ES', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })
+                  : 'No disponible'}
               </p>
             </div>
           </div>

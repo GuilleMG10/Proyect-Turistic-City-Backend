@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, User, Lock, Mail, Calendar } from 'lucide-react';
+import { useModalEscape } from '../../hooks/useModalEscape';
 import { useUserStore } from '../../store/userStore';
 
 type Props = {
@@ -21,6 +22,9 @@ export default function LoginModal({ isOpen, onClose }: Props) {
 
   const { login, register, isLoading, error } = useUserStore();
   const [localError, setLocalError] = useState<string | null>(null);
+
+  // Handle escape key
+  useModalEscape(isOpen, onClose);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -200,7 +204,7 @@ export default function LoginModal({ isOpen, onClose }: Props) {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/40 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 mt-2"
+            className="w-full bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-3.5 rounded-xl transition-all shadow-cyan-500/30 hover:shadow-cyan-500/40 disabled:shadow-none active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 mt-2"
           >
             {isLoading ? (
               <span className="flex items-center justify-center gap-2">
@@ -223,7 +227,7 @@ export default function LoginModal({ isOpen, onClose }: Props) {
               <div className="w-full border-t border-gray-200 dark:border-gray-700"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white dark:bg-gray-800 text-gray-500">o</span>
+              <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">o</span>
             </div>
           </div>
           

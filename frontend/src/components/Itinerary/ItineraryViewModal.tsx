@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { X, Save, Edit2, MapPin, Navigation, Calendar, Clock } from "lucide-react";
+import { useDraggableModal } from "../../hooks/useDraggableModal";
+import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
 import type { Itinerary, ItineraryItem, Place, EventWithStatus } from "../../types";
 import ItineraryTimeline from "./ItineraryTimeline";
 import ItinerarySummary from "./ItinerarySummary";
@@ -25,6 +27,16 @@ export default function ItineraryViewModal({
   availableEvents = []
 }: Props) {
   const [isEditMode, setIsEditMode] = useState(false);
+
+  // Lock body scroll when modal is open
+  useBodyScrollLock(isOpen);
+
+  // Draggable modal for mobile
+  const { dragHandleProps, modalStyle, isDragging } = useDraggableModal({
+    isOpen,
+    onClose,
+    threshold: 25,
+  });
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -61,19 +73,33 @@ export default function ItineraryViewModal({
   return (
     <>
       <div 
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end md:items-center justify-center z-50 md:p-4"
         onClick={(e) => {
           if (e.target === e.currentTarget) onClose();
         }}
       >
-        <div className="bg-gray-50 dark:bg-gray-900 rounded-2xl w-full max-w-5xl max-h-[90vh] overflow-y-auto shadow-2xl animate-in slide-in-from-bottom duration-300 md:animate-in md:fade-in md:zoom-in-95">
+        <div 
+          className="bg-gray-50 dark:bg-gray-900 w-full md:rounded-2xl md:max-w-5xl h-[95vh] md:h-auto md:max-h-[90vh] overflow-y-auto shadow-2xl animate-in slide-in-from-bottom duration-300 rounded-t-3xl md:rounded-2xl"
+          data-modal-content
+          style={modalStyle}
+        >
+          {/* Mobile drag handle */}
+          <div 
+            className="sticky top-0 z-30 md:hidden bg-gradient-to-r from-blue-600 to-blue-800 rounded-t-3xl cursor-grab active:cursor-grabbing"
+            {...dragHandleProps}
+          >
+            <div className="flex justify-center py-3">
+              <div className={`w-12 h-1.5 rounded-full transition-colors ${isDragging ? 'bg-white/60' : 'bg-white/30'}`} />
+            </div>
+          </div>
+
           {/* Header */}
-          <header className="bg-gradient-to-r from-primary-600 to-primary-800 text-white p-4 md:p-6 rounded-t-2xl relative overflow-hidden">
-            <div className="absolute inset-0 bg-white/10 backdrop-blur-sm" />
+          <header className="bg-gradient-to-r from-blue-600 to-blue-800 text-white p-4 md:p-6 md:rounded-t-2xl relative overflow-hidden -mt-2 md:mt-0">
+            <div className="absolute inset-0 bg-white/5" />
             <div className="flex items-center justify-between relative z-10">
               <div className="flex-1 min-w-0">
-                <h2 className="text-xl md:text-2xl font-bold mb-2 truncate">{itinerary.name}</h2>
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs md:text-sm opacity-90">
+                <h2 className="text-xl md:text-2xl font-bold mb-2 truncate text-white">{itinerary.name}</h2>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs md:text-sm text-white/90">
                   <span className="flex items-center gap-1.5">
                     <Calendar className="h-4 w-4" />
                     <span className="capitalize">
@@ -94,7 +120,7 @@ export default function ItineraryViewModal({
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setIsEditMode(true)}
-                  className="p-2.5 hover:bg-white/20 rounded-xl transition-colors"
+                  className="p-2.5 hover:bg-white/20 rounded-xl transition-colors text-white"
                   aria-label="Editar itinerario"
                   title="Editar"
                 >
@@ -102,7 +128,7 @@ export default function ItineraryViewModal({
                 </button>
                 <button
                   onClick={onClose}
-                  className="p-2.5 hover:bg-white/20 rounded-xl transition-colors"
+                  className="hidden md:block p-2.5 hover:bg-white/20 rounded-xl transition-colors text-white"
                   aria-label="Cerrar modal"
                 >
                   <X className="h-6 w-6" />

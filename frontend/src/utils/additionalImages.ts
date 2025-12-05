@@ -6,8 +6,8 @@ interface PlaceImages {
   [placeId: number]: string[]; // Array of base64 image strings
 }
 
-// Get all additional images
-export function getAdditionalImages(): PlaceImages {
+// Get all additional images (internal use)
+function getAdditionalImages(): PlaceImages {
   try {
     const stored = localStorage.getItem(ADDITIONAL_IMAGES_KEY);
     return stored ? JSON.parse(stored) : {};

@@ -44,7 +44,7 @@ export default function UserMenu({ onLoginClick }: Props) {
       <div className="relative" ref={menuRef}>
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center gap-2 pl-1 pr-3 py-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-cyan-500 shadow-sm hover:shadow-md"
+          className="flex items-center gap-2 p-1 sm:pl-1 sm:pr-3 sm:py-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-cyan-500 shadow-sm hover:shadow-md"
           aria-label="Menú de invitado"
           aria-expanded={isOpen}
         >
@@ -95,7 +95,7 @@ export default function UserMenu({ onLoginClick }: Props) {
     <div className="relative" ref={menuRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 pl-1 pr-3 py-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-cyan-500 shadow-sm hover:shadow-md"
+        className="flex items-center gap-2 p-1 sm:pl-1 sm:pr-3 sm:py-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-cyan-500 shadow-sm hover:shadow-md"
         aria-label="Menú de usuario"
         aria-expanded={isOpen}
       >

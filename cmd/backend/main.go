@@ -70,10 +70,18 @@ func main() {
 	placeFavoriteService := service.NewPlaceFavoriteService(placeFavoriteRepo)
 	placeFavoriteHandler := handler.NewPlaceFavoriteHandler(placeFavoriteService)
 
+	userPreferenceRepo := repository.NewUserPreferenceRepository(db)
+	userPreferenceService := service.NewUserPreferenceService(userPreferenceRepo)
+	userPreferenceHandler := handler.NewUserPreferenceHandler(userPreferenceService)
+
+	itineraryRepo := repository.NewItineraryRepository(db)
+	itineraryService := service.NewItineraryService(itineraryRepo)
+	itineraryHandler := handler.NewItineraryHandler(itineraryService)
+
 	router := gin.Default()
 	router.Use(middleware.CORS())
 
-	api.RegisterRoutes(router, userHandler, placeHandler, reviewHandler, eventHandler, iaHandler, userInterestHandler, placeFavoriteHandler)
+	api.RegisterRoutes(router, userHandler, placeHandler, reviewHandler, eventHandler, iaHandler, userInterestHandler, placeFavoriteHandler, userPreferenceHandler, itineraryHandler)
 
 	if err := router.Run(":8081"); err != nil {
 		log.Fatalf("Could not start server: %v", err)
