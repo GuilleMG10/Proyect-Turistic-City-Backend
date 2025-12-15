@@ -70,7 +70,7 @@ export default function Explore() {
   useEffect(() => {
     const tabKey = activeTab === 'explorar' || activeTab === 'para-ti' ? 'explorar' : 'eventos';
     const rememberedCategory = categoryMemory[tabKey];
-    
+
     if (availableCategories.includes(rememberedCategory)) {
       setSelectedCategory(rememberedCategory);
     } else {
@@ -114,7 +114,7 @@ export default function Explore() {
     if (error) return 'Error al cargar el contenido. Por favor, intenta de nuevo.';
     if (searchQuery) return `Búsqueda aplicada: ${searchQuery}`;
     if (selectedCategory !== 'Todos') return `Categoría seleccionada: ${selectedCategory}`;
-    
+
     const tabNames = {
       'explorar': 'lugares',
       'eventos': 'eventos',
@@ -130,7 +130,7 @@ export default function Explore() {
 
     return `Mostrando ${itemCount} ${tabNames[activeTab]} en la pestaña ${tabNames[activeTab]}.`;
   }, [loading, error, searchQuery, selectedCategory, activeTab, filteredPlaces.length, filteredEvents.length]);
-  
+
   const handleFormSuccess = () => {
     refetch();
     setIsPlaceFormOpen(false);
@@ -138,11 +138,11 @@ export default function Explore() {
   };
 
   // Lock body scroll when any modal is open
-  const isAnyModalOpen = 
-    modalState.isEventModalOpen || 
-    modalState.isPlaceModalOpen || 
-    isPlaceFormOpen || 
-    isEventFormOpen || 
+  const isAnyModalOpen =
+    modalState.isEventModalOpen ||
+    modalState.isPlaceModalOpen ||
+    isPlaceFormOpen ||
+    isEventFormOpen ||
     modalState.isFilterModalOpen;
   useBodyScrollLock(isAnyModalOpen);
 
@@ -226,11 +226,9 @@ export default function Explore() {
       <FilterModal
         isOpen={modalState.isFilterModalOpen}
         onClose={modalState.closeFilterModal}
-        onApplyFilters={(newFilters) => {
-          setFilters(newFilters);
-          console.log('Applied filters:', newFilters);
-        }}
+        onApplyFilters={setFilters}
         currentFilters={filters}
+        viewType={activeTab === 'eventos' ? 'events' : 'places'}
       />
 
       {/* Floating Action Button for Creation */}

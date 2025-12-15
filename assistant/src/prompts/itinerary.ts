@@ -25,6 +25,11 @@ INSTRUCCIONES OBLIGATORIAS Y ESTRICTAS:
 - Incluye los lugares obligatorios que el usuario quiere incluir en "placesAlreadySelected" solamente si es posible según horarios.
 - Cada lugar tiene un tiempo estimado de visita: puedes igualarlo o reducirlo al crear el itinerario, pero nunca excederlo.
 
+NOTA IMPORTANTE SOBRE TIPOS:
+- Los elementos con tipo "lugar" son ubicaciones permanentes (monumentos, plazas, museos, etc.) y generalmente son GRATIS.
+- Los elementos con tipo "evento" son actividades temporales con fecha específica y pueden tener COSTO DE ENTRADA.
+- Al calcular el presupuesto, considera principalmente los costos de los eventos.
+
 LUGARES CERCANOS:
 {{NAMES_NEARBY}}
 
@@ -34,7 +39,7 @@ LUGARES OBLIGATORIOS QUE EL USUARIO QUIERE INCLUIR:
 LUGARES FAVORITOS DEL USUARIO:
 {{NAMES_INTERESTS}}
 
-INFORMACIÓN COMPLETA DE LOS LUGARES DISPONIBLES (RAG):
+INFORMACIÓN COMPLETA DE LOS LUGARES Y EVENTOS DISPONIBLES (RAG):
 {{PLACES_DETAILS}}
 
 DATOS DEL USUARIO:
@@ -50,6 +55,7 @@ Debes responder EXACTAMENTE con esta estructura JSON, sin agregar ni quitar clav
   "itinerario": [
     {
       "lugar": "",
+      "tipo": "",
       "dia_sugerido": "",
       "horario_sugerido": "",
       "costo_estimado": "",

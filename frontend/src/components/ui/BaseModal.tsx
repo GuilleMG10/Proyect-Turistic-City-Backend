@@ -8,21 +8,21 @@ type BaseModalProps = {
   isOpen: boolean;
   onClose: () => void;
   children: ReactNode;
-  
+
   // Optional customization
   title?: string;
   titleId?: string;
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '4xl';
   showCloseButton?: boolean;
-  
+
   // Header customization
   headerContent?: ReactNode;
   headerClassName?: string;
   headerGradient?: boolean;
-  
+
   // Drag handle customization for mobile
   dragHandleClassName?: string;
-  
+
   // Z-index control for stacking modals
   zIndex?: number;
 };
@@ -96,16 +96,15 @@ export default function BaseModal({
       >
         {/* Mobile drag handle */}
         <div
-          className={`sticky top-0 z-30 md:hidden rounded-t-3xl cursor-grab active:cursor-grabbing ${dragHandleClassName || defaultDragHandleClass}`}
+          className={`sticky top-0 z-30 md:hidden rounded-t-3xl cursor-grab active:cursor-grabbing pt-2 ${dragHandleClassName || defaultDragHandleClass}`}
           {...dragHandleProps}
         >
           <div className="flex justify-center py-3">
             <div
-              className={`w-12 h-1.5 rounded-full transition-colors ${
-                isDragging
-                  ? headerGradient ? 'bg-white/60' : 'bg-gray-400 dark:bg-gray-500'
-                  : headerGradient ? 'bg-white/30' : 'bg-gray-300 dark:bg-gray-600'
-              }`}
+              className={`w-12 h-1.5 rounded-full transition-colors ${isDragging
+                ? headerGradient ? 'bg-white/60' : 'bg-gray-400 dark:bg-gray-500'
+                : headerGradient ? 'bg-white/30' : 'bg-gray-300 dark:bg-gray-600'
+                }`}
             />
           </div>
         </div>
@@ -113,31 +112,29 @@ export default function BaseModal({
         {/* Optional Header */}
         {(title || headerContent) && (
           <header
-            className={`relative overflow-hidden ${
-              headerGradient
-                ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white -mt-3 md:mt-0 md:rounded-t-2xl'
-                : 'bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700'
-            } ${headerClassName || 'p-6'}`}
+            className={`relative overflow-hidden ${headerGradient
+              ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white -mt-3 md:mt-0 md:rounded-t-2xl'
+              : 'bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700'
+              } ${headerClassName || 'p-6'}`}
           >
             {headerGradient && (
               <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10" />
             )}
-            
+
             <div className="relative flex items-center justify-between">
               {headerContent || (
                 <h2 id={titleId} className="text-2xl font-bold">
                   {title}
                 </h2>
               )}
-              
+
               {showCloseButton && (
                 <button
                   onClick={onClose}
-                  className={`hidden md:flex p-2 rounded-full transition-all focus:outline-none focus:ring-2 ${
-                    headerGradient
-                      ? 'hover:bg-white/20 text-white/90 hover:text-white focus:ring-white/50'
-                      : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 focus:ring-gray-200'
-                  }`}
+                  className={`hidden md:flex p-2 rounded-full transition-all focus:outline-none focus:ring-2 ${headerGradient
+                    ? 'hover:bg-white/20 text-white/90 hover:text-white focus:ring-white/50'
+                    : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 focus:ring-gray-200'
+                    }`}
                   aria-label="Cerrar"
                 >
                   <X className="h-6 w-6" />
@@ -156,11 +153,11 @@ export default function BaseModal({
 /**
  * Modal content wrapper with consistent padding
  */
-export function ModalContent({ 
-  children, 
-  className = '' 
-}: { 
-  children: ReactNode; 
+export function ModalContent({
+  children,
+  className = ''
+}: {
+  children: ReactNode;
   className?: string;
 }) {
   return (
@@ -173,11 +170,11 @@ export function ModalContent({
 /**
  * Modal footer with action buttons
  */
-export function ModalFooter({ 
-  children, 
-  className = '' 
-}: { 
-  children: ReactNode; 
+export function ModalFooter({
+  children,
+  className = ''
+}: {
+  children: ReactNode;
   className?: string;
 }) {
   return (

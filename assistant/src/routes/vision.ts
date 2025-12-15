@@ -136,7 +136,10 @@ vision_route.post("/profile", async (c) => {
 
 			s.write(`data: ${STREAM_DONE}\n\n`);
 
-			log.debug({ response_length: full_response.length }, "Profile vision complete");
+			log.debug(
+				{ response_length: full_response.length },
+				"Profile vision complete",
+			);
 		} catch (error) {
 			const err_msg = error instanceof Error ? error.message : String(error);
 			log.error({ error: err_msg }, "Error processing profile vision request");

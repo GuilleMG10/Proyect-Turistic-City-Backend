@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, Star, MapPin, DollarSign, Users } from "lucide-react";
+import { X, Star, DollarSign } from "lucide-react";
 import BaseModal from "../ui/BaseModal";
 
 type FilterOptions = {
@@ -10,14 +10,17 @@ type FilterOptions = {
   zones: string[];
 };
 
+type ViewType = 'places' | 'events';
+
 type Props = {
   isOpen: boolean;
   onClose: () => void;
   onApplyFilters: (filters: FilterOptions) => void;
   currentFilters: FilterOptions;
+  viewType?: ViewType; // 'places' = hide zones, age, price | 'events' = hide zones, age
 };
 
-export default function FilterModal({ isOpen, onClose, onApplyFilters, currentFilters }: Props) {
+export default function FilterModal({ isOpen, onClose, onApplyFilters, currentFilters, viewType = 'places' }: Props) {
   const [filters, setFilters] = useState<FilterOptions>(currentFilters);
   const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
 
@@ -29,7 +32,6 @@ export default function FilterModal({ isOpen, onClose, onApplyFilters, currentFi
     setPrevIsOpen(false);
   }
 
-  const zones = ["Centro", "Norte", "Sur", "Este", "Oeste"];
   const priceRanges = [
     { label: "Gratis", min: 0, max: 0 },
     { label: "1-50 Bs", min: 1, max: 50 },
@@ -37,23 +39,6 @@ export default function FilterModal({ isOpen, onClose, onApplyFilters, currentFi
     { label: "101-200 Bs", min: 101, max: 200 },
     { label: "200+ Bs", min: 200, max: 1000 },
   ];
-  const ageRanges = [
-    { label: "Todas las edades", min: 0, max: 100 },
-    { label: "8+ años", min: 8, max: 100 },
-    { label: "12+ años", min: 12, max: 100 },
-    { label: "18+ años", min: 18, max: 100 },
-    { label: "21+ años", min: 21, max: 100 },
-  ];
-
-  const handleZoneToggle = (zone: string) => {
-    setFilters(prev => ({
-      ...prev,
-      zones: prev.zones.includes(zone)
-        ? prev.zones.filter(z => z !== zone)
-        : [...prev.zones, zone]
-    }));
-  };
-
   const handleApply = () => {
     onApplyFilters(filters);
     onClose();
@@ -101,7 +86,8 @@ export default function FilterModal({ isOpen, onClose, onApplyFilters, currentFi
     >
       {/* Content */}
       <section className="p-5 overflow-y-auto space-y-8" aria-label="Opciones de filtro">
-        {/* Zones */}
+        {/* Zones - hidden for both places and events views */}
+        {/* Keeping the code commented in case we add zone support later
         <fieldset>
           <legend className="flex items-center gap-2 font-semibold mb-4 text-gray-900 dark:text-white">
             <MapPin className="h-4 w-4 text-cyan-500" />
@@ -112,11 +98,10 @@ export default function FilterModal({ isOpen, onClose, onApplyFilters, currentFi
               <button
                 key={zone}
                 onClick={() => handleZoneToggle(zone)}
-                className={`flex-shrink-0 px-4 py-2 text-sm font-medium rounded-xl border transition-all focus:outline-none focus:ring-2 focus:ring-cyan-500 ${
-                  filters.zones.includes(zone)
-                    ? "bg-cyan-50 dark:bg-cyan-900/20 border-cyan-200 dark:border-cyan-800 text-cyan-700 dark:text-cyan-300 shadow-sm"
-                    : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-cyan-300 dark:hover:border-cyan-700 hover:bg-gray-50 dark:hover:bg-gray-700"
-                }`}
+                className={`flex-shrink-0 px-4 py-2 text-sm font-medium rounded-xl border transition-all focus:outline-none focus:ring-2 focus:ring-cyan-500 ${filters.zones.includes(zone)
+                  ? "bg-cyan-50 dark:bg-cyan-900/20 border-cyan-200 dark:border-cyan-800 text-cyan-700 dark:text-cyan-300 shadow-sm"
+                  : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-cyan-300 dark:hover:border-cyan-700 hover:bg-gray-50 dark:hover:bg-gray-700"
+                  }`}
                 aria-pressed={filters.zones.includes(zone)}
               >
                 {zone}
@@ -124,8 +109,10 @@ export default function FilterModal({ isOpen, onClose, onApplyFilters, currentFi
             ))}
           </nav>
         </fieldset>
+        */}
 
-        {/* Age Range */}
+        {/* Age Range - hidden for both places and events views */}
+        {/* Keeping the code commented in case we add age restrictions later
         <fieldset>
           <legend className="flex items-center gap-2 font-semibold mb-4 text-gray-900 dark:text-white">
             <Users className="h-4 w-4 text-cyan-500" />
@@ -135,17 +122,15 @@ export default function FilterModal({ isOpen, onClose, onApplyFilters, currentFi
             {ageRanges.map(range => {
               const isSelected = filters.ageRange[0] === range.min && filters.ageRange[1] === range.max;
               return (
-                <label 
+                <label
                   key={range.label}
-                  className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
-                    isSelected 
-                      ? "bg-cyan-50 dark:bg-cyan-900/20 border-cyan-200 dark:border-cyan-800" 
-                      : "border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
-                  }`}
+                  className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${isSelected
+                    ? "bg-cyan-50 dark:bg-cyan-900/20 border-cyan-200 dark:border-cyan-800"
+                    : "border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
+                    }`}
                 >
-                  <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${
-                    isSelected ? "border-cyan-500" : "border-gray-300 dark:border-gray-600"
-                  }`}>
+                  <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${isSelected ? "border-cyan-500" : "border-gray-300 dark:border-gray-600"
+                    }`}>
                     {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-cyan-500" />}
                   </div>
                   <input
@@ -163,45 +148,46 @@ export default function FilterModal({ isOpen, onClose, onApplyFilters, currentFi
             })}
           </div>
         </fieldset>
+        */}
 
-        {/* Price Range */}
-        <fieldset>
-          <legend className="flex items-center gap-2 font-semibold mb-4 text-gray-900 dark:text-white">
-            <DollarSign className="h-4 w-4 text-green-500" />
-            Rango de Precio
-          </legend>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {priceRanges.map(range => {
-              const isSelected = filters.priceRange[0] === range.min && filters.priceRange[1] === range.max;
-              return (
-                <label 
-                  key={range.label}
-                  className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
-                    isSelected 
-                      ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800" 
+        {/* Price Range - only shown for events */}
+        {viewType === 'events' && (
+          <fieldset>
+            <legend className="flex items-center gap-2 font-semibold mb-4 text-gray-900 dark:text-white">
+              <DollarSign className="h-4 w-4 text-green-500" />
+              Rango de Precio
+            </legend>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {priceRanges.map(range => {
+                const isSelected = filters.priceRange[0] === range.min && filters.priceRange[1] === range.max;
+                return (
+                  <label
+                    key={range.label}
+                    className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${isSelected
+                      ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800"
                       : "border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
-                  }`}
-                >
-                  <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${
-                    isSelected ? "border-green-500" : "border-gray-300 dark:border-gray-600"
-                  }`}>
-                    {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-green-500" />}
-                  </div>
-                  <input
-                    type="radio"
-                    name="priceRange"
-                    checked={isSelected}
-                    onChange={() => setFilters(prev => ({ ...prev, priceRange: [range.min, range.max] }))}
-                    className="sr-only"
-                  />
-                  <span className={`text-sm font-medium ${isSelected ? "text-green-900 dark:text-green-100" : "text-gray-700 dark:text-gray-300"}`}>
-                    {range.label}
-                  </span>
-                </label>
-              );
-            })}
-          </div>
-        </fieldset>
+                      }`}
+                  >
+                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${isSelected ? "border-green-500" : "border-gray-300 dark:border-gray-600"
+                      }`}>
+                      {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-green-500" />}
+                    </div>
+                    <input
+                      type="radio"
+                      name="priceRange"
+                      checked={isSelected}
+                      onChange={() => setFilters(prev => ({ ...prev, priceRange: [range.min, range.max] }))}
+                      className="sr-only"
+                    />
+                    <span className={`text-sm font-medium ${isSelected ? "text-green-900 dark:text-green-100" : "text-gray-700 dark:text-gray-300"}`}>
+                      {range.label}
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          </fieldset>
+        )}
 
         {/* Rating */}
         <fieldset>
@@ -214,11 +200,10 @@ export default function FilterModal({ isOpen, onClose, onApplyFilters, currentFi
               <button
                 key={rating}
                 onClick={() => setFilters(prev => ({ ...prev, minRating: rating }))}
-                className={`flex-shrink-0 flex items-center gap-1.5 px-4 py-2.5 rounded-xl border text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-amber-500 ${
-                  filters.minRating === rating
-                    ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-200 shadow-sm"
-                    : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
-                }`}
+                className={`flex-shrink-0 flex items-center gap-1.5 px-4 py-2.5 rounded-xl border text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-amber-500 ${filters.minRating === rating
+                  ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-200 shadow-sm"
+                  : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                  }`}
                 aria-pressed={filters.minRating === rating}
               >
                 <Star className={`h-4 w-4 ${filters.minRating === rating ? "fill-amber-500 text-amber-500" : "text-gray-400 dark:text-gray-500"}`} />

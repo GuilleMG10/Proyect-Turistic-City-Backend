@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import { LatLng, Icon } from 'leaflet';
 import type * as L from 'leaflet';
@@ -25,8 +25,8 @@ type Props = {
 };
 
 // Component to handle map clicks
-function LocationMarker({ position, onPositionChange }: { 
-  position: LatLng; 
+function LocationMarker({ position, onPositionChange }: {
+  position: LatLng;
   onPositionChange: (latlng: LatLng) => void;
 }) {
   useMapEvents({
@@ -61,7 +61,7 @@ export default function LocationPicker({ latitude, longitude, onLocationChange, 
   const handlePositionChange = (latlng: LatLng) => {
     setPosition(latlng);
     onLocationChange(latlng.lat, latlng.lng);
-    
+
     // Reverse geocoding to get address
     reverseGeocode(latlng.lat, latlng.lng);
   };
@@ -85,8 +85,7 @@ export default function LocationPicker({ latitude, longitude, onLocationChange, 
     }
   };
 
-  const handleSearch = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleSearchClick = async () => {
     if (!searchQuery.trim()) return;
 
     setIsSearching(true);
@@ -102,15 +101,15 @@ export default function LocationPicker({ latitude, longitude, onLocationChange, 
           }
         }
       );
-      
+
       const data = await response.json();
-      
+
       if (data && data.length > 0) {
         const result = data[0];
         const newPos = new LatLng(parseFloat(result.lat), parseFloat(result.lon));
         setPosition(newPos);
         onLocationChange(newPos.lat, newPos.lng, result.display_name);
-        
+
         // Center map on new position
         if (mapRef.current) {
           mapRef.current.setView(newPos, 15);
@@ -129,7 +128,7 @@ export default function LocationPicker({ latitude, longitude, onLocationChange, 
   return (
     <div className={className}>
       {/* Search Bar */}
-      <form onSubmit={handleSearch} onClick={(e) => e.stopPropagation()} className="mb-3">
+      <div className="mb-3" onClick={(e) => e.stopPropagation()}>
         <label htmlFor="location-search" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
           Buscar Ubicación
         </label>
@@ -140,6 +139,12 @@ export default function LocationPicker({ latitude, longitude, onLocationChange, 
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleSearchClick();
+                }
+              }}
               placeholder="Ej: Plaza Murillo, Cochabamba"
               className="w-full px-4 py-2.5 pl-10 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 dark:focus:ring-cyan-400 transition-all shadow-sm"
               disabled={isSearching}
@@ -148,10 +153,7 @@ export default function LocationPicker({ latitude, longitude, onLocationChange, 
           </div>
           <button
             type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              handleSearch(e as unknown as React.FormEvent<HTMLFormElement>);
-            }}
+            onClick={handleSearchClick}
             disabled={isSearching || !searchQuery.trim()}
             className="px-4 py-2.5 bg-cyan-600 dark:bg-cyan-700 text-white rounded-xl hover:bg-cyan-700 dark:hover:bg-cyan-800 focus:outline-none focus:ring-2 focus:ring-cyan-500 dark:focus:ring-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-all shadow-sm hover:shadow-md active:scale-95"
           >
@@ -174,7 +176,7 @@ export default function LocationPicker({ latitude, longitude, onLocationChange, 
             {searchError}
           </p>
         )}
-      </form>
+      </div>
 
       {/* Map */}
       <div className="border border-gray-300 dark:border-gray-600 rounded-xl overflow-hidden h-[300px] relative z-0 shadow-inner">

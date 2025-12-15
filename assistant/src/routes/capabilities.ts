@@ -7,7 +7,7 @@ export const capabilities_route = new Hono();
 
 capabilities_route.get("/", async (c) => {
 	const provider = get_provider();
-	
+
 	// Use actual capabilities for Ollama (checks if models are available)
 	let config = provider.config;
 	if (provider instanceof OllamaProvider) {

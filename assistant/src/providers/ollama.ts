@@ -11,7 +11,12 @@ import { THINKING_END, THINKING_START } from "../types/ai.js";
 const log = create_child_logger("ollama");
 
 // Ollama capability types from /api/show
-type OllamaCapability = "completion" | "thinking" | "vision" | "embedding" | "tools";
+type OllamaCapability =
+	| "completion"
+	| "thinking"
+	| "vision"
+	| "embedding"
+	| "tools";
 
 interface OllamaModelInfo {
 	capabilities: OllamaCapability[];
@@ -37,25 +42,36 @@ async function get_model_capabilities(
 		});
 
 		if (!response.ok) {
-			log.debug({ model: model_name, status: response.status }, "Model not found in Ollama");
+			log.debug(
+				{ model: model_name, status: response.status },
+				"Model not found in Ollama",
+			);
 			const info: OllamaModelInfo = { capabilities: [], available: false };
 			model_capabilities_cache.set(model_name, info);
 			return info;
 		}
 
-		const data = (await response.json()) as { capabilities?: OllamaCapability[] };
+		const data = (await response.json()) as {
+			capabilities?: OllamaCapability[];
+		};
 		const info: OllamaModelInfo = {
 			capabilities: data.capabilities || [],
 			available: true,
 		};
 
 		model_capabilities_cache.set(model_name, info);
-		log.debug({ model: model_name, capabilities: info.capabilities }, "Model capabilities cached");
+		log.debug(
+			{ model: model_name, capabilities: info.capabilities },
+			"Model capabilities cached",
+		);
 
 		return info;
 	} catch (err) {
 		log.warn(
-			{ model: model_name, error: err instanceof Error ? err.message : String(err) },
+			{
+				model: model_name,
+				error: err instanceof Error ? err.message : String(err),
+			},
 			"Could not fetch model capabilities",
 		);
 		return { capabilities: [], available: false };
@@ -90,29 +106,40 @@ export class OllamaProvider implements AIProvider {
 	private async check_capabilities(): Promise<void> {
 		// Check main model capabilities
 		const main_info = await get_model_capabilities(this.base_url, this.model);
-		
+
 		if (main_info.available) {
-			this.config.supports_thinking = main_info.capabilities.includes("thinking");
+			this.config.supports_thinking =
+				main_info.capabilities.includes("thinking");
 		}
 
 		// Check vision model if configured
 		if (this.vision_model) {
-			const vision_info = await get_model_capabilities(this.base_url, this.vision_model);
-			this.config.supports_vision = vision_info.available && vision_info.capabilities.includes("vision");
-			
+			const vision_info = await get_model_capabilities(
+				this.base_url,
+				this.vision_model,
+			);
+			this.config.supports_vision =
+				vision_info.available && vision_info.capabilities.includes("vision");
+
 			if (!vision_info.available) {
-				log.debug({ vision_model: this.vision_model }, "Vision model not available");
+				log.debug(
+					{ vision_model: this.vision_model },
+					"Vision model not available",
+				);
 			} else if (!vision_info.capabilities.includes("vision")) {
 				log.warn(
-					{ vision_model: this.vision_model, capabilities: vision_info.capabilities },
+					{
+						vision_model: this.vision_model,
+						capabilities: vision_info.capabilities,
+					},
 					"Configured vision model does not have vision capability",
 				);
 			}
 		}
 
 		log.info(
-			{ 
-				model: this.model, 
+			{
+				model: this.model,
 				vision_model: this.vision_model || "(none)",
 				supports_thinking: this.config.supports_thinking,
 				supports_vision: this.config.supports_vision,

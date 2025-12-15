@@ -15,7 +15,7 @@ export default defineConfig({
       'Cross-Origin-Embedder-Policy': 'cross-origin',
       'Cross-Origin-Opener-Policy': 'same-origin'
     },
-    allowedHosts: ['culturistas.stuns.org', 'localhost:8081']
+    allowedHosts: ['culturistas.gfplace.com', 'localhost:8081']
   },
   build: {
     target: 'esnext',

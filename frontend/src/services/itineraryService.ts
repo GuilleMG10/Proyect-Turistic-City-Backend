@@ -1,8 +1,8 @@
 import { ApiService } from './api';
-import type { 
+import type {
   Itinerary,
   ItineraryItem,
-  ItineraryGenerateRequest, 
+  ItineraryGenerateRequest,
   GeneratedItinerary,
   Place,
   EventWithStatus
@@ -14,7 +14,7 @@ export class ItineraryService {
   private static getAuthToken(): string | null {
     const userStorage = localStorage.getItem('user-storage');
     if (!userStorage) return null;
-    
+
     try {
       const parsed = JSON.parse(userStorage);
       return parsed.state?.token || null;
@@ -43,10 +43,12 @@ export class ItineraryService {
     ]);
 
     // Filter events for the selected date
-    const selectedDate = new Date(request.date).toDateString();
-    const availableEvents = events.filter(event => 
-      new Date(event.event_date).toDateString() === selectedDate
-    );
+    // Normalize dates to YYYY-MM-DD for reliable comparison
+    const selectedDateStr = request.date.split('T')[0]; // Get just the date part
+    const availableEvents = events.filter(event => {
+      const eventDateStr = event.event_date.split('T')[0]; // Get just the date part
+      return eventDateStr === selectedDateStr;
+    });
 
     // Build the AI prompt
     const prompt = this.buildItineraryPrompt(request, places, availableEvents);
@@ -58,7 +60,7 @@ export class ItineraryService {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           prompt,
           skipMemory: true, // Don't save itinerary prompts to chat memory
         }),
@@ -84,7 +86,7 @@ export class ItineraryService {
             if (line.startsWith('data: ')) {
               let data = line.slice(6);
               if (data === '[DONE]') break;
-              
+
               // Parse JSON-encoded data
               if (data.startsWith('"')) {
                 try {
@@ -93,7 +95,7 @@ export class ItineraryService {
                   // Use as-is if parsing fails
                 }
               }
-              
+
               if (data && data.trim()) {
                 fullResponse += data;
                 if (onProgress) {
@@ -123,7 +125,7 @@ export class ItineraryService {
   ): string {
     const preferences = request.preferences.join(', ');
     const pace = request.pace || 'moderate';
-    
+
     // Filter places by user preferences to reduce prompt size
     const preferenceSet = new Set(request.preferences.map(p => p.toLowerCase()));
     const filteredPlaces = places
@@ -131,12 +133,12 @@ export class ItineraryService {
       .filter(p => {
         // Include if category matches any preference, or if it's a general interest (Gastronómico, Recreativo)
         const category = (p.category || '').toLowerCase();
-        return preferenceSet.has(category) || 
-               preferenceSet.size === 0 || 
-               ['gastronómico', 'recreativo'].includes(category);
+        return preferenceSet.has(category) ||
+          preferenceSet.size === 0 ||
+          ['gastronómico', 'recreativo'].includes(category);
       })
       .slice(0, 20); // Limit to 20 places max to keep prompt size manageable
-    
+
     // Format places information - include ID and handle undefined prices
     const placesInfo = filteredPlaces
       .map(p => {
@@ -148,9 +150,9 @@ export class ItineraryService {
     // Format events information - include ID and handle undefined prices
     const eventsInfo = events.length > 0
       ? events.map(e => {
-          const price = e.price != null && !isNaN(e.price) ? `Bs.${e.price}` : 'Gratis';
-          return `- ID:${e.id} | ${e.name} (${e.category}, Precio: ${price}, Ubicación: ${e.location})`;
-        }).join('\n')
+        const price = e.price != null && !isNaN(e.price) ? `Bs.${e.price}` : 'Gratis';
+        return `- ID:${e.id} | ${e.name} (${e.category}, Precio: ${price}, Ubicación: ${e.location})`;
+      }).join('\n')
       : 'No hay eventos disponibles para esta fecha.';
 
     return `Eres un asistente turístico experto en Cochabamba, Bolivia. Debes crear un itinerario para un turista.
@@ -165,22 +167,25 @@ DATOS DEL TURISTA:
 LUGARES DISPONIBLES (usa el número ID para referenciar):
 ${placesInfo}
 
-EVENTOS DISPONIBLES:
+EVENTOS DISPONIBLES (tienen fecha específica y pueden tener costo de entrada):
 ${eventsInfo}
 
 INSTRUCCIONES:
-1. Selecciona 4-6 lugares que coincidan con las preferencias
-2. Usa el ID numérico de cada lugar en "item_id"
-3. Los lugares con precio "Gratis" tienen costo 0
-4. Incluye tiempos realistas (1-2 horas por lugar)
-5. Empieza desde ${request.start_time}
+1. Selecciona 4-6 lugares/eventos que coincidan con las preferencias
+2. Usa el ID numérico de cada lugar/evento en "item_id"
+3. Para "estimated_cost", USA EL PRECIO indicado en cada lugar/evento. Si dice "Gratis" = 0, si dice "Bs.50" = 50
+4. "total_cost" debe ser la SUMA de todos los "estimated_cost" de los items
+5. Incluye tiempos realistas (1-2 horas por lugar)
+6. Respeta el presupuesto máximo del turista
+7. Si hay eventos disponibles para la fecha, considera incluirlos
 
 RESPONDE SOLO CON ESTE JSON (sin texto adicional):
 {
   "items": [
-    {"type": "place", "item_id": 1, "start_time": "09:00", "end_time": "10:30", "estimated_cost": 0, "notes": "Descripción breve"}
+    {"type": "place", "item_id": 1, "start_time": "09:00", "end_time": "10:30", "estimated_cost": 0, "notes": "Descripción breve"},
+    {"type": "event", "item_id": 5, "start_time": "11:00", "end_time": "13:00", "estimated_cost": 50, "notes": "Evento con entrada"}
   ],
-  "total_cost": 0,
+  "total_cost": 50,
   "total_duration": "6 horas",
   "route_optimization": "Ruta optimizada por cercanía"
 }`;
@@ -202,15 +207,15 @@ RESPONDE SOLO CON ESTE JSON (sin texto adicional):
       }
 
       const parsed = JSON.parse(jsonMatch[0]);
-      
+
       // Check if items array is empty
       if (!parsed.items || parsed.items.length === 0) {
         throw new Error('El asistente no pudo generar un itinerario con los criterios especificados. Intenta con diferentes preferencias o un presupuesto mayor.');
       }
-      
+
       // Validate and enrich the response - filter out invalid items instead of throwing
       const enrichedItems = parsed.items
-        .filter((item: { type: string; item_id: number; [key: string]: unknown }) => {
+        .filter((item: { type: string; item_id: number;[key: string]: unknown }) => {
           if (item.type === 'place') {
             const place = places.find(p => p.id === item.item_id);
             if (!place) {
@@ -226,7 +231,7 @@ RESPONDE SOLO CON ESTE JSON (sin texto adicional):
           }
           return true;
         });
-      
+
       // If all items were filtered out, throw an error
       if (enrichedItems.length === 0) {
         throw new Error('No se pudieron encontrar los lugares sugeridos por el asistente. Intenta generar de nuevo.');

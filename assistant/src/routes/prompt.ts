@@ -48,7 +48,10 @@ prompt_route.post("/", async (c) => {
 
 	if (!result.success) {
 		log.error(
-			{ issues: result.error.issues, body_preview: JSON.stringify(body).slice(0, 500) },
+			{
+				issues: result.error.issues,
+				body_preview: JSON.stringify(body).slice(0, 500),
+			},
 			"Validation failed",
 		);
 		return c.json({ error: result.error.issues[0]?.message }, 400);

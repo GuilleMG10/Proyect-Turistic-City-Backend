@@ -1,6 +1,10 @@
 package service
 
-import "github.com/GuilleMG10/Proyect-Turistic-City-Backend/internal/model"
+import (
+	"log"
+
+	"github.com/GuilleMG10/Proyect-Turistic-City-Backend/internal/model"
+)
 
 type EventRepository interface {
 	FindAll() ([]*model.Event, error)
@@ -11,11 +15,15 @@ type EventRepository interface {
 }
 
 type EventService struct {
-	repo EventRepository
+	repo   EventRepository
+	aiSync *AISyncService
 }
 
 func NewEventService(repo EventRepository) *EventService {
-	return &EventService{repo: repo}
+	return &EventService{
+		repo:   repo,
+		aiSync: NewAISyncService(),
+	}
 }
 
 func (s *EventService) GetAllEvents() ([]*model.Event, error) {
@@ -27,11 +35,25 @@ func (s *EventService) GetEvent(id uint) (*model.Event, error) {
 }
 
 func (s *EventService) AddEvent(event *model.Event) error {
-	return s.repo.Create(event)
+	if err := s.repo.Create(event); err != nil {
+		return err
+	}
+	// Sync to AI backend (non-blocking, errors are logged but not returned)
+	if err := s.aiSync.SyncEventToAI(event); err != nil {
+		log.Printf("Failed to sync event to AI: %v", err)
+	}
+	return nil
 }
 
 func (s *EventService) UpdateEvent(event *model.Event) error {
-	return s.repo.Update(event)
+	if err := s.repo.Update(event); err != nil {
+		return err
+	}
+	// Sync updated event to AI backend
+	if err := s.aiSync.SyncEventToAI(event); err != nil {
+		log.Printf("Failed to sync event to AI: %v", err)
+	}
+	return nil
 }
 
 func (s *EventService) DeleteEvent(id uint) error {

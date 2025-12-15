@@ -80,9 +80,10 @@ itinerary_route.post("/", async (c) => {
 			const places_details = collected
 				.map(
 					(p) => `• ${p.name}
+  - Tipo: ${p.type || "lugar"}
   - Categoria: ${p.category}
   - Horario: ${p.atencion}
-  - Precio estimado: ${p.estimated_price}
+  - Precio estimado: ${p.estimated_price || "Gratis"}
   - Lo más iconico: ${p.lo_mas_iconico_del_lugar}
   - Tiempo estimado de visita: ${p.tiempo_estimado_visita}
   `,
